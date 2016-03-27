@@ -74,7 +74,7 @@ def plotJonesFreq(timespy, Jnf):
     plt.figure()
     plt.subplot(211)
     plt.plot(timespy, 10*np.log10(p_ch))
-    plt.title('p channel')
+    plt.title('p-channel')
     plt.subplot(212)
     plt.plot(timespy, 10*np.log10(q_ch))
     plt.title('q-channel')
@@ -109,8 +109,9 @@ def print_paral(srcfld, stnRot, res, pjonesOfSrc):
         #print paramat
         az[i], el[i] = pntsonsphere.crt2sphHorizontal(basisITRF_lcl[i,:,0].squeeze())
     #print("th, ph", np.rad2deg(np.array([np.pi/2-el, az]).T))
-    ax.plot(az[0], 90-el[0]/np.pi*180,'*')
     ax.plot(az, 90-el/np.pi*180,'+')
+    #Mark out start point
+    ax.plot(az[0], 90-el[0]/np.pi*180,'r8')
     ax.set_rmax(90)
     plt.draw()
 
