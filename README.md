@@ -13,5 +13,5 @@ real telescopes, currently:
 ### How do I get set up? ###
 
 * Use setup.py script to install
-* Requires: python-casacore, numpy, and scipy >=0.14.
+* Requires: python-casacore, numpy and [AntPat](https://github.com/2baOrNot2ba/AntPat)
 
