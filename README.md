@@ -15,3 +15,7 @@ real telescopes, currently:
 * Use setup.py script to install
 * Requires: python-casacore, numpy and [AntPat](https://github.com/2baOrNot2ba/AntPat)
 
+### Status ###
+
+Please note that Myra is still in developement. The output has not yet been
+throughly verified, but will be soon.
