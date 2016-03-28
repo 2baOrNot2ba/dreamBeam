@@ -64,8 +64,9 @@ def computeJones(tele_name, ArrBand, stnID, modeltype,
 
 def printJonesFreq(timespy, Jnf):
     #Select one frequency
-    for ti in range(0,duration.seconds/ObsTimeStp.seconds):
+    for ti in range(len(timespy)):
         print freq, timespy[ti], Jnf[ti,0,0], Jnf[ti,0,1], Jnf[ti,1,0], Jnf[ti,1,1]
+        #print("{0} {1} {2}".format(ti, np.abs(Jnf[ti,0,0])**2+np.abs(Jnf[ti,0,1])**2, np.abs(Jnf[ti,1,0])**2+np.abs(Jnf[ti,1,1])**2) )
 
 
 def plotJonesFreq(timespy, Jnf):
