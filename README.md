@@ -1,6 +1,6 @@
-# Myra #
+# dreamBeam #
 
-Myra is framework for modeling radio astronomical telescopes.
+dreamBeam is a framework for modeling radio astronomical telescopes.
 
 ### What is this repository for? ###
 

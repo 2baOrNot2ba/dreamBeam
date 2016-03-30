@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-setup(name = 'Myra',
+setup(name = 'dreamBeam',
       version = '0.1',
       description = 'Measurement equation framework for interferometrY in Radio Astronomy.',
       author = 'Tobia D. Carozzi',
