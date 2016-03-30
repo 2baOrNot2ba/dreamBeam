@@ -3,7 +3,7 @@
    and frequency.
 """
 import sys
-sys.path.append('..')
+#sys.path.append('..')
 import os
 import optparse
 import pickle
@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 from antpat.dualpolelem import plot_polcomp_dynspec
 from antpat.io import NECread
 from antpat.reps.sphgridfun import pntsonsphere
-import rime.jones
-import telescopes
+import dreambeam.rime.jones
+import dreambeam.telescopes
 
 projdir = os.path.dirname(os.path.abspath(__file__))
 dataformdir = projdir+'/data_formats/'
@@ -23,7 +23,7 @@ NECdir = dataformdir+'/NEC_out/'
 
 def inittelescope(name, patmodel):
     filename = "teldat_"+name+"_"+patmodel+".p"
-    teldatdir = os.path.dirname(telescopes.__file__)+"/"+name+"/data/"
+    teldatdir = os.path.dirname(dreambeam.telescopes.__file__)+"/"+name+"/data/"
     telescope = pickle.load(open(teldatdir+filename,'rb'))
     return telescope
 
@@ -35,7 +35,7 @@ def computeJones(tele_name, ArrBand, stnID, modeltype,
     celAz, celEl, celRef = CelDir.split(',')
     celAz = float(celAz)
     celEl = float(celEl)
-    srcfld = rime.jones.DualPolFieldPointSrc((celAz, celEl, celRef))
+    srcfld = dreambeam.rime.jones.DualPolFieldPointSrc((celAz, celEl, celRef))
     
     #    *Setup Parallatic Jones*
     #duration = ObsTimeEnd-ObsTimeBeg
@@ -43,7 +43,7 @@ def computeJones(tele_name, ArrBand, stnID, modeltype,
     nrTimSamps = int((duration.total_seconds()/ObsTimeStp.seconds))+1
     for ti in range(0, nrTimSamps):
        timespy.append(ObsTimeBeg+ti*ObsTimeStp)
-    pjones = rime.jones.PJones(timespy)
+    pjones = dreambeam.rime.jones.PJones(timespy)
     #    *Setup EJones*
     telescope = inittelescope(tele_name, modeltype)
     stnBD = telescope['Station'][stnID][ArrBand]
@@ -168,4 +168,3 @@ if __name__ == "__main__":
                 printJonesFreq(timespy, Jnf)
     else :
         opt.error("incorrect number of arguments")
-

@@ -4,9 +4,9 @@ dreamBeam is a framework for modeling radio astronomical telescopes.
 
 ### What is this repository for? ###
 
-Myra let's you create generic measurement equations, i.e. multiplicative chains
-of Jones matrices. It also comes with some predetermined, basic beam models of
-real telescopes, currently:
+dreamBeam let's you create generic measurement equations, i.e. multiplicative
+chains of Jones matrices. It also comes with some predetermined, basic beam
+models of real telescopes, currently:
 
 * LOFAR
 
@@ -17,5 +17,5 @@ real telescopes, currently:
 
 ### Status ###
 
-Please note that Myra is still in developement. The output has not yet been
+Please note that dreamBeam is still in developement. The output has not yet been
 throughly verified, but will be soon.

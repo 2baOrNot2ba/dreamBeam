@@ -14,7 +14,7 @@ p7
 ccopy_reg
 _reconstructor
 p8
-(ctelescopes.rt
+(cdreambeam.telescopes.rt
 TelescopeStnBnd
 p9
 c__builtin__

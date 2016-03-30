@@ -6,8 +6,8 @@ import re
 import pickle
 from antpat.dualpolelem import DualPolElem
 from antpat.reps.hamaker import HamakerPolarimeter
-from native.parseAntennaField import getArrayBandParams, list_stations
-from telescopes.rt import TelescopeStnBnd
+from dreambeam.telescopes.LOFAR.native.parseAntennaField import getArrayBandParams, list_stations
+from dreambeam.telescopes.rt import TelescopeStnBnd
 
 TELESCOPE_NAME = 'LOFAR'
 nr_pols = 2
@@ -166,7 +166,7 @@ def savetelescope(stnlst, antmodel):
 
 
 if __name__ == "__main__":
-    """Use this to produce telescope data files for use in Myra. Run this as:
+    """Use this to produce telescope data files for use in dreamBeam. Run this as:
     $ python telwizhelper_LOFAR.py
     """
     gen_antmodelfiles()

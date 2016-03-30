@@ -9,7 +9,7 @@ import numpy as np
 import os
 from os.path import dirname
 #AntennaFieldDirectory='src/NDPPP/LOFAR/MAC/Deployment/data/StaticMetaData/AntennaFields/'
-AntennaFieldDirectory=dirname(__file__)+'../share/AntennaFields/'
+AntennaFieldDirectory=dirname(__file__)+'/../share/AntennaFields/'
 COMMENT_CHAR = '#'
 
 def parseAntennaField(stationName,AFfileNameType=2):
