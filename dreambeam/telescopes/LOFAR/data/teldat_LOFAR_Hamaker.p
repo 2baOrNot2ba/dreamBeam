@@ -14,7 +14,7 @@ p7
 ccopy_reg
 _reconstructor
 p8
-(cdreambeam.telescopes.LOFAR.LOFAR_LH_BA_stn
+(cdreambeam.telescopes.LOFAR.feeds
 LOFAR_LBA_stn
 p9
 c__builtin__
@@ -215,7 +215,7 @@ tp91
 bsbsS'HBA'
 p92
 g8
-(cdreambeam.telescopes.LOFAR.LOFAR_LH_BA_stn
+(cdreambeam.telescopes.LOFAR.feeds
 LOFAR_HBA_stn
 p93
 g10

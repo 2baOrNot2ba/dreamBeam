@@ -1,4 +1,7 @@
-import dreambeam.rime.jones
+"""rt (i.e. Radio Telescopes) module is for handling real telescope meta-data."""
+import os
+import pickle
+import dreambeam.telescopes
 
 class TelescopeStnBnd(object):
     """Model of one station and one band of a telescope."""
@@ -13,16 +16,19 @@ class TelescopeStnBnd(object):
         ejones = None
         return ejones
 
+
 class TelescopeWiz():
     """Database over available telescopes patterns."""
-    telescopeDir = "./"
-    def __init__(self, tscopename, band, beammodel):
-        mapname2filen(tscopename, band, beammodel)
-        telescopestnbnd = pickle.load(open(filename,'rb'))
-        return telescopestnbnd
+    def getTelescope(self, tscopename, beammodel):
+        teldatapath = self.tel2path(tscopename, beammodel)
+        with open(teldatapath,'rb') as f:
+            telescope = pickle.load(f)
+        return telescope
     
-    def mapname2filen(tscopename, band, beammodel):
+    def tel2path(self, tscopename, beammodel):
         #Currently it only maps requests to filename
-        filename = telescopeDir+tscopename+'/tel_'+band+beammodel+'.p'
-        return filename
+        filename = "teldat_"+tscopename+"_"+beammodel+".p"
+        teldatdir = os.path.dirname(dreambeam.telescopes.__file__)+"/"+tscopename+"/data/"
+        teldatapath = teldatdir+filename
+        return teldatapath
 

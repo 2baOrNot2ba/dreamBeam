@@ -11,18 +11,11 @@ import matplotlib.pyplot as plt
 from antpat.dualpolelem import plot_polcomp_dynspec
 from antpat.reps.sphgridfun import pntsonsphere
 import dreambeam.rime.jones
-import dreambeam.telescopes
+from dreambeam.telescopes.rt import TelescopeWiz
 
 projdir = os.path.dirname(os.path.abspath(__file__))
 dataformdir = projdir+'/data_formats/'
 NECdir = dataformdir+'/NEC_out/'
-
-
-def inittelescope(name, patmodel):
-    filename = "teldat_"+name+"_"+patmodel+".p"
-    teldatdir = os.path.dirname(dreambeam.telescopes.__file__)+"/"+name+"/data/"
-    telescope = pickle.load(open(teldatdir+filename,'rb'))
-    return telescope
 
 
 def computeJones(tele_name, ArrBand, stnID, modeltype,
@@ -42,7 +35,8 @@ def computeJones(tele_name, ArrBand, stnID, modeltype,
         timespy.append(ObsTimeBeg+ti*ObsTimeStp)
     pjones = dreambeam.rime.jones.PJones(timespy)
     #    *Setup EJones*
-    telescope = inittelescope(tele_name, modeltype)
+    tw = TelescopeWiz()
+    telescope = tw.getTelescope(tele_name, modeltype)
     stnBD = telescope['Station'][stnID][ArrBand]
     #ejones = stnBD.getEJones()
     ejones = stnBD.getEJones(CelDir)
