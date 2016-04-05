@@ -42,14 +42,16 @@ def computeJones(tele_name, ArrBand, stnID, modeltype,
     timespy = []
     nrTimSamps = int((duration.total_seconds()/ObsTimeStp.seconds))+1
     for ti in range(0, nrTimSamps):
-       timespy.append(ObsTimeBeg+ti*ObsTimeStp)
+        timespy.append(ObsTimeBeg+ti*ObsTimeStp)
     pjones = dreambeam.rime.jones.PJones(timespy)
     #    *Setup EJones*
     telescope = inittelescope(tele_name, modeltype)
     stnBD = telescope['Station'][stnID][ArrBand]
-    ejones = stnBD.getEJones()
+    #ejones = stnBD.getEJones()
+    ejones = stnBD.getEJones(CelDir)
     stnRot = stnBD.stnRot
-    stnDPolel = stnBD.stnDPolel
+    #stnDPolel = stnBD.stnDPolel
+    stnDPolel = stnBD.feed_pat
     #    *Setup MEq*
     pjonesOfSrc = pjones.op(srcfld)
     res = ejones.op(pjones.op(srcfld))

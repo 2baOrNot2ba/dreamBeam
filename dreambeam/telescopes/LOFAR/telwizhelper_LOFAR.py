@@ -1,6 +1,5 @@
 """Script to generate LOFAR antenna response data."""
 import sys
-#sys.path.append('../..')
 import numpy
 import re
 import pickle
@@ -8,6 +7,8 @@ from antpat.dualpolelem import DualPolElem
 from antpat.reps.hamaker import HamakerPolarimeter
 from dreambeam.telescopes.LOFAR.native.parseAntennaField import getArrayBandParams, list_stations
 from dreambeam.telescopes.rt import TelescopeStnBnd
+import dreambeam.rime.jones
+from dreambeam.telescopes.LOFAR.feeds import LOFAR_LBA_stn, LOFAR_HBA_stn
 
 TELESCOPE_NAME = 'LOFAR'
 nr_pols = 2
@@ -108,61 +109,51 @@ def gen_antmodelfiles(inpfileL=LOFAR_HAdata_dir+'DefaultCoeffLBA.cc',
     convHA2DPE(inpfileH, DP_HBAfile_default)
 
 
-def create_stnbnd_telescope(stnID, ArrBand, antmodel='Hamaker'):
-    """Create a telescope-station-band object for station stnId and band
-    ArrBand using antenna model antmodel."""
-    #    *Setup station Jones*
-    ##Get the metadata of the LOFAR station. stnRot is the transformation matrix
-    ##  ITRF_crds = stnRot*LOFAR_crds
-    stnPos, stnRot, stnRelPos = getArrayBandParams(stnID, ArrBand)
+def savetelescope(stnlst, antmodel='Hamaker'):
+    """Save all the data relevant to the telescope beam modelling into
+    one file."""
+    telescope = {'Name': TELESCOPE_NAME}
+    print("Generating telescope beam model data for:")
+    telescope['FeedModel'] = antmodel
     ##Create station's antenna model
-    if antmodel == 'NEC_TC':
-        #This is an example of dual-pol antenna object constructed
-        #from two single-pol radiation patterns
-        basefile = 'Lofar-dipole-FREE.out'
-        fileloc = NECdir+basefile
-        atvfd = NECread.readNECout_tvecfuns(fileloc)
-        lofarAntX = RadFarField(atvfd)
-        lofarAntY = lofarAntX.rotate90()
-        lofarpolel = DualPolElem(lofarAntX, lofarAntY)
-    elif antmodel == "idl_dip":
-        #ideal dipoles:
-        tstantX = theoreticalantennas.ideal_dipole_grid_X(np.linspace(10.e6,90e6,11))
-        tstantY = tstantX.rotate90()
-        stnDPolel = DualPolElem(tstantX, tstantY)
-    elif antmodel == 'Hamaker':
+    if antmodel == 'Hamaker':
         #This is an example of dual-pol element built from a monolithic
         #Jones representation.
-        if ArrBand == 'LBA':
-            DP_LHBAfile = DP_LBAfile_default
-        else:
-            DP_LHBAfile = DP_HBAfile_default
-        stnDPolel = pickle.load(open(DP_LHBAfile, 'rb'))
+        stnDPolel_L = pickle.load(open(DP_LBAfile_default, 'rb'))
+        stnDPolel_H = pickle.load(open(DP_HBAfile_default, 'rb'))
     else:
         print("Error no such LOFAR model")
         exit(1)
     #Rotate 45 degrees since LOFAR elements are 45 degrees to meridian:
-    stnDPolel.rotateframe(polcrdrot)
+    stnDPolel_L.rotateframe(polcrdrot)
+    stnDPolel_H.rotateframe(polcrdrot)
     
-    #Create a StationBand object for this
-    stnbd = TelescopeStnBnd(stnDPolel, stnPos, stnRot)
-    return stnbd
-
-
-def savetelescope(stnlst, antmodel):
-    """Save all the data relevant to the telescope beam modelling into
-    one file."""
-    telescope = {'Name': TELESCOPE_NAME, 'PatternModel': antmodel}
-    print("Generating telescope beam model data for:")
+    #Set station feed to be the chosen DP pattern:
+    #LOFAR_LBA_stn.feed_pat = stnDPolel_L
+    #LOFAR_HBA_stn.feed_pat = stnDPolel_H
+    
     telescope['Station'] = {}
     for stnId in stnlst:
         telescope['Station'][stnId] = {}
         for band in bands:
             print(stnId, band, antmodel)
-            stnbndtel = create_stnbnd_telescope(stnId, band, antmodel)
+            #    *Setup station Jones*
+            ##Get the metadata of the LOFAR station. stnRot is the transformation matrix
+            ##  ITRF_crds = stnRot*LOFAR_crds
+            stnPos, stnRot, stnRelPos = getArrayBandParams(stnId, band)
+            #Create a StationBand object for this
+            if band == 'LBA':
+                stnbd = LOFAR_LBA_stn(stnPos, stnRot)
+                stnbd.feed_pat = stnDPolel_L
+            else:
+                stnbd = LOFAR_HBA_stn(stnPos, stnRot)
+                stnbd.feed_pat = stnDPolel_H
+            stnbndtel = stnbd
+            #stnbndtel = create_stnbnd_telescope(stnId, band)
             telescope['Station'][stnId][band] = stnbndtel
     saveName="teldat_"+TELESCOPE_NAME+"_"+antmodel+".p"
     pickle.dump(telescope, open(TELEDATADIR+saveName, 'wb'))
+    print("Saved '"+saveName+"' in "+TELEDATADIR)
 
 
 if __name__ == "__main__":
@@ -173,3 +164,4 @@ if __name__ == "__main__":
     stnlst = list_stations()
     antmodel = 'Hamaker'
     savetelescope(stnlst, antmodel)
+    print("Completed setup.")

@@ -2,14 +2,15 @@ import dreambeam.rime.jones
 
 class TelescopeStnBnd(object):
     """Model of one station and one band of a telescope."""
-    def __init__(self, stnDPolel, stnPos, stnRot):
-        self.stnDPolel = stnDPolel
+    feed_pat = None
+    def __init__(self, stnPos, stnRot):
+        """Set the station's position and attitude.""" 
         self.stnPos = stnPos
         self.stnRot = stnRot
     
     def getEJones(self):
-        """Create ejones for station based on antenna model."""
-        ejones = dreambeam.rime.jones.EJones(self.stnDPolel, self.stnPos, self.stnRot)
+        """Create ejones for station based on antenna patterns."""
+        ejones = None
         return ejones
 
 class TelescopeWiz():
