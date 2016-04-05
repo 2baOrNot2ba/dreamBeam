@@ -2,8 +2,6 @@
 """Model of a LOFAR station. Gets Jones matrix towards a given direction
    and frequency.
 """
-import sys
-#sys.path.append('..')
 import os
 import optparse
 import pickle
@@ -11,7 +9,6 @@ from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 from antpat.dualpolelem import plot_polcomp_dynspec
-from antpat.io import NECread
 from antpat.reps.sphgridfun import pntsonsphere
 import dreambeam.rime.jones
 import dreambeam.telescopes

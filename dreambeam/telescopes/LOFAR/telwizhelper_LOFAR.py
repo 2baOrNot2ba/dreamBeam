@@ -1,13 +1,10 @@
 """Script to generate LOFAR antenna response data."""
-import sys
 import numpy
 import re
 import pickle
 from antpat.dualpolelem import DualPolElem
 from antpat.reps.hamaker import HamakerPolarimeter
 from dreambeam.telescopes.LOFAR.native.parseAntennaField import getArrayBandParams, list_stations
-from dreambeam.telescopes.rt import TelescopeStnBnd
-import dreambeam.rime.jones
 from dreambeam.telescopes.LOFAR.feeds import LOFAR_LBA_stn, LOFAR_HBA_stn
 
 TELESCOPE_NAME = 'LOFAR'
