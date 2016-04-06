@@ -17,6 +17,8 @@ projdir = os.path.dirname(os.path.abspath(__file__))
 dataformdir = projdir+'/data_formats/'
 NECdir = dataformdir+'/NEC_out/'
 
+#Startup a telescope wizard.
+tw = TelescopeWiz()
 
 def computeJones(tele_name, ArrBand, stnID, modeltype,
                ObsTimeBeg, duration, ObsTimeStp,
@@ -35,7 +37,6 @@ def computeJones(tele_name, ArrBand, stnID, modeltype,
         timespy.append(ObsTimeBeg+ti*ObsTimeStp)
     pjones = dreambeam.rime.jones.PJones(timespy)
     #    *Setup EJones*
-    tw = TelescopeWiz()
     telescope = tw.getTelescope(tele_name, modeltype)
     stnBD = telescope['Station'][stnID][ArrBand]
     #ejones = stnBD.getEJones()
@@ -130,15 +131,25 @@ if __name__ == "__main__":
 #    CelDir="6.11378655886310,1.021919366,J2000"
 #    modelLOFARobservation(stnID, ArrBand, ObsTimeBeg, ObsTimeEnd, ObsTimeStp,
 #                          CelDir,  modeltype = 'Hamaker_Arts' )
-    usage = "usage: %prog act telescope band antmodel stnName beginUTC duration timeStep pointingRA pointingDEC [frequency]"
-    #Example: $ pointing_jones.py action LOFAR LBA Hamaker SE607 '2012-04-01 01:02:03' 60 1 0 0 60E6
+    usage = "Usage: pointing_jones.py [print|plot] telescope band antmodel stnID beginUTC duration timeStep pointingRA pointingDEC [frequency]"
+    #Example: $ pointing_jones.py print LOFAR LBA Hamaker SE607 '2012-04-01 01:02:03' 60 1 0 0 60E6
     opt = optparse.OptionParser(usage=usage)
     options, args = opt.parse_args()
-    if len(args) >0:
+    if len(args) == 0:
+        print("Specify output-type: 'print' or 'plot'")
+        print(usage)
+        exit()
+    else:
         action = args.pop(0)
+    if len(args) == 0:
+        print("Specify telescope:")
+        print '\n'.join(tw.list_telescopes())
+        print(usage)
+        exit()
+    else:
         telescopeName = args.pop(0)
-        band = args.pop(0)
-        antmodel=args.pop(0)
+    band = args.pop(0)
+    antmodel=args.pop(0)
     if len(args) == 6 or len(args) == 7:
         stnID,bTime,duration,stepTime,CelDir=args2inpparms(args)
         if len(args) == 7:
