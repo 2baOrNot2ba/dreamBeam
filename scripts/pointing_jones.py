@@ -2,9 +2,7 @@
 """Model of a LOFAR station. Gets Jones matrix towards a given direction
    and frequency.
 """
-import os
-import optparse
-import pickle
+import sys
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,16 +11,14 @@ from antpat.reps.sphgridfun import pntsonsphere
 import dreambeam.rime.jones
 from dreambeam.telescopes.rt import TelescopeWiz
 
-projdir = os.path.dirname(os.path.abspath(__file__))
-dataformdir = projdir+'/data_formats/'
-NECdir = dataformdir+'/NEC_out/'
-
 #Startup a telescope wizard.
 tw = TelescopeWiz()
 
-def computeJones(tele_name, ArrBand, stnID, modeltype,
+def pointing_jones(tele_name, ArrBand, stnID, modeltype,
                ObsTimeBeg, duration, ObsTimeStp,
                CelDir, freq):
+    """Computes the Jones matrix along pointing axis while tracking a fixed
+    celestial source."""
     #    *Setup Source*
     celAz, celEl, celRef = CelDir.split(',')
     celAz = float(celAz)
@@ -112,63 +108,85 @@ def print_paral(srcfld, stnRot, res, pjonesOfSrc):
     plt.draw()
 
 
-def args2inpparms(args):
-    stnName=args[0]
-    bTime = datetime.strptime(args[1], "%Y-%m-%d %H:%M:%S")
-    duration =timedelta(0,float(args[2]))
-    stepTime =timedelta(0,float(args[3]))
-    #ra=args[4]+'rad'
-    #dec=args[5]+'rad'
-    CelDir=str(args[4])+','+str(args[5])+',J2000'
-    return stnName,bTime,duration,stepTime,CelDir
-
 if __name__ == "__main__":
-#    stnID="SE607"
-#    ArrBand="LBA"
-#    ObsTimeBeg=datetime(2015,12,29,0,0,0)
-#    ObsTimeEnd=datetime(2015,12,29,22,0,0)
-#    ObsTimeStp=timedelta(minutes=60)
-#    CelDir="6.11378655886310,1.021919366,J2000"
-#    modelLOFARobservation(stnID, ArrBand, ObsTimeBeg, ObsTimeEnd, ObsTimeStp,
-#                          CelDir,  modeltype = 'Hamaker_Arts' )
-    usage = "Usage: pointing_jones.py [print|plot] telescope band antmodel stnID beginUTC duration timeStep pointingRA pointingDEC [frequency]"
-    #Example: $ pointing_jones.py print LOFAR LBA Hamaker SE607 '2012-04-01 01:02:03' 60 1 0 0 60E6
-    opt = optparse.OptionParser(usage=usage)
-    options, args = opt.parse_args()
-    if len(args) == 0:
+    scriptname = sys.argv[0]
+    args = sys.argv[1:]
+    usage = "Usage: {} print|plot telescope band stnID beammodel beginUTC duration timeStep pointingRA pointingDEC [frequency]".format(scriptname)
+    #Example: 
+    #$ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 60 1 6.11 1.02 60E6
+    try:
+        action = args.pop(0)
+    except IndexError:
         print("Specify output-type: 'print' or 'plot'")
         print(usage)
         exit()
-    else:
-        action = args.pop(0)
-    if len(args) == 0:
+    try:
+        telescopeName = args.pop(0)
+    except IndexError:
         print("Specify telescope:")
         print '\n'.join(tw.list_telescopes())
         print(usage)
         exit()
-    else:
-        telescopeName = args.pop(0)
-    band = args.pop(0)
-    antmodel=args.pop(0)
-    if len(args) == 6 or len(args) == 7:
-        stnID,bTime,duration,stepTime,CelDir=args2inpparms(args)
-        if len(args) == 7:
-            freq=float(args[6])
-        else:
-            freq=0.
-        timespy, freqs, Jn = computeJones(telescopeName, band, stnID, antmodel,
+    try:
+        band = args.pop(0)
+    except IndexError:
+        print("Specify band/feed:")
+        print(usage)
+        exit()
+    try:
+        antmodel = args.pop(0)
+    except IndexError:
+        print("Specify beam-model:")
+        print(usage)
+        exit()
+    try:
+        stnID = args.pop(0)
+    except IndexError:
+        print("Specify station-ID:")
+        print(usage)
+        exit()
+    try:
+        bTime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
+    except IndexError:
+        print("Specify start-time [UTC].")
+        print(usage)
+        exit()
+    try:
+        duration =timedelta(0,float(args[1]))
+    except IndexError:
+        print("Specify duration.")
+        print(usage)
+        exit()
+    try:
+        stepTime =timedelta(0,float(args[2]))
+    except IndexError:
+        print("Specify step-time.")
+        print(usage)
+        exit()
+    try:
+        #ra=args[4]+'rad'
+        #dec=args[5]+'rad'
+        CelDir=str(args[3])+','+str(args[4])+',J2000'
+    except IndexError:
+        print("Specify pointing direction.")
+        print(usage)
+        exit()
+    try:
+        freq=float(args[5])
+    except IndexError:
+        freq=0.
+    timespy, freqs, Jn = pointing_jones(telescopeName, band, stnID, antmodel,
                    bTime, duration, stepTime, CelDir, freq)
-        if len(args) == 6:
-            if action == "plot":
-                plotAllJones(timespy, freqs, Jn)
-            else:
-                printAllJones(timespy, freqs, Jn)
+    if freq == 0.:
+        if action == "plot":
+            plotAllJones(timespy, freqs, Jn)
         else:
-            frqIdx = np.where(np.isclose(freqs,freq,atol=190e3))[0][0]
-            Jnf = Jn[frqIdx,:,:,:].squeeze()
-            if action == "plot":
-                plotJonesFreq(timespy, Jnf)
-            else:
-                printJonesFreq(timespy, Jnf)
-    else :
-        opt.error("incorrect number of arguments")
+            printAllJones(timespy, freqs, Jn)
+    else:
+        frqIdx = np.where(np.isclose(freqs,freq,atol=190e3))[0][0]
+        Jnf = Jn[frqIdx,:,:,:].squeeze()
+        if action == "plot":
+            plotJonesFreq(timespy, Jnf)
+        else:
+            printJonesFreq(timespy, Jnf)
+
