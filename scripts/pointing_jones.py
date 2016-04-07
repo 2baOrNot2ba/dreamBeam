@@ -134,15 +134,15 @@ if __name__ == "__main__":
         print(usage)
         exit()
     try:
-        antmodel = args.pop(0)
-    except IndexError:
-        print("Specify beam-model:")
-        print(usage)
-        exit()
-    try:
         stnID = args.pop(0)
     except IndexError:
         print("Specify station-ID:")
+        print(usage)
+        exit()
+    try:
+        antmodel = args.pop(0)
+    except IndexError:
+        print("Specify beam-model:")
         print(usage)
         exit()
     try:
