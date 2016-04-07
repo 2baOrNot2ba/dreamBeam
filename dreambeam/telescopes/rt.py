@@ -32,18 +32,18 @@ class TelescopeWiz():
         telescope_list = []
         for dd in ds:
             if os.path.isdir(self.telescopes_dir+'/'+dd+"/data/"):
-               telescope_list.append(os.path.basename(dd))
+                telescope_list.append(os.path.basename(dd))
         return telescope_list
 
-    def getTelescope(self, tscopename, beammodel):
-        teldatapath = self.tel2path(tscopename, beammodel)
+    def getTelescopeband(self, tscopename, band, beammodel):
+        teldatapath = self.telbnd2path(tscopename, band, beammodel)
         with open(teldatapath,'rb') as f:
             telescope = pickle.load(f)
         return telescope
     
-    def tel2path(self, tscopename, beammodel):
+    def telbnd2path(self, tscopename, band, beammodel):
         #Currently it only maps requests to filename
-        filename = "teldat_"+tscopename+"_"+beammodel+".p"
+        filename = "teldat_"+tscopename+"_"+band+"_"+beammodel+".p"
         teldatdir = os.path.dirname(dreambeam.telescopes.__file__)+"/"+tscopename+"/data/"
         teldatapath = teldatdir+filename
         return teldatapath

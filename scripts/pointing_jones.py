@@ -33,8 +33,8 @@ def pointing_jones(tele_name, ArrBand, stnID, modeltype,
         timespy.append(ObsTimeBeg+ti*ObsTimeStp)
     pjones = dreambeam.rime.jones.PJones(timespy)
     #    *Setup EJones*
-    telescope = tw.getTelescope(tele_name, modeltype)
-    stnBD = telescope['Station'][stnID][ArrBand]
+    telescope = tw.getTelescopeband(tele_name, ArrBand, modeltype)
+    stnBD = telescope['Station'][stnID]
     #ejones = stnBD.getEJones()
     ejones = stnBD.getEJones(CelDir)
     stnRot = stnBD.stnRot

@@ -11,9 +11,10 @@ TELESCOPE_NAME = 'LOFAR'
 nr_pols = 2
 sampfreq = 100e6
 nr_channels = 512
-bands = ['LBA', 'HBA']
-antmodels = ['Hamaker']
+BANDS = ['LBA', 'HBA']
+ANTMODELS = ['Hamaker']
 oosr2 = 1./numpy.sqrt(2)
+PICKLE_PROTO = pickle.HIGHEST_PROTOCOL
 # + -
 # + +
 polcrdrot = numpy.array([[+oosr2, -oosr2,  0.],
@@ -79,7 +80,7 @@ def convHA2DPE(inp_HA_file, out_DP_file):
     artsdata = pickle.load(open(inp_HA_file, 'rb'))
     HLBA = HamakerPolarimeter(artsdata)
     stnDPolel = DualPolElem(HLBA)
-    pickle.dump(stnDPolel, open(out_DP_file, 'wb'))
+    pickle.dump(stnDPolel, open(out_DP_file, 'wb'), PICKLE_PROTO)
 
 
 def gen_antmodelfiles(inpfileL=LOFAR_HAdata_dir+'DefaultCoeffLBA.cc',
@@ -91,7 +92,7 @@ def gen_antmodelfiles(inpfileL=LOFAR_HAdata_dir+'DefaultCoeffLBA.cc',
     LOFAR model data stored in the 'lofar_elem_resp' packages c++ header files.
     Also adds nominal LOFAR frequency channels."""
     
-    #Adding nominal frequency channels. The HA model for LOFAR has two bands
+    #Adding nominal frequency channels. The HA model for LOFAR has two BANDS
     #while data recording S/W has 3 intervals based on sampling frequency,
     #namely (0,100), (100,200), (200,300), each with 512 channels.
     #Here I concatenate the two latter intervals.
@@ -106,50 +107,47 @@ def gen_antmodelfiles(inpfileL=LOFAR_HAdata_dir+'DefaultCoeffLBA.cc',
     convHA2DPE(inpfileH, DP_HBAfile_default)
 
 
-def savetelescope(stnlst, antmodel='Hamaker'):
-    """Save all the data relevant to the telescope beam modelling into
+def save_telescopeband(band, stnlst, antmodel='Hamaker'):
+    """Save all the data relevant to the telescope-band beam modeling into
     one file."""
-    telescope = {'Name': TELESCOPE_NAME}
-    print("Generating telescope beam model data for:")
-    telescope['FeedModel'] = antmodel
+    assert band in BANDS, ("Error: {} is not one of the available bands.\n"
+                           "(Available bands are: {})").format(band, BANDS)
+    assert antmodel in ANTMODELS, ("Error: {} is not one of the available models.\n"
+                                  "Available models are: {})").format(antmodel, ANTMODELS)
+    print("Generating '{}' beam-model for the band {} of the {} telescope with stations:".format(
+                                                   antmodel, band, TELESCOPE_NAME))
+    #Create telescope-bands metadata:
+    telescope = {'Name': TELESCOPE_NAME, 'Band': band, 'Beam-model': antmodel}
     ##Create station's antenna model
+    if band == BANDS[0]:
+        DP_BAfile = DP_LBAfile_default
+    elif band == BANDS[1]:
+        DP_BAfile = DP_HBAfile_default
     if antmodel == 'Hamaker':
         #This is an example of dual-pol element built from a monolithic
         #Jones representation.
-        stnDPolel_L = pickle.load(open(DP_LBAfile_default, 'rb'))
-        stnDPolel_H = pickle.load(open(DP_HBAfile_default, 'rb'))
-    else:
-        print("Error no such LOFAR model")
-        exit(1)
+        stnDPolel = pickle.load(open(DP_BAfile, 'rb'))
     #Rotate 45 degrees since LOFAR elements are 45 degrees to meridian:
-    stnDPolel_L.rotateframe(polcrdrot)
-    stnDPolel_H.rotateframe(polcrdrot)
+    stnDPolel.rotateframe(polcrdrot)
     
-    #Set station feed to be the chosen DP pattern:
-    #LOFAR_LBA_stn.feed_pat = stnDPolel_L
-    #LOFAR_HBA_stn.feed_pat = stnDPolel_H
-    
+    #Create telescope_band_station metadata:
     telescope['Station'] = {}
+    if band == BANDS[0]:
+        LOFAR_BA_stn = LOFAR_LBA_stn
+    else:
+        LOFAR_BA_stn = LOFAR_HBA_stn
     for stnId in stnlst:
-        telescope['Station'][stnId] = {}
-        for band in bands:
-            print(stnId, band, antmodel)
-            #    *Setup station Jones*
-            ##Get the metadata of the LOFAR station. stnRot is the transformation matrix
-            ##  ITRF_crds = stnRot*LOFAR_crds
-            stnPos, stnRot, stnRelPos = getArrayBandParams(stnId, band)
-            #Create a StationBand object for this
-            if band == 'LBA':
-                stnbd = LOFAR_LBA_stn(stnPos, stnRot)
-                stnbd.feed_pat = stnDPolel_L
-            else:
-                stnbd = LOFAR_HBA_stn(stnPos, stnRot)
-                stnbd.feed_pat = stnDPolel_H
-            stnbndtel = stnbd
-            #stnbndtel = create_stnbnd_telescope(stnId, band)
-            telescope['Station'][stnId][band] = stnbndtel
-    saveName="teldat_"+TELESCOPE_NAME+"_"+antmodel+".p"
-    pickle.dump(telescope, open(TELEDATADIR+saveName, 'wb'))
+        print(stnId)
+        #    *Setup station Jones*
+        ##Get the metadata of the LOFAR station. stnRot is the transformation matrix
+        ##  ITRF_crds = stnRot*LOFAR_crds
+        stnPos, stnRot, stnRelPos = getArrayBandParams(stnId, band)
+        #Create a StationBand object for this
+        stnbnd = LOFAR_BA_stn(stnPos, stnRot)
+        stnbnd.feed_pat = stnDPolel
+        telescope['Station'][stnId] = stnbnd
+    saveName="teldat_"+TELESCOPE_NAME+"_"+band+"_"+antmodel+".p"
+    pickle.dump(telescope, open(TELEDATADIR+saveName, 'wb'), PICKLE_PROTO)
     print("Saved '"+saveName+"' in "+TELEDATADIR)
 
 
@@ -160,5 +158,6 @@ if __name__ == "__main__":
     gen_antmodelfiles()
     stnlst = list_stations()
     antmodel = 'Hamaker'
-    savetelescope(stnlst, antmodel)
+    for band in BANDS:
+        save_telescopeband(band, stnlst, antmodel)
     print("Completed setup.")
