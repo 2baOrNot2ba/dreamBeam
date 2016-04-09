@@ -1,7 +1,7 @@
-from dreambeam.telescopes.rt import TelescopeStnBnd
+from dreambeam.telescopes.rt import TelescopeBndStn
 import dreambeam.rime.jones
 
-class LOFAR_LBA_stn(TelescopeStnBnd):
+class LOFAR_LBA_stn(TelescopeBndStn):
     """Class for LOFAR LBA station."""
     def __init__(self, stnPos, stnRot):
         super(LOFAR_LBA_stn, self).__init__(stnPos, stnRot)
@@ -23,7 +23,7 @@ class LOFAR_LBA_stn(TelescopeStnBnd):
    #     print pdict
    #     self.__dict__ = pdict
 
-class LOFAR_HBA_stn(TelescopeStnBnd):
+class LOFAR_HBA_stn(TelescopeBndStn):
     """Class for LOFAR HBA station."""
     def __init__(self, stnPos, stnRot):
         super(LOFAR_HBA_stn, self).__init__(stnPos, stnRot)

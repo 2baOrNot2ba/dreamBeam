@@ -4,6 +4,7 @@ import re
 import pickle
 from antpat.dualpolelem import DualPolElem
 from antpat.reps.hamaker import HamakerPolarimeter
+from dreambeam.telescopes import rt
 from dreambeam.telescopes.LOFAR.native.parseAntennaField import getArrayBandParams, list_stations
 from dreambeam.telescopes.LOFAR.feeds import LOFAR_LBA_stn, LOFAR_HBA_stn
 
@@ -26,6 +27,8 @@ HA_LBAfile_default = TELEDATADIR+'HA_LOFAR_elresp_LBA.p'
 HA_HBAfile_default = TELEDATADIR+'HA_LOFAR_elresp_HBA.p'
 DP_LBAfile_default = TELEDATADIR+'DP_model_LBA.p'
 DP_HBAfile_default = TELEDATADIR+'DP_model_HBA.p'
+#Start up a telescope wizard:
+TW = rt.TelescopesWiz()
 
 
 def read_LOFAR_HAcc(coefsccfilename):
@@ -146,9 +149,9 @@ def save_telescopeband(band, stnlst, antmodel='Hamaker'):
         stnbnd = LOFAR_BA_stn(stnPos, stnRot)
         stnbnd.feed_pat = stnDPolel
         telescope['Station'][stnId] = stnbnd
-    saveName="teldat_"+TELESCOPE_NAME+"_"+band+"_"+antmodel+".p"
-    pickle.dump(telescope, open(TELEDATADIR+saveName, 'wb'), PICKLE_PROTO)
-    print("Saved '"+saveName+"' in "+TELEDATADIR)
+    teldatdir, saveName = TW.telbndmdl2dirfile(TELESCOPE_NAME, band, antmodel)
+    pickle.dump(telescope, open('/'.join((teldatdir, saveName)), 'wb'), PICKLE_PROTO)
+    print("Saved '"+saveName+"' in "+teldatdir)
 
 
 if __name__ == "__main__":

@@ -9,10 +9,10 @@ import matplotlib.pyplot as plt
 from antpat.dualpolelem import plot_polcomp_dynspec
 from antpat.reps.sphgridfun import pntsonsphere
 import dreambeam.rime.jones
-from dreambeam.telescopes.rt import TelescopeWiz
+from dreambeam.telescopes.rt import TelescopesWiz
 
 #Startup a telescope wizard.
-tw = TelescopeWiz()
+TW = TelescopesWiz()
 
 def pointing_jones(tele_name, ArrBand, stnID, modeltype,
                ObsTimeBeg, duration, ObsTimeStp,
@@ -33,7 +33,7 @@ def pointing_jones(tele_name, ArrBand, stnID, modeltype,
         timespy.append(ObsTimeBeg+ti*ObsTimeStp)
     pjones = dreambeam.rime.jones.PJones(timespy)
     #    *Setup EJones*
-    telescope = tw.getTelescopeband(tele_name, ArrBand, modeltype)
+    telescope = TW.getTelescopeBand(tele_name, ArrBand, modeltype)
     stnBD = telescope['Station'][stnID]
     #ejones = stnBD.getEJones()
     ejones = stnBD.getEJones(CelDir)
@@ -108,60 +108,43 @@ def print_paral(srcfld, stnRot, res, pjonesOfSrc):
     plt.draw()
 
 
+def getnextcmdarg(args, mes):
+    try:
+        arg = args.pop(0)
+    except IndexError:
+        print("Specify "+mes)
+        print(USAGE)
+        exit()
+    return arg
+
+SCRIPTNAME = sys.argv[0].split('/')[-1]
+USAGE = "Usage:\n  {} print|plot telescope band stnID beammodel beginUTC duration timeStep pointingRA pointingDEC [frequency]".format(SCRIPTNAME)
+#Example: 
+#$ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 60 1 6.11 1.02 60E6
 if __name__ == "__main__":
-    scriptname = sys.argv[0]
-    args = sys.argv[1:]
-    usage = "Usage: {} print|plot telescope band stnID beammodel beginUTC duration timeStep pointingRA pointingDEC [frequency]".format(scriptname)
-    #Example: 
-    #$ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 60 1 6.11 1.02 60E6
-    try:
-        action = args.pop(0)
-    except IndexError:
-        print("Specify output-type: 'print' or 'plot'")
-        print(usage)
-        exit()
-    try:
-        telescopeName = args.pop(0)
-    except IndexError:
-        print("Specify telescope:")
-        print '\n'.join(tw.list_telescopes())
-        print(usage)
-        exit()
-    try:
-        band = args.pop(0)
-    except IndexError:
-        print("Specify band/feed:")
-        print(usage)
-        exit()
-    try:
-        stnID = args.pop(0)
-    except IndexError:
-        print("Specify station-ID:")
-        print(usage)
-        exit()
-    try:
-        antmodel = args.pop(0)
-    except IndexError:
-        print("Specify beam-model:")
-        print(usage)
-        exit()
+    args = sys.argv[1:] 
+    action = getnextcmdarg(args, "output-type:\n  'print' or 'plot'")
+    telescopeName = getnextcmdarg(args, "telescope:\n  "+', '.join(TW.get_telescopes()))
+    band = getnextcmdarg(args, "band/feed:\n  "+', '.join(TW.get_bands(telescopeName)))
+    stnID =  getnextcmdarg(args, "station-ID:\n  "+ ', '.join(TW.get_stations(telescopeName, band)))
+    antmodel = getnextcmdarg(args, "beam-model:\n  "+', '.join(TW.get_beammodels(telescopeName, band)))
     try:
         bTime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
     except IndexError:
         print("Specify start-time [UTC].")
-        print(usage)
+        print(USAGE)
         exit()
     try:
         duration =timedelta(0,float(args[1]))
     except IndexError:
         print("Specify duration.")
-        print(usage)
+        print(USAGE)
         exit()
     try:
         stepTime =timedelta(0,float(args[2]))
     except IndexError:
         print("Specify step-time.")
-        print(usage)
+        print(USAGE)
         exit()
     try:
         #ra=args[4]+'rad'
@@ -169,7 +152,7 @@ if __name__ == "__main__":
         CelDir=str(args[3])+','+str(args[4])+',J2000'
     except IndexError:
         print("Specify pointing direction.")
-        print(usage)
+        print(USAGE)
         exit()
     try:
         freq=float(args[5])
