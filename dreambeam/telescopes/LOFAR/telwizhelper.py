@@ -74,7 +74,7 @@ def convLOFARcc2HA(inpfile, outfile, channels):
     dict of a Hamaker-Arts instance."""
     artsdata = read_LOFAR_HAcc(inpfile)
     artsdata['channels'] = channels
-    pickle.dump(artsdata, open(outfile, 'wb'))
+    pickle.dump(artsdata, open(outfile, 'wb'), PICKLE_PROTO)
 
 
 def convHA2DPE(inp_HA_file, out_DP_file):
