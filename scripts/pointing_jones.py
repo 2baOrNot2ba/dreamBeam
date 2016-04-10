@@ -12,10 +12,8 @@ import dreambeam.rime.jones
 from dreambeam.telescopes.rt import TelescopesWiz
 
 
-
-def pointing_jones(stnID,
-               ObsTimeBeg, duration, ObsTimeStp,
-               CelDir, freq):
+def pointing_jones(telescope, stnID, ObsTimeBeg, duration, ObsTimeStp, CelDir,
+                   freq):
     """Computes the Jones matrix along pointing axis while tracking a fixed
     celestial source."""
     #    *Setup Source*
@@ -31,23 +29,47 @@ def pointing_jones(stnID,
     for ti in range(0, nrTimSamps):
         timespy.append(ObsTimeBeg+ti*ObsTimeStp)
     pjones = dreambeam.rime.jones.PJones(timespy)
+
     #    *Setup EJones*
     stnBD = telescope['Station'][stnID]
-    #ejones = stnBD.getEJones()
     ejones = stnBD.getEJones(CelDir)
     stnRot = stnBD.stnRot
-    #stnDPolel = stnBD.stnDPolel
     stnDPolel = stnBD.feed_pat
+
     #    *Setup MEq*
     pjonesOfSrc = pjones.op(srcfld)
     res = ejones.op(pjones.op(srcfld))
-    
-    #print np.matmul(basisITRF_lcl, basisJ2000_ITRF)
-    #Do something with it
+
+    #Get the resulting Jones matrices 
     Jn = res.getValue()
-    print_paral(srcfld, stnRot, res, pjonesOfSrc)
+    compute_paral(srcfld, stnRot, res, pjonesOfSrc)
     freqs = stnDPolel.getfreqs()
     return timespy, freqs, Jn
+
+
+def compute_paral(srcfld, stnRot, res, pjonesOfSrc):
+    """Compute parallactic rotation. Also display's pointings in horizontal coordinates."""
+    #print("Parallactic rotation matrix:")
+    srcbasis = srcfld.jonesbasis
+    basisITRF_lcl = res.jonesbasis
+    basisJ2000_ITRF = pjonesOfSrc.jonesbasis
+    ax = plt.subplot(111, projection='polar')
+    nrsamps=basisITRF_lcl.shape[0]
+    az = np.zeros((nrsamps))
+    el = np.zeros((nrsamps))
+    for i in range(nrsamps):
+        basisJ2000_ITRF_to = np.matmul(stnRot, basisJ2000_ITRF[i,:,:])
+        paramat = np.matmul(basisITRF_lcl[i,:,:].T, basisJ2000_ITRF_to)
+        #print paramat
+        az[i], el[i] = pntsonsphere.crt2sphHorizontal(basisITRF_lcl[i,:,0].squeeze())
+    
+    #Display pointings in horizontal coordinates
+    #print("th, ph", np.rad2deg(np.array([np.pi/2-el, az]).T))
+    ax.plot(az, 90-el/np.pi*180,'+')
+    #Mark out start point
+    ax.plot(az[0], 90-el[0]/np.pi*180,'r8')
+    ax.set_rmax(90)
+    plt.draw()
 
 
 def printJonesFreq(timespy, Jnf):
@@ -82,28 +104,6 @@ def printAllJones(timespy, freqs, Jn):
 
 def plotAllJones(timespy, freqs, Jn):
     plot_polcomp_dynspec(timespy, freqs, Jn)
-
-
-def print_paral(srcfld, stnRot, res, pjonesOfSrc):
-    #print("Parallactic rotation matrix:")
-    srcbasis = srcfld.jonesbasis
-    basisITRF_lcl = res.jonesbasis
-    basisJ2000_ITRF = pjonesOfSrc.jonesbasis
-    ax = plt.subplot(111, projection='polar')
-    nrsamps=basisITRF_lcl.shape[0]
-    az = np.zeros((nrsamps))
-    el = np.zeros((nrsamps))
-    for i in range(nrsamps):
-        basisJ2000_ITRF_to = np.matmul(stnRot, basisJ2000_ITRF[i,:,:])
-        paramat = np.matmul(basisITRF_lcl[i,:,:].T, basisJ2000_ITRF_to)
-        #print paramat
-        az[i], el[i] = pntsonsphere.crt2sphHorizontal(basisITRF_lcl[i,:,0].squeeze())
-    #print("th, ph", np.rad2deg(np.array([np.pi/2-el, az]).T))
-    ax.plot(az, 90-el/np.pi*180,'+')
-    #Mark out start point
-    ax.plot(az[0], 90-el[0]/np.pi*180,'r8')
-    ax.set_rmax(90)
-    plt.draw()
 
 
 def getnextcmdarg(args, mes):
@@ -162,9 +162,10 @@ if __name__ == "__main__":
 
     #Get the telescopeband instance:
     telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
-    #
-    timespy, freqs, Jn = pointing_jones( stnID,
-                   bTime, duration, stepTime, CelDir, freq)
+    #Compute the Jones matrices
+    timespy, freqs, Jn = pointing_jones(telescope, stnID, bTime, duration,
+                                        stepTime, CelDir, freq)
+    #Do something with resulting Jones according to cmdline args
     if freq == 0.:
         if action == "plot":
             plotAllJones(timespy, freqs, Jn)
@@ -177,4 +178,3 @@ if __name__ == "__main__":
             plotJonesFreq(timespy, Jnf)
         else:
             printJonesFreq(timespy, Jnf)
-
