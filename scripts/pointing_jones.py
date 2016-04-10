@@ -11,10 +11,9 @@ from antpat.reps.sphgridfun import pntsonsphere
 import dreambeam.rime.jones
 from dreambeam.telescopes.rt import TelescopesWiz
 
-#Startup a telescope wizard.
-TW = TelescopesWiz()
 
-def pointing_jones(tele_name, ArrBand, stnID, modeltype,
+
+def pointing_jones(stnID,
                ObsTimeBeg, duration, ObsTimeStp,
                CelDir, freq):
     """Computes the Jones matrix along pointing axis while tracking a fixed
@@ -33,7 +32,6 @@ def pointing_jones(tele_name, ArrBand, stnID, modeltype,
         timespy.append(ObsTimeBeg+ti*ObsTimeStp)
     pjones = dreambeam.rime.jones.PJones(timespy)
     #    *Setup EJones*
-    telescope = TW.getTelescopeBand(tele_name, ArrBand, modeltype)
     stnBD = telescope['Station'][stnID]
     #ejones = stnBD.getEJones()
     ejones = stnBD.getEJones(CelDir)
@@ -43,7 +41,7 @@ def pointing_jones(tele_name, ArrBand, stnID, modeltype,
     #    *Setup MEq*
     pjonesOfSrc = pjones.op(srcfld)
     res = ejones.op(pjones.op(srcfld))
-        
+    
     #print np.matmul(basisITRF_lcl, basisJ2000_ITRF)
     #Do something with it
     Jn = res.getValue()
@@ -122,6 +120,9 @@ USAGE = "Usage:\n  {} print|plot telescope band stnID beammodel beginUTC duratio
 #Example: 
 #$ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 60 1 6.11 1.02 60E6
 if __name__ == "__main__":
+    #Startup a telescope wizard
+    TW = TelescopesWiz()
+    #Process cmd line arguments
     args = sys.argv[1:] 
     action = getnextcmdarg(args, "output-type:\n  'print' or 'plot'")
     telescopeName = getnextcmdarg(args, "telescope:\n  "+', '.join(TW.get_telescopes()))
@@ -158,7 +159,11 @@ if __name__ == "__main__":
         freq=float(args[5])
     except IndexError:
         freq=0.
-    timespy, freqs, Jn = pointing_jones(telescopeName, band, stnID, antmodel,
+
+    #Get the telescopeband instance:
+    telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
+    #
+    timespy, freqs, Jn = pointing_jones( stnID,
                    bTime, duration, stepTime, CelDir, freq)
     if freq == 0.:
         if action == "plot":
