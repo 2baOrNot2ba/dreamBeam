@@ -9,6 +9,8 @@ import sys
 import numpy as np
 import os
 from os.path import dirname
+import argparse
+
 #ANTENNAFIELDDIR='src/NDPPP/LOFAR/MAC/Deployment/data/StaticMetaData/AntennaFields/'
 ANTENNAFIELDDIR=dirname(__file__)+'/../share/AntennaFields/'
 COMMENT_CHAR = '#'
@@ -122,12 +124,8 @@ def list_stations(antenna_field_dir=ANTENNAFIELDDIR):
 
 
 if __name__ == '__main__':
-    from optparse import OptionParser
-    o = OptionParser()
-    o.set_usage('%prog [options] LOFARstationID')
-    o.set_description(__doc__)
-    o.add_option('-v','--verbose',dest='verbose',action='store_true',
-        help='Verbose output, prints frequency information')
-    opts, args = o.parse_args(sys.argv[1:])
-    AFD=parseAntennaFieldFile(args[0])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("antenna_field_file")
+    args = parser.parse_args()
+    AFD=parseAntennaFieldFile(args.antenna_field_file)
     print(AFD)
