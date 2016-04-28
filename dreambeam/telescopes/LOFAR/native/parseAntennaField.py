@@ -5,30 +5,38 @@
      r_ITRF = ROTATION_MATRIX * r_stn where r are 3-element column vectors.
 """
 #This file was taken from the mscorpol.py modules. (It has been modified.)
+import sys
 import numpy as np
 import os
 from os.path import dirname
-#AntennaFieldDirectory='src/NDPPP/LOFAR/MAC/Deployment/data/StaticMetaData/AntennaFields/'
-AntennaFieldDirectory=dirname(__file__)+'/../share/AntennaFields/'
+#ANTENNAFIELDDIR='src/NDPPP/LOFAR/MAC/Deployment/data/StaticMetaData/AntennaFields/'
+ANTENNAFIELDDIR=dirname(__file__)+'/../share/AntennaFields/'
 COMMENT_CHAR = '#'
 
-def parseAntennaField(stationName,AFfileNameType=2):
-
+def _getAntennaFieldFile(stationName, antenna_field_dir=ANTENNAFIELDDIR,
+                         AFfileNameType=2):
     if AFfileNameType==2:
        basename=stationName+'-'+'AntennaField'+'.conf'
     else:
        basename='AntennaField'+stationName+'.conf'
-    filename=AntennaFieldDirectory+'/'+basename
+    filepath=antenna_field_dir+'/'+basename
+    return filepath
+
+
+def parseAntennaField(stationName):
+    filepath=_getAntennaFieldFile(stationName)
+    return parseAntennaFieldFile(filepath)
+    
+
+def parseAntennaFieldFile(filename):
     AntFldData={'LBA': {'NORMAL_VECTOR': [], 'ROTATION_MATRIX':[],'POSITION':[],'REL_POS':[]},
                 'HBA': {'NORMAL_VECTOR': [], 'ROTATION_MATRIX':[],'POSITION':[],'REL_POS':[]},
                 'HBA0': {'NORMAL_VECTOR': [], 'ROTATION_MATRIX':[],'POSITION':[],'REL_POS':[]},
                 'HBA1': {'NORMAL_VECTOR': [], 'ROTATION_MATRIX':[],'POSITION':[],'REL_POS':[]}
-}
+               }
     f = open(filename)
     line=f.readline()
-
     while line:
-
         if COMMENT_CHAR in line:
            line, comment = line.split(COMMENT_CHAR, 1)
         if "HBA0" in line:
@@ -82,6 +90,7 @@ def parseAntennaField(stationName,AFfileNameType=2):
         line=f.readline()
     return AntFldData
 
+
 def getArrayBandParams(stnName,ArrBand):
    AntFld=parseAntennaField(stnName)
    stnLoc=stnName[0:2]
@@ -100,11 +109,10 @@ def getArrayBandParams(stnName,ArrBand):
    stnRelPos=np.matrix(AntFld[AntBand]['REL_POS'])
    return stnPos, stnRot, stnRelPos
 
-import sys
 
-def list_stations():
+def list_stations(antenna_field_dir=ANTENNAFIELDDIR):
     """List all the available LOFAR station-ids."""
-    dirlist = os.listdir(AntennaFieldDirectory)
+    dirlist = os.listdir(antenna_field_dir)
     stnId_list = []
     for f in dirlist:
         (stnId, blank) = f.split("-AntennaField.conf",1)
@@ -121,5 +129,5 @@ if __name__ == '__main__':
     o.add_option('-v','--verbose',dest='verbose',action='store_true',
         help='Verbose output, prints frequency information')
     opts, args = o.parse_args(sys.argv[1:])
-    AFD=parseAntennaField(args[0])
+    AFD=parseAntennaFieldFile(args[0])
     print(AFD)
