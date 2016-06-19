@@ -95,7 +95,7 @@ class PJones(Jones):
 
 class DualPolFieldPointSrc(Jones):
     """This is a mock Jones point source. It does not model a real source. It's
-    purpose is for testing. I can be seen as a source that first transmits in one
+    purpose is for testing. It can be seen as a source that first transmits in one
     polarization and then in another, then 2 transmissions given in the 2 columns.
     It may have a spectral dimension. The src_dir should be a tuple with
     (az, el, ref).""" 
@@ -109,7 +109,7 @@ class DualPolFieldPointSrc(Jones):
 
 
 class EJones(Jones):
-    """The is the antenna or feed Jones. It is given by a set of complex gain
+    """This is the antenna or feed Jones. It is given by a set of complex gain
     patterns for each frequency and polarization channel."""
     def __init__(self, dualPolElem, position, stnRot, freqSel=None):
         self.position = position
@@ -146,8 +146,6 @@ class EJones(Jones):
 
 
 class DualPolFieldSink(Jones):
-    def computeJonesRes():
+    def computeJonesRes(self):
         self.jones=self.jonesr
         self.jonesmeta=self.jonesrmeta
-     
-
