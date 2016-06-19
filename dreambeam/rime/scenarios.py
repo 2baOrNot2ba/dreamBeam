@@ -12,9 +12,10 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     """Computes the Jones matrix along pointing axis while tracking a fixed
     celestial source. """ #Fix: Doesn't use freq
     #    *Setup Source*
-    celAz, celEl, celRef = CelDir.split(',')
-    celAz = float(celAz)
-    celEl = float(celEl)
+    #celAz, celEl, celRef = CelDir.split(',')
+    #celAz = float(celAz)
+    #celEl = float(celEl)
+    (celAz, celEl, celRef) = CelDir
     srcfld = dreambeam.rime.jones.DualPolFieldPointSrc((celAz, celEl, celRef))
     
     #    *Setup Parallatic Jones*
@@ -43,7 +44,7 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
 
 
 def compute_paral(srcfld, stnRot, res, pjonesOfSrc):
-    """Compute parallactic rotation. Also display's pointings in horizontal coordinates."""
+    """Compute parallactic rotation. Also displays pointings in horizontal coordinates."""
     #print("Parallactic rotation matrix:")
     srcbasis = srcfld.jonesbasis
     basisITRF_lcl = res.jonesbasis
