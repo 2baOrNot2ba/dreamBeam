@@ -8,9 +8,9 @@ from antpat.reps.sphgridfun import pntsonsphere
 import dreambeam.rime.jones
 
 def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
-                              ObsTimeStp, CelDir, freq):
+                              ObsTimeStp, CelDir):
     """Computes the Jones matrix along pointing axis while tracking a fixed
-    celestial source."""
+    celestial source. """ #Fix: Doesn't use freq
     #    *Setup Source*
     celAz, celEl, celRef = CelDir.split(',')
     celAz = float(celAz)
@@ -33,7 +33,7 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
 
     #    *Setup MEq*
     pjonesOfSrc = pjones.op(srcfld)
-    res = ejones.op(pjones.op(srcfld))
+    res = ejones.op(pjonesOfSrc)
 
     #Get the resulting Jones matrices 
     Jn = res.getValue()

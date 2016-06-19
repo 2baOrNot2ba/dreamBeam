@@ -103,7 +103,7 @@ if __name__ == "__main__":
     telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
     #Compute the Jones matrices
     timespy, freqs, Jn = on_pointing_axis_tracking(telescope, stnID, bTime, duration,
-                                        stepTime, CelDir, freq)
+                                               stepTime, CelDir) #fix: freq not used
     #Do something with resulting Jones according to cmdline args
     if freq == 0.:
         if action == "plot":
