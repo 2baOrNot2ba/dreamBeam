@@ -44,7 +44,7 @@ class Jones(object):
 
 class JonesChain(object):
     jonesproducts=[]
-    def __init__():
+    def __init__(self):
         self.jonesproducts=[]
 
 
@@ -146,8 +146,8 @@ class EJones(Jones):
 
 
 class DualPolFieldSink(Jones):
-     def computeJonesRes():
-         self.jones=self.jonesr
-         self.jonesmeta=self.jonesrmeta
+    def computeJonesRes():
+        self.jones=self.jonesr
+        self.jonesmeta=self.jonesrmeta
      
 
