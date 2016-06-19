@@ -71,32 +71,35 @@ if __name__ == "__main__":
     try:
         bTime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
     except IndexError:
-        print("Specify start-time [UTC].")
+        print("Specify start-time (UTC in ISO format: yy-mm-ddTHH:MM:SS ).")
         print(USAGE)
         exit()
     try:
         duration =timedelta(0,float(args[1]))
     except IndexError:
-        print("Specify duration.")
+        print("Specify duration (in seconds).")
         print(USAGE)
         exit()
     try:
         stepTime =timedelta(0,float(args[2]))
     except IndexError:
-        print("Specify step-time.")
+        print("Specify step-time (in seconds).")
         print(USAGE)
         exit()
     try:
-        #ra=args[4]+'rad'
-        #dec=args[5]+'rad'
-        CelDir=str(args[3])+','+str(args[4])+',J2000'
+        CelDir=(float(args[3]), float(args[4]), 'J2000')
     except IndexError:
-        print("Specify pointing direction.")
+        print("Specify pointing direction (in radians): RA DEC")
         print(USAGE)
         exit()
-    try:
-        freq=float(args[5])
-    except IndexError:
+    if len(args)>5:
+        try:
+            freq=float(args[5])
+        except ValueError:
+            print("Specify frequency (in Hz).")
+            print(USAGE)
+            exit()
+    else:
         freq=0.
 
     #Get the telescopeband instance:
