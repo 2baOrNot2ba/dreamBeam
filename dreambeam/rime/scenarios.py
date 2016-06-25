@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from antpat.reps.sphgridfun import pntsonsphere
 import dreambeam.rime.jones
 
+
 def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
                               ObsTimeStp, CelDir):
     """Computes the Jones matrix along pointing axis while tracking a fixed
@@ -36,11 +37,43 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     pjonesOfSrc = pjones.op(srcfld)
     res = ejones.op(pjonesOfSrc)
 
-    #Get the resulting Jones matrices 
+    #Get the resulting Jones matrices
+    #(structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
     Jn = res.getValue()
     compute_paral(srcfld, stnRot, res, pjonesOfSrc)
     freqs = stnDPolel.getfreqs()
     return timespy, freqs, Jn
+
+
+def beamfov(telescope, stnID, ObsTime, CelDir, freq):
+    """Computes the Jones matrix over the beam fov for pointing.
+    """
+    #    *Setup Source*
+    (celAz, celEl, celRef) = CelDir
+    srcfld = dreambeam.rime.jones.DualPolFieldRegion()
+    
+    #    *Setup Parallatic Jones*
+    pjones = dreambeam.rime.jones.PJones( [ObsTime] )
+
+    #    *Setup EJones*
+    stnBD = telescope['Station'][stnID]
+    stnRot = stnBD.stnRot
+    stnDPolel = stnBD.feed_pat
+    #    **Select frequency
+    freqs = stnDPolel.getfreqs()
+    frqIdx = np.where(np.isclose(freqs,freq,atol=190e3))[0][0]
+    ejones = stnBD.getEJones(CelDir, [freqs[frqIdx]]) #Ejones doesnt use CelDir 
+
+    #    *Setup MEq*
+    pjonesOfSrc = pjones.op(srcfld)
+    res = ejones.op(pjonesOfSrc)
+
+    #Get the resulting Jones matrices
+    #(structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
+    Jn = res.getValue()
+    #compute_paral(srcfld, stnRot, res, pjonesOfSrc)
+    #res.getBasis()
+    return srcfld.azmsh, srcfld.elmsh, Jn, ejones.thisjones
 
 
 def compute_paral(srcfld, stnRot, res, pjonesOfSrc):

@@ -227,7 +227,27 @@ def getSph2CartTransf(r):
                           [ 0., -(xu*xu+yu*yu)]])
     transf_sph2cart = np.bmat([[ru.T, tang2cart]])
     return transf_sph2cart
+
+
+def getSph2CartTransfArr(r):
+    """(Array version) Compute the transformation matrix from a spherical basis to a Cartesian
+    basis at the field point given by the input 'r'.
+    The output 'transf_sph2cart' is defined such that:
     
+    [[v_x], [v_y], [v_z]]=transf_sph2cart*matrix([[v_r], [v_phi], [v_theta]])."""
+    r = np.array(r)
+    r = r.squeeze()
+    #ru = r/np.sqrt(np.tensordot(r,r, axes=([0],[0])))
+    ru = r/np.sqrt(r[0,...]**2+r[1,...]**2+r[2,...]**2)
+    xu = ru[0,...]
+    yu = ru[1,...]
+    zu = ru[2,...]
+    nrf = 1.0/np.sqrt(xu*xu+yu*yu)
+    transf_sph2cart = np.array([
+                          [xu,             yu*nrf,          xu*zu*nrf],
+                          [yu,            -xu*nrf,          yu*zu*nrf],
+                          [zu, np.zeros(xu.shape), -(xu*xu+yu*yu)*nrf]])
+    return transf_sph2cart
 
 
 def computeSph2CrtMat(lmnMatrix):
@@ -268,7 +288,8 @@ def sph2crt(azi, ele):
     x = np.cos(ele)*np.cos(azi)
     y = np.cos(ele)*np.sin(azi)
     z = np.sin(ele)
-    return(np.matrix([x,y,z]))
+    return(np.array([x,y,z]))
+    #return(np.matrix([x,y,z]))
 
 
 def IAU_pol_basis(src_az, src_el):
@@ -310,3 +331,9 @@ def printJones(Jn):
     for ti in range(0,Jn.shape[0]):
         print Jn[ti,:,:]
 
+
+def shiftmat2back(arr):
+    arr=np.rollaxis(arr,0,arr.ndim)
+    arr=np.rollaxis(arr,0,arr.ndim)
+    return arr
+    
