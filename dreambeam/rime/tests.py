@@ -4,8 +4,7 @@ import sys
 from datetime import datetime, timedelta
 from jones import *
 from conversionUtils import *
-sys.path.append('/home/tobia/Documents/Work_Projects/LOFAR/dataProcessing/')
-from parseAntennaField import getArrayBandParams
+from dreambeam.telescopes.LOFAR.native.parseAntennaField import getArrayBandParams
 
 
 def setupObsInstance():
@@ -76,7 +75,7 @@ def tcomputeSphBasis():
     jonesrbasis_to=np.asmatrix(convertBasis(me, jonesbasis, 'J2000', 'ITRF'))
     jonesbasisMat=getSph2CartTransf(jonesrbasis_to[:,0])
     #print jonesrbasis_to[:,1:]
-    print jonesbasisMat[:,1:].H*jonesrbasis_to[:,1:]
+    print ti, jonesbasisMat[:,1:].H*jonesrbasis_to[:,1:]
 
 
 if __name__ == '__main__':
