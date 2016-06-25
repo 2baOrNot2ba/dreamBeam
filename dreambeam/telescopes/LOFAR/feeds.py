@@ -5,7 +5,7 @@ class LOFAR_LBA_stn(TelescopeBndStn):
     """Class for LOFAR LBA station."""
     def __init__(self, stnPos, stnRot):
         super(LOFAR_LBA_stn, self).__init__(stnPos, stnRot)
-    def getEJones(self, pointing):
+    def getEJones(self, pointing, freqSel=None):
         """Get e-jones for this pointing for LOFAR LBA station.
         The basic model used here is that the antenna elements are all the
         same on all the stations, i.e. they have the same far-field pattern.
@@ -14,7 +14,8 @@ class LOFAR_LBA_stn(TelescopeBndStn):
         is to take the the response along the pointing-direction to be
         proportional to the response along the corresponding direction
         for the far-field pattern of the single antenna element."""
-        ejones = dreambeam.rime.jones.EJones(self.feed_pat, self.stnPos, self.stnRot)
+        ejones = dreambeam.rime.jones.EJones(self.feed_pat, self.stnPos,
+                                             self.stnRot, freqSel)
         return ejones
    # def __getstate__(self):
    #     print self.__dict__
@@ -23,11 +24,12 @@ class LOFAR_LBA_stn(TelescopeBndStn):
    #     print pdict
    #     self.__dict__ = pdict
 
+
 class LOFAR_HBA_stn(TelescopeBndStn):
     """Class for LOFAR HBA station."""
     def __init__(self, stnPos, stnRot):
         super(LOFAR_HBA_stn, self).__init__(stnPos, stnRot)
-    def getEJones(self, pointing):
+    def getEJones(self, pointing, freqSel=None):
         """Get e-jones for this pointing for LOFAR HBA station.
         The basic model used here is that the antenna elements are all the
         same on all the stations, i.e. they have the same far-field pattern.
@@ -36,6 +38,6 @@ class LOFAR_HBA_stn(TelescopeBndStn):
         is to take the the response along the pointing-direction to be
         proportional to the response along the corresponding direction
         for the far-field pattern of the single antenna element."""
-        ejones = dreambeam.rime.jones.EJones(self.feed_pat, self.stnPos, self.stnRot)
+        ejones = dreambeam.rime.jones.EJones(self.feed_pat, self.stnPos,
+                                             self.stnRot, freqSel)
         return ejones
-
