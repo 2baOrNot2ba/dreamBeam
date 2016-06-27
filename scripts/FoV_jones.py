@@ -1,13 +1,9 @@
 #!/usr/bin/env python
-"""Model of a LOFAR station. Gets Jones matrix towards a given direction
-   and frequency.
+"""Show LOFAR element beam pattern.
 """
 import sys
-from datetime import datetime, timedelta
-import numpy as np
-import matplotlib.pyplot as plt
-from antpat.dualpolelem import plot_polcomp_dynspec
-from dreambeam.rime.scenarios import on_pointing_axis_tracking, beamfov
+from datetime import datetime
+from dreambeam.rime.scenarios import beamfov
 from dreambeam.telescopes.rt import TelescopesWiz
 from dreambeam.rime.jones import plotJonesField
 
@@ -16,7 +12,8 @@ def printJonesField(az, el, Jnf):
     #Select one frequency
     for idxi in range(az.shape[0]):
         for idxj in range(az.shape[1]):
-            print az[idxi,idxj], el[idxi,idxj], Jnf[ti,0,0], Jnf[ti,0,1], Jnf[ti,1,0], Jnf[ti,1,1]
+            print "az, el:", az[idxi,idxj], el[idxi,idxj]
+            print "Jones:", Jnf[idxi,idxj,0,0], Jnf[idxi,idxj,0,1], Jnf[idxi,idxj,1,0], Jnf[idxi,idxj,1,1]
 
 
 def getnextcmdarg(args, mes):
@@ -68,6 +65,6 @@ if __name__ == "__main__":
     az, el, Jnf, ej = beamfov(telescope, stnID, bTime, CelDir, freq)
     #Do something with resulting Jones according to cmdline args
     if action == "plot":
-        plotJonesField(az, el, ej)
+        plotJonesField(az, el, Jnf)
     else:
         printJonesField(az, el, Jnf)
