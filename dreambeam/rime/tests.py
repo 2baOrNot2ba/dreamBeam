@@ -1,60 +1,69 @@
 #!/usr/bin/python
 
-import sys
 from datetime import datetime, timedelta
+import numpy as np
 from jones import *
 from conversionUtils import *
 from dreambeam.telescopes.LOFAR.native.parseAntennaField import getArrayBandParams
-
+import antpat.reps.sphgridfun
+from casacore.measures import measures
 
 def setupObsInstance():
-   #Observation interval
-   beginTime=datetime(2011,10,25,0,0,0)
-   endTime=datetime(2011,10,26,0,0,0)
-   stepTime=timedelta(minutes=60)
-   td=endTime-beginTime
-   Times=[]
-   nrTimSamps=int(td.total_seconds()/stepTime.seconds)+1
-   for ti in range(0,nrTimSamps):
-       Times.append(beginTime+ti*stepTime)
+    #Observation interval
+    beginTime=datetime(2011,10,25,0,0,0)
+    endTime=datetime(2011,10,26,0,0,0)
+    stepTime=timedelta(minutes=60)
+    td=endTime-beginTime
+    Times=[]
+    nrTimSamps=int(td.total_seconds()/stepTime.seconds)+1
+    for ti in range(0,nrTimSamps):
+        Times.append(beginTime+ti*stepTime)
 
-
-   #Source direction
-   ##CasA
-   celSrcTheta=0.548876961
-   celSrcPhi=6.11378655886310
-   celSrcDir= celSrcPhi, (math.pi/2-celSrcTheta), 'J2000'
+    #Source direction
+    ##CasA
+    celSrcTheta_CasA=0.548876961
+    celSrcPhi_CasA=6.11378655886310
+    
+    celSrcTheta=math.pi/2
+    celSrcPhi=0.
+    celSrcDir= celSrcPhi, (math.pi/2-celSrcTheta), 'J2000'
    
-   #Station position and rotation
-   #stnPos_me=measures().position('wgs84','12deg','58deg','0m')
-   stnPos, stnRot, stnRelPos = getArrayBandParams('SE607', 'LBA')
+    #Station position and rotation
+    ##Alt1 arbitrarily:
+    me=measures()
+    stnPos_meWGS=measures().position('wgs84','0deg','0deg','0m')
+    stnPos_meITRF=me.measure(stnPos_meWGS,'ITRF')
+    stnPos=stnPos_meITRF['m2']['value']*sph2crt_me(stnPos_meITRF)[:,np.newaxis]
+    stnRot=antpat.reps.sphgridfun.pntsonsphere.rot3Dmat(0.,0.,1*math.pi/2)
+    ##Alt2 set via official LOFAR geodetic data:
+    #stnPos, stnRot, stnRelPos = getArrayBandParams('SE607', 'LBA')
 
-   return Times, celSrcDir, stnPos, stnRot
+    return Times, celSrcDir, stnPos, stnRot
 
 
 def tgetParallacticRot():
-   Times, celSrcDir, stnPos, stnRot=setupObsInstance()
-   RotP=getParallacticRot(Times, stnPos, celSrcDir, doPolPrec=False)
-   printJones(RotP)
+    Times, celSrcDir, stnPos, stnRot=setupObsInstance()
+    RotP=getParallacticRot(Times, stnPos, celSrcDir, doPolPrec=False)
+    printJones(RotP)
 
 
 def tPJones():
-   Times, celSrcDir, stnPos, stnRot=setupObsInstance()
-   srcfld=DualPolFieldPointSrc(celSrcDir[:2])
-   pjones=PJones(Times)
-   #snk=DualPolFieldSink()
-   res=pjones.op(srcfld)
-   print("Value", res.getValue())
-   print("Basis", res.getBasis())
+    Times, celSrcDir, stnPos, stnRot=setupObsInstance()
+    srcfld=DualPolFieldPointSrc(celSrcDir[:2])
+    pjones=PJones(Times)
+    #snk=DualPolFieldSink()
+    res=pjones.op(srcfld)
+    print("Value", res.getValue())
+    print("Basis", res.getBasis())
 
 
 def tModFuncs_CEL2TOPOpnts():
-   Times, celSrcDir, stnPos, stnRot=setupObsInstance()
-   CelRot, rotang=CEL2TOPOpnts(Times, stnPos, celSrcDir)
-   print CelRot
-   #print np.rad2deg(rotang)
-   #RotP=getParallacticRot(Times, stnPos, stnRot, celSrcDir, doPolPrec=False)
-   #printJones(RotP)
+    Times, celSrcDir, stnPos, stnRot=setupObsInstance()
+    CelRot, rotang=CEL2TOPOpnts(Times, stnPos, celSrcDir)
+    print "CelRot",CelRot
+    #print np.rad2deg(rotang)
+    #RotP=getParallacticRot(Times, stnPos, stnRot, celSrcDir, doPolPrec=False)
+    #printJones(RotP)
 
 
 def tModFuncs_crt2sph():
@@ -66,22 +75,22 @@ def tModFuncs_crt2sph():
 
 
 def tcomputeSphBasis():
-  Times, celSrcDir, stnPos, stnRot=setupObsInstance()
-  celSrcDir=(0., 0*1.570796327)
-  obsTimesArr, obsTimeUnit= pyTimes2meTimes(Times)
-  jonesbasis=np.array(getSph2CartTransf(sph2crt(celSrcDir[0], celSrcDir[1])))
-  for ti in range(0,len(obsTimesArr)):
-    me=setEpoch(obsTimesArr[ti], obsTimeUnit)
-    jonesrbasis_to=np.asmatrix(convertBasis(me, jonesbasis, 'J2000', 'ITRF'))
-    jonesbasisMat=getSph2CartTransf(jonesrbasis_to[:,0])
-    #print jonesrbasis_to[:,1:]
-    print ti, jonesbasisMat[:,1:].H*jonesrbasis_to[:,1:]
+    Times, celSrcDir, stnPos, stnRot=setupObsInstance()
+    obsTimesArr, obsTimeUnit= pyTimes2meTimes(Times)
+    jonesbasis=np.array(getSph2CartTransf(sph2crt(celSrcDir[0], celSrcDir[1])))
+    print "jonesbasis", jonesbasis
+    for ti in range(0,len(obsTimesArr)):
+        me=setEpoch(obsTimesArr[ti], obsTimeUnit)
+        jonesrbasis_to=np.asmatrix(convertBasis(me, jonesbasis, 'J2000', 'ITRF'))
+        jonesbasisMat=getSph2CartTransf(jonesrbasis_to[:,0])
+        print jonesrbasis_to[:,0]
+        print obsTimesArr[ti], jonesbasisMat[:,1:].H*jonesrbasis_to[:,1:]
 
 
 if __name__ == '__main__':
-  pass
-  #tPJones()
-  #tgetParallacticRot()
-  #tModFuncs_CEL2TOPOpnts()
-  #tModFuncs_crt2sph_me()
-  #tcomputeSphBasis()
+    pass
+    #tPJones()
+    #tgetParallacticRot()
+    #tModFuncs_CEL2TOPOpnts()
+    #tModFuncs_crt2sph_me()
+    tcomputeSphBasis()
