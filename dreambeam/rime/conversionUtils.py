@@ -35,7 +35,6 @@ def CEL2TOPOpnts(obsTimes, stnPos, celPnt):
                             str(stnPos[1,0])+'m',
                             str(stnPos[2,0])+'m')
     celPntBasis = getSph2CartTransf(sph2crt_me(celPnt_me))
-    print celPntBasis
     obsTimesArr = obsTimes_me.get_value()
     obsTimeUnit = obsTimes_me.get_unit()
     #CelRot=zeros((len(obsTimesArr),2,2))
@@ -56,7 +55,7 @@ def CEL2TOPOpnts(obsTimes, stnPos, celPnt):
         CelRot = getRotbetweenRefFrames(celPntRefFrame,'ITRF', me)
         IncRot = CelRot*CelRot0.T
         rotang[ti] = rotzMat2ang(IncRot)
-    return CelRot, rotang
+    return CelRot0, rotang
 
 
 def getParallacticRot(obsTimes, stnPos, srcDir, doPolPrec=True):
@@ -160,12 +159,12 @@ def getRotbetweenRefFrames(rfFrom,rfTo, me):
     x_fr = me.direction(rfFrom,  '0deg',  '0deg')
     y_fr = me.direction(rfFrom, '90deg',  '0deg')
     z_fr = me.direction(rfFrom, '90deg', '90deg')
-    x_to = sph2crt_me(me.direction(rfTo,    '0deg',  '0deg'))
-    y_to = sph2crt_me(me.direction(rfTo,   '90deg',  '0deg'))
-    z_to = sph2crt_me(me.direction(rfTo,   '90deg', '90deg'))
-    x_fr_to = sph2crt_me(me.measure(x_fr, rfTo))
-    y_fr_to = sph2crt_me(me.measure(y_fr, rfTo))
-    z_fr_to = sph2crt_me(me.measure(z_fr, rfTo))
+    x_to = np.asmatrix(sph2crt_me(me.direction(rfTo,    '0deg',  '0deg')))
+    y_to = np.asmatrix(sph2crt_me(me.direction(rfTo,   '90deg',  '0deg')))
+    z_to = np.asmatrix(sph2crt_me(me.direction(rfTo,   '90deg', '90deg')))
+    x_fr_to = np.asmatrix(sph2crt_me(me.measure(x_fr, rfTo)))
+    y_fr_to = np.asmatrix(sph2crt_me(me.measure(y_fr, rfTo)))
+    z_fr_to = np.asmatrix(sph2crt_me(me.measure(z_fr, rfTo)))
     xyz_fr_to = np.bmat([[x_fr_to],[y_fr_to],[z_fr_to]])
     xyz_to = np.bmat([[x_to],[y_to],[z_to]])
     frameRot = xyz_fr_to*xyz_to.T
