@@ -27,7 +27,7 @@ def getnextcmdarg(args, mes):
 
 
 SCRIPTNAME = sys.argv[0].split('/')[-1]
-USAGE = "Usage:\n  {} print|plot telescope band stnID beammodel beginUTC pointingRA pointingDEC [frequency]".format(SCRIPTNAME)
+USAGE = "Usage:\n  {} print|plot telescope band stnID beammodel timeUTC pointingRA pointingDEC frequency".format(SCRIPTNAME)
 #Example: 
 #$ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 60 1 6.11 1.02 60E6
 if __name__ == "__main__":
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     try:
         bTime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
     except IndexError:
-        print("Specify start-time (UTC in ISO format: yy-mm-ddTHH:MM:SS ).")
+        print("Specify time (UTC in ISO format: yy-mm-ddTHH:MM:SS ).")
         print(USAGE)
         exit()
     try:
@@ -65,6 +65,6 @@ if __name__ == "__main__":
     az, el, Jnf, ej = beamfov(telescope, stnID, bTime, CelDir, freq)
     #Do something with resulting Jones according to cmdline args
     if action == "plot":
-        plotJonesField(az, el, Jnf)
+        plotJonesField(az, el, Jnf, rep='Stokes')
     else:
         printJonesField(az, el, Jnf)
