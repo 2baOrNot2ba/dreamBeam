@@ -209,25 +209,64 @@ class DualPolFieldSink(Jones):
         self.jones=self.jonesr
         self.jonesmeta=self.jonesrmeta
 
-def plotJonesField(az, el, jonesfld):
+def plotJonesField(az, el, jonesfld, rep='abs-Jones'):
+    if rep=='abs-Jones':
+        restitle = 'Beam Jones on sky'
+        res00 = np.abs(jonesfld[:,:,0,0])
+        res00 = np.ma.masked_invalid(res00)
+        res00lbl = r'|J_{p\phi}|'
+        res01 = np.abs(jonesfld[:,:,0,1])
+        res01 = np.ma.masked_invalid(res01)
+        res01lbl = r'|J_{p\theta}|' 
+        res10 = np.abs(jonesfld[:,:,1,0])
+        res10 = np.ma.masked_invalid(res10)
+        res10lbl = r'|J_{q\phi}|'
+        res11 = np.abs(jonesfld[:,:,1,1])
+        res11 = np.ma.masked_invalid(res11)
+        res11lbl = r'|J_{q\theta}|'
+    elif rep=='Stokes':
+        corrmat = np.matmul(jonesfld,np.swapaxes(jonesfld.conj(),-2,-1))
+        S0 = np.real(corrmat[:,:,0,0]+corrmat[:,:,1,1])
+        SQ = np.real(corrmat[:,:,0,0]-corrmat[:,:,1,1])/2
+        SU = np.real(corrmat[:,:,0,1]+corrmat[:,:,1,0])/2
+        SV = np.imag(corrmat[:,:,0,1]-corrmat[:,:,1,0])/2
+        restitle = 'Antenna Stokes on sky'
+        res00 = S0
+        res00lbl = 'I'
+        res01 = SQ
+        res01lbl = 'Q'
+        res10 = SU
+        res10lbl = 'U'
+        res11 = SV
+        res11lbl = 'V'
+    else:
+        print "Unknown Jones representation."
+        exit(1)
+    
+    fig = plt.figure()
+    fig.suptitle(restitle)
     ax = plt.subplot(221,polar=False)
-    j00=np.abs(jonesfld[:,:,0,0])
-    j00 = np.ma.masked_invalid(j00)
-    plt.pcolormesh(az, el, j00)
+    plt.pcolormesh(az, el, res00)
     plt.colorbar()
+    ax.set_title(res00lbl)
+    plt.ylabel('RA')
+    
     ax = plt.subplot(222,polar=False)
-    j01=np.abs(jonesfld[:,:,0,1])
-    j01 = np.ma.masked_invalid(j01)
-    plt.pcolormesh(az, el, j01)
-    plt.colorbar()    
+    plt.pcolormesh(az, el, res01)
+    plt.colorbar()
+    ax.set_title(res01lbl)
+    
     ax = plt.subplot(223,polar=False)
-    j10=np.abs(jonesfld[:,:,1,0])
-    j10 = np.ma.masked_invalid(j10)
-    plt.pcolormesh(az, el, j10)
+    plt.pcolormesh(az, el, res10)
     plt.colorbar()
+    ax.set_title(res10lbl)
+    plt.xlabel('DEC')
+    plt.ylabel('RA')
+    
     ax = plt.subplot(224,polar=False)
-    j11=np.abs(jonesfld[:,:,1,1])
-    j11 = np.ma.masked_invalid(j11)
-    plt.pcolormesh(az, el, j11)
+    plt.pcolormesh(az, el, res11)
     plt.colorbar()
+    ax.set_title(res11lbl)
+    plt.xlabel('DEC')
+
     plt.show()
