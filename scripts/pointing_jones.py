@@ -22,12 +22,17 @@ def printJonesFreq(timespy, Jnf):
 def plotJonesFreq(timespy, Jnf):
     p_ch = np.abs(Jnf[:,0,0].squeeze())**2+np.abs(Jnf[:,0,1].squeeze())**2
     q_ch = np.abs(Jnf[:,1,1].squeeze())**2+np.abs(Jnf[:,1,0].squeeze())**2
+    p_ch = -np.real(Jnf[:,0,0].squeeze())   #+ 0,1 => 0,0
+    q_ch = -np.real(Jnf[:,1,1].squeeze())  #- 1,0 0> 1,1
+    #In dB:
+    #p_ch = 10*np.log10(p_ch)
+    #q_ch = 10*np.log10(q_ch)
     plt.figure()
     plt.subplot(211)
-    plt.plot(timespy, 10*np.log10(p_ch))
+    plt.plot(timespy, p_ch)
     plt.title('p-channel')
     plt.subplot(212)
-    plt.plot(timespy, 10*np.log10(q_ch))
+    plt.plot(timespy, q_ch)
     plt.title('q-channel')
     plt.xlabel('Time')
     plt.show()
