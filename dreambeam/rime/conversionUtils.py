@@ -298,9 +298,9 @@ def IAU_pol_basis(src_az, src_el):
     #While IAU has +x pointing to -theta_hat, +y along +phi_hat, +z along -r_hat.
     #HOWEVER, implementation here keeps r_hat in first columns, so:
     IAUtoC09 = np.array([[ 1.,  0.,  0.],
-                         [ 0.,  0., +1.],
-                         [ 0., -1.,  0.]])
-    IAUtoC09 = np.identity(3)
+                         [ 0.,  0., -1.],
+                         [ 0., +1.,  0.]])
+    #IAUtoC09 = np.identity(3)
     basis_C09 = np.array(getSph2CartTransf(sph2crt(src_az, src_el)))
     basis_IAU = np.matmul(basis_C09, IAUtoC09)
     return basis_IAU
