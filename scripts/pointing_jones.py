@@ -15,8 +15,8 @@ def printJonesFreq(timespy, Jnf):
     #Select one frequency
     for ti in range(len(timespy)):
         print freq, timespy[ti], Jnf[ti,0,0], Jnf[ti,0,1], Jnf[ti,1,0], Jnf[ti,1,1]
-        #Print out data for BST-mode comparison (ie powers of p & q channels):
-        #print("{0} {1} {2}".format(ti, np.abs(Jnf[ti,0,0])**2+np.abs(Jnf[ti,0,1])**2, np.abs(Jnf[ti,1,0])**2+np.abs(Jnf[ti,1,1])**2) )
+        # Print out data for BST-mode comparison (ie powers of p & q channels):
+        # print("{0} {1} {2}".format( (timespy[ti]-timespy[0]).total_seconds(), np.abs(Jnf[ti,0,0])**2+np.abs(Jnf[ti,0,1])**2, np.abs(Jnf[ti,1,0])**2+np.abs(Jnf[ti,1,1])**2) )
 
 
 def plotJonesFreq(timespy, Jnf):
