@@ -21,8 +21,8 @@ def setupObsInstance():
 
     #Source direction
     ##CasA
-    celSrcTheta_CasA=0.548876961
-    celSrcPhi_CasA=6.11378655886310
+    celSrcTheta_CasA=np.pi/2-1.026515
+    celSrcPhi_CasA=6.123487
     
     celSrcTheta=0*math.pi/2
     celSrcPhi=0.
