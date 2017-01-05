@@ -16,14 +16,14 @@ def printJonesFreq(timespy, Jnf):
     for ti in range(len(timespy)):
         print freq, timespy[ti], Jnf[ti,0,0], Jnf[ti,0,1], Jnf[ti,1,0], Jnf[ti,1,1]
         # Print out data for BST-mode comparison (ie powers of p & q channels):
-        # print("{0} {1} {2}".format( (timespy[ti]-timespy[0]).total_seconds(), np.abs(Jnf[ti,0,0])**2+np.abs(Jnf[ti,0,1])**2, np.abs(Jnf[ti,1,0])**2+np.abs(Jnf[ti,1,1])**2) )
+        #print("{0} {1} {2}".format( (timespy[ti]-timespy[0]).total_seconds(), np.abs(Jnf[ti,0,0])**2+np.abs(Jnf[ti,0,1])**2, np.abs(Jnf[ti,1,0])**2+np.abs(Jnf[ti,1,1])**2) )
 
 
 def plotJonesFreq(timespy, Jnf):
     p_ch = np.abs(Jnf[:,0,0].squeeze())**2+np.abs(Jnf[:,0,1].squeeze())**2
     q_ch = np.abs(Jnf[:,1,1].squeeze())**2+np.abs(Jnf[:,1,0].squeeze())**2
-    p_ch = -np.real(Jnf[:,0,0].squeeze())   #+ 0,1 => 0,0
-    q_ch = -np.real(Jnf[:,1,1].squeeze())  #- 1,0 0> 1,1
+    #p_ch = -np.real(Jnf[:,0,0].squeeze())   #+ 0,1 => 0,0
+    #q_ch = -np.real(Jnf[:,1,1].squeeze())  #- 1,0 0> 1,1
     #In dB:
     #p_ch = 10*np.log10(p_ch)
     #q_ch = 10*np.log10(q_ch)
