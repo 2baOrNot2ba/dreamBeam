@@ -24,7 +24,7 @@ def setupObsInstance():
     celSrcTheta_CasA=0.548876961
     celSrcPhi_CasA=6.11378655886310
     
-    celSrcTheta=math.pi/2
+    celSrcTheta=0*math.pi/2
     celSrcPhi=0.
     celSrcDir= celSrcPhi, (math.pi/2-celSrcTheta), 'J2000'
    
@@ -72,6 +72,7 @@ def tModFuncs_crt2sph():
     dir_crt=sph2crt(azi,ele)
     print dir_crt
     dir_sph=crt2sph(dir_crt)
+    print dir_sph
 
 
 def tcomputeSphBasis():
@@ -84,7 +85,8 @@ def tcomputeSphBasis():
         jonesrbasis_to=np.asmatrix(convertBasis(me, jonesbasis, 'J2000', 'ITRF'))
         jonesbasisMat=getSph2CartTransf(jonesrbasis_to[:,0])
         print jonesrbasis_to[:,0]
-        print obsTimesArr[ti], jonesbasisMat[:,1:].H*jonesrbasis_to[:,1:]
+        #print obsTimesArr[ti], jonesbasisMat[:,1:].H*jonesrbasis_to[:,1:]
+        print obsTimesArr[ti], jonesrbasis_to, jonesbasisMat
 
 
 if __name__ == '__main__':
@@ -92,5 +94,5 @@ if __name__ == '__main__':
     #tPJones()
     #tgetParallacticRot()
     #tModFuncs_CEL2TOPOpnts()
-    #tModFuncs_crt2sph_me()
+    #tModFuncs_crt2sph()
     tcomputeSphBasis()
