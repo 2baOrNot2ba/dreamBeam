@@ -83,6 +83,7 @@ def compute_paral(srcfld, stnRot, res, pjonesOfSrc):
     basisITRF_lcl = res.jonesbasis
     basisJ2000_ITRF = pjonesOfSrc.jonesbasis
     ax = plt.subplot(111, projection='polar')
+    ax.set_theta_offset(np.pi/2)
     nrsamps=basisITRF_lcl.shape[0]
     az = np.zeros((nrsamps))
     el = np.zeros((nrsamps))
@@ -99,3 +100,4 @@ def compute_paral(srcfld, stnRot, res, pjonesOfSrc):
     ax.plot(az[0], 90-el[0]/np.pi*180,'r8')
     ax.set_rmax(90)
     plt.draw()
+
