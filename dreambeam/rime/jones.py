@@ -227,18 +227,18 @@ def plotJonesField(az, el, jonesfld, rep='abs-Jones'):
     elif rep=='Stokes':
         corrmat = np.matmul(jonesfld,np.swapaxes(jonesfld.conj(),-2,-1))
         S0 = np.real(corrmat[:,:,0,0]+corrmat[:,:,1,1])
-        SQ = np.real(corrmat[:,:,0,0]-corrmat[:,:,1,1])/2
-        SU = np.real(corrmat[:,:,0,1]+corrmat[:,:,1,0])/2
-        SV = np.imag(corrmat[:,:,0,1]-corrmat[:,:,1,0])/2
+        SQ = np.real(corrmat[:,:,0,0]-corrmat[:,:,1,1])
+        SU = np.real(corrmat[:,:,0,1]+corrmat[:,:,1,0])
+        SV = np.imag(corrmat[:,:,0,1]-corrmat[:,:,1,0])
         restitle = 'Antenna Stokes on sky'
         res00 = S0
         res00lbl = 'I'
-        res01 = SQ
-        res01lbl = 'Q'
-        res10 = SU
-        res10lbl = 'U'
-        res11 = SV
-        res11lbl = 'V'
+        res01 = SQ/S0
+        res01lbl = 'q'
+        res10 = SU/S0
+        res10lbl = 'u'
+        res11 = SV/S0
+        res11lbl = 'v'
     else:
         print "Unknown Jones representation."
         exit(1)
@@ -246,27 +246,27 @@ def plotJonesField(az, el, jonesfld, rep='abs-Jones'):
     fig = plt.figure()
     fig.suptitle(restitle)
     ax = plt.subplot(221,polar=False)
-    plt.pcolormesh(az, el, res00)
+    plt.pcolormesh(az, el, res00, vmin=0., vmax=2.0)
     plt.colorbar()
     ax.set_title(res00lbl)
-    plt.ylabel('RA')
+    plt.ylabel('DEC')
     
     ax = plt.subplot(222,polar=False)
-    plt.pcolormesh(az, el, res01)
+    plt.pcolormesh(az, el, res01, vmin=-1., vmax=1.)
     plt.colorbar()
     ax.set_title(res01lbl)
     
     ax = plt.subplot(223,polar=False)
-    plt.pcolormesh(az, el, res10)
+    plt.pcolormesh(az, el, res10, vmin=-1., vmax=1.)
     plt.colorbar()
     ax.set_title(res10lbl)
-    plt.xlabel('DEC')
-    plt.ylabel('RA')
+    plt.xlabel('RA')
+    plt.ylabel('DEC')
     
     ax = plt.subplot(224,polar=False)
-    plt.pcolormesh(az, el, res11)
+    plt.pcolormesh(az, el, res11, vmin=-1., vmax=1.)
     plt.colorbar()
     ax.set_title(res11lbl)
-    plt.xlabel('DEC')
+    plt.xlabel('RA')
 
     plt.show()
