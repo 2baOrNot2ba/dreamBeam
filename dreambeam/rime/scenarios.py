@@ -40,7 +40,7 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     #Get the resulting Jones matrices
     #(structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
     Jn = res.getValue()
-    compute_paral(srcfld, stnRot, res, pjonesOfSrc)
+    compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg)
     freqs = stnDPolel.getfreqs()
     return timespy, freqs, Jn
 
@@ -76,7 +76,7 @@ def beamfov(telescope, stnID, ObsTime, CelDir, freq):
     return srcfld.azmsh, srcfld.elmsh, Jn, ejones.thisjones
 
 
-def compute_paral(srcfld, stnRot, res, pjonesOfSrc):
+def compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg):
     """Compute parallactic rotation. Also displays pointings in horizontal coordinates."""
     #print("Parallactic rotation matrix:")
     srcbasis = srcfld.jonesbasis
@@ -93,11 +93,16 @@ def compute_paral(srcfld, stnRot, res, pjonesOfSrc):
         #print paramat
         az[i], el[i] = pntsonsphere.crt2sphHorizontal(basisITRF_lcl[i,:,0].squeeze())
     
-    #Display pointings in horizontal coordinates
+    # Display pointings in horizontal coordinates
     #print("th, ph", np.rad2deg(np.array([np.pi/2-el, az]).T))
-    ax.plot(az, 90-el/np.pi*180,'+')
-    #Mark out start point
-    ax.plot(az[0], 90-el[0]/np.pi*180,'r8')
+    ax.plot(az, 90-el/np.pi*180, '+', label='Trajectory')
+    # Mark out start point
+    ax.plot(az[0], 90-el[0]/np.pi*180, 'r8',
+            label='Start: '+ObsTimeBeg.isoformat()+'UT')
     ax.set_rmax(90)
+    plt.title('Source trajectory [local coords, ARC projection]')
+    ax.legend(numpoints=1, loc='best')
+    plt.annotate('N (stn)', xy=(0,90) )
+    plt.annotate('E (stn)', xy=(np.pi/2,90) )
     plt.draw()
 
