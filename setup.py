@@ -7,8 +7,10 @@ setup(name = 'dreamBeam',
       description = 'Measurement equation framework for interferometrY in Radio Astronomy.',
       author = 'Tobia D. Carozzi',
       author_email = 'tobia.carozzi@chalmers.se',
-      packages = find_packages(), #['antpat', 'rime', 'telescopes'],
-      license = 'BSD',
+      packages = find_packages(),
+      package_data = {'dreambeam.telescopes.LOFAR':
+                ['share/*.cc','share/StaticMetaData/*.conf','data/*teldat.p']},
+      license = 'ISC',
       classifiers = [
           'Development Status :: 1 - Planning',
           'Intended Audience :: Science/Research',
