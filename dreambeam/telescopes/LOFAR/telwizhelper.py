@@ -144,7 +144,8 @@ def save_telescopeband(band, stnlst, antmodel='Hamaker'):
         #    *Setup station Jones*
         ##Get the metadata of the LOFAR station. stnRot is the transformation matrix
         ##  ITRF_crds = stnRot*LOFAR_crds
-        stnPos, stnRot, stnRelPos = getArrayBandParams(stnId, band)
+        stnPos, stnRot, stnRelPos, stnIntilePos \
+                                   = getArrayBandParams(stnId, band)
         #Create a StationBand object for this
         stnbnd = LOFAR_BA_stn(stnPos, stnRot)
         stnbnd.feed_pat = stnDPolel
@@ -155,8 +156,9 @@ def save_telescopeband(band, stnlst, antmodel='Hamaker'):
 
 
 if __name__ == "__main__":
-    """Use this to produce telescope data files for use in dreamBeam. Run this as:
-    $ python telwizhelper_LOFAR.py
+    """Use this to produce telescope data files for use in dreamBeam, or when
+    configuration data has changed. Run this as:
+    $ python telwizhelper.py
     """
     gen_antmodelfiles()
     stnlst = list_stations()
