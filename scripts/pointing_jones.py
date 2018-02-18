@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 """Model of a LOFAR station. Gets Jones matrix towards a given direction
    and frequency.
+   
+   
+   Example:
+   $ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 60 1 6.11 1.02 60E6
+   
+   This prints out the Jones matrices for the LOFAR LBA antenna at 60.e6 Hz for
+   the SE607 station tracking a source at RA-DEC 6.11 1.02 (radians) for 60s
+   starting at 2012-04-01T01:02:03 using the Hamaker model.
 """
 import sys
 from datetime import datetime, timedelta
@@ -61,8 +69,8 @@ def getnextcmdarg(args, mes):
 
 SCRIPTNAME = sys.argv[0].split('/')[-1]
 USAGE = "Usage:\n  {} print|plot telescope band stnID beammodel beginUTC duration timeStep pointingRA pointingDEC [frequency]".format(SCRIPTNAME)
-#Example: 
-#$ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 60 1 6.11 1.02 60E6
+
+
 if __name__ == "__main__":
     #Startup a telescope wizard
     TW = TelescopesWiz()
@@ -76,7 +84,7 @@ if __name__ == "__main__":
     try:
         bTime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
     except IndexError:
-        print("Specify start-time (UTC in ISO format: yy-mm-ddTHH:MM:SS ).")
+        print("Specify start-time (UTC in ISO format: yyyy-mm-ddTHH:MM:SS ).")
         print(USAGE)
         exit()
     try:
