@@ -21,8 +21,11 @@ from dreambeam.telescopes.rt import TelescopesWiz
 
 def printJonesFreq(timespy, Jnf):
     #Select one frequency
+    print "Time, Freq, J11, J12, J21, J22" #header for CSV
     for ti in range(len(timespy)):
-        print freq, timespy[ti], Jnf[ti,0,0], Jnf[ti,0,1], Jnf[ti,1,0], Jnf[ti,1,1]
+        #creates and prints a comma separated string
+        jones_1f_outstring=",".join(map(str,[timespy[ti].isoformat(), freq, Jnf[ti,0,0], Jnf[ti,0,1], Jnf[ti,1,0], Jnf[ti,1,1]]))
+        print jones_1f_outstring
         # Print out data for BST-mode comparison (ie powers of p & q channels):
         #print("{0} {1} {2}".format( (timespy[ti]-timespy[0]).total_seconds(), np.abs(Jnf[ti,0,0])**2+np.abs(Jnf[ti,0,1])**2, np.abs(Jnf[ti,1,0])**2+np.abs(Jnf[ti,1,1])**2) )
 
@@ -47,11 +50,13 @@ def plotJonesFreq(timespy, Jnf):
 
 
 def printAllJones(timespy, freqs, Jn):
-    print "Time, Freq, J11, J12, J21, J22"
+    print "Time, Freq, J11, J12, J21, J22" #header for CSV
     #duration.seconds/ObsTimeStp.seconds
     for ti in range(0, len(timespy)):
         for fi,freq in enumerate(freqs):
-            print timespy[ti].isoformat(), freq, Jn[fi,ti,0,0], Jn[fi,ti,0,1], Jn[fi,ti,1,0], Jn[fi,ti,1,1]
+            #creates and prints a comma-separated string
+            jones_nf_outstring=",".join(map(str,[timespy[ti].isoformat(), freq, Jn[fi,ti,0,0], Jn[fi,ti,0,1], Jn[fi,ti,1,0], Jn[fi,ti,1,1]]))
+            print jones_nf_outstring
 
 
 def plotAllJones(timespy, freqs, Jn):
