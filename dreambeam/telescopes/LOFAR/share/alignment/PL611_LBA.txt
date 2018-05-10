@@ -1,0 +1,13 @@
+# observatory=LOFAR
+# station=PL611
+# arrayband=LBA
+# coordsys=XYZ
+# Rotation matrix (alignment station frame w.r.t. ITRF))
+# 
+# Created with LOFARmetadata
+# Created at 2018-04-25 16:48:49.067615
+# 
+# x_hat y_hat z_hat
+   -0.273368    -0.715243     0.643193
+    0.947799    -0.086176     0.307002
+   -0.164153     0.693542     0.701465

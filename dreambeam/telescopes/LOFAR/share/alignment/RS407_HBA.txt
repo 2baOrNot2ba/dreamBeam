@@ -1,0 +1,13 @@
+# observatory=LOFAR
+# station=RS407
+# arrayband=HBA
+# coordsys=XYZ
+# Rotation matrix (alignment station frame w.r.t. ITRF))
+# 
+# Created with LOFARmetadata
+# Created at 2018-04-25 16:48:49.084637
+# 
+# x_hat y_hat z_hat
+   -0.119595    -0.791954     0.598753
+    0.992823    -0.095419     0.072099
+    0.000033     0.603078     0.797682

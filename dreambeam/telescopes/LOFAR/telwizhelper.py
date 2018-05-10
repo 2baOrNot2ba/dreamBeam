@@ -5,7 +5,8 @@ import pickle
 from antpat.dualpolelem import DualPolElem
 from antpat.reps.hamaker import HamakerPolarimeter
 from dreambeam.telescopes import rt
-from dreambeam.telescopes.LOFAR.native.parseAntennaField import getArrayBandParams, list_stations
+#from dreambeam.telescopes.LOFAR.native.parseAntennaField import getArrayBandParams, list_stations
+from dreambeam.telescopes.geometry_ingest import readarrcfg, readalignment
 from dreambeam.telescopes.LOFAR.feeds import LOFAR_LBA_stn, LOFAR_HBA_stn
 
 TELESCOPE_NAME = 'LOFAR'
@@ -110,7 +111,7 @@ def gen_antmodelfiles(inpfileL=LOFAR_HAdata_dir+'DefaultCoeffLBA.cc',
     convHA2DPE(inpfileH, DP_HBAfile_default)
 
 
-def save_telescopeband(band, stnlst, antmodel='Hamaker'):
+def save_telescopeband(band, antmodel='Hamaker'):
     """Save all the data relevant to the telescope-band beam modeling into
     one file."""
     assert band in BANDS, ("Error: {} is not one of the available bands.\n"
@@ -139,13 +140,20 @@ def save_telescopeband(band, stnlst, antmodel='Hamaker'):
         LOFAR_BA_stn = LOFAR_LBA_stn
     else:
         LOFAR_BA_stn = LOFAR_HBA_stn
-    for stnId in stnlst:
+    x, y, z, diam, stnIds = readarrcfg(TELESCOPE_NAME, band)
+    
+    for stnId in stnIds:
+        
+    #for stnId in stnlst:
         print(stnId)
         #    *Setup station Jones*
         ##Get the metadata of the LOFAR station. stnRot is the transformation matrix
         ##  ITRF_crds = stnRot*LOFAR_crds
-        stnPos, stnRot, stnRelPos, stnIntilePos \
-                                   = getArrayBandParams(stnId, band)
+        #stnPos, stnRot, stnRelPos, stnIntilePos \
+        #name, stnPos, stnRot       = getArrayBandParams(TELESCOPE_NAME, stnId, band)
+        stnid_idx = stnIds.tolist().index(stnId)
+        stnPos = [x[stnid_idx], y[stnid_idx], z[stnid_idx]]
+        stnRot = readalignment(TELESCOPE_NAME, stnId, band)
         #Create a StationBand object for this
         stnbnd = LOFAR_BA_stn(stnPos, stnRot)
         stnbnd.feed_pat = stnDPolel
@@ -161,8 +169,9 @@ if __name__ == "__main__":
     $ python telwizhelper.py
     """
     gen_antmodelfiles()
-    stnlst = list_stations()
+    #stnlst = list_stations(TELESCOPE_NAME)
     antmodel = 'Hamaker'
     for band in BANDS:
-        save_telescopeband(band, stnlst, antmodel)
+        #save_telescopeband(band, stnlst, antmodel)
+        save_telescopeband(band, antmodel)
     print("Completed setup.")

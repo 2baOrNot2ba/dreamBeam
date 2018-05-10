@@ -1,0 +1,13 @@
+# observatory=LOFAR
+# station=DE601
+# arrayband=HBA
+# coordsys=XYZ
+# Rotation matrix (alignment station frame w.r.t. ITRF))
+# 
+# Created with LOFARmetadata
+# Created at 2018-04-25 16:48:49.039586
+# 
+# x_hat y_hat z_hat
+   -0.119807    -0.765995     0.631584
+    0.992797    -0.091945     0.076814
+   -0.000769     0.636237     0.771493

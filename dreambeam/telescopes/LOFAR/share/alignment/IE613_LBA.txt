@@ -1,0 +1,13 @@
+# observatory=LOFAR
+# station=IE613
+# arrayband=LBA
+# coordsys=XYZ
+# Rotation matrix (alignment station frame w.r.t. ITRF))
+# 
+# Created with LOFARmetadata
+# Created at 2018-04-25 16:48:49.063802
+# 
+# x_hat y_hat z_hat
+   -0.026733    -0.802348     0.596257
+    0.991626    -0.096671    -0.085625
+    0.126342     0.588975     0.798214
