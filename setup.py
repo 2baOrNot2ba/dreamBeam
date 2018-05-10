@@ -9,7 +9,7 @@ setup(name = 'dreamBeam',
       author_email = 'tobia.carozzi@chalmers.se',
       packages = find_packages(),
       package_data = {'dreambeam.telescopes.LOFAR':
-                ['share/*.cc','share/StaticMetaData/*.conf','data/*teldat.p']},
+                ['share/*.cc','share/simmos/*.cfg','share/alignment/*.txt','data/*teldat.p']},
       license = 'ISC',
       classifiers = [
           'Development Status :: 1 - Planning',
