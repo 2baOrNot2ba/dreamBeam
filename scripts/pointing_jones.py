@@ -19,6 +19,12 @@ from dreambeam.rime.scenarios import on_pointing_axis_tracking
 from dreambeam.telescopes.rt import TelescopesWiz
 
 
+SCRIPTNAME = sys.argv[0].split('/')[-1]
+USAGE = "Usage:\n  {} print|plot telescope band stnID beammodel beginUTC duration timeStep pointingRA pointingDEC [frequency]".format(SCRIPTNAME)
+# Startup a telescope wizard
+TW = TelescopesWiz()
+
+
 def printJonesFreq(timespy, Jnf):
     #Select one frequency
     print "Time, Freq, J11, J12, J21, J22" #header for CSV
@@ -50,6 +56,7 @@ def plotJonesFreq(timespy, Jnf):
 
 
 def printAllJones(timespy, freqs, Jn):
+    """Print all the Jones matrices over time & frequency."""
     print "Time, Freq, J11, J12, J21, J22" #header for CSV
     #duration.seconds/ObsTimeStp.seconds
     for ti in range(0, len(timespy)):
@@ -60,6 +67,7 @@ def printAllJones(timespy, freqs, Jn):
 
 
 def plotAllJones(timespy, freqs, Jn):
+    """Plot all the Jones matrices over time & frequency."""
     plot_polcomp_dynspec(timespy, freqs, Jn)
 
 
@@ -72,14 +80,32 @@ def getnextcmdarg(args, mes):
         exit()
     return arg
 
-SCRIPTNAME = sys.argv[0].split('/')[-1]
-USAGE = "Usage:\n  {} print|plot telescope band stnID beammodel beginUTC duration timeStep pointingRA pointingDEC [frequency]".format(SCRIPTNAME)
+
+def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
+                                                                 CelDir):
+    """An python entry_point for the pointing_jones command."""
+    #Get the telescopeband instance:
+    telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
+    #Compute the Jones matrices
+    timespy, freqs, Jn = on_pointing_axis_tracking(telescope, stnID, bTime, duration,
+                                               stepTime, CelDir) #fix: freq not used
+    #Do something with resulting Jones according to cmdline args
+    if freq == 0.:
+        if action == "plot":
+            plotAllJones(timespy, freqs, Jn)
+        else:
+            printAllJones(timespy, freqs, Jn)
+    else:
+        frqIdx = np.where(np.isclose(freqs,freq,atol=190e3))[0][0]
+        Jnf = Jn[frqIdx,:,:,:].squeeze()
+        if action == "plot":
+            plotJonesFreq(timespy, Jnf)
+        else:
+            printJonesFreq(timespy, Jnf)
 
 
 if __name__ == "__main__":
-    #Startup a telescope wizard
-    TW = TelescopesWiz()
-    #Process cmd line arguments
+    # Process cmd line arguments
     args = sys.argv[1:] 
     action = getnextcmdarg(args, "output-type:\n  'print' or 'plot'")
     telescopeName = getnextcmdarg(args, "telescope:\n  "+', '.join(TW.get_telescopes()))
@@ -119,22 +145,6 @@ if __name__ == "__main__":
             exit()
     else:
         freq=0.
-
-    #Get the telescopeband instance:
-    telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
-    #Compute the Jones matrices
-    timespy, freqs, Jn = on_pointing_axis_tracking(telescope, stnID, bTime, duration,
-                                               stepTime, CelDir) #fix: freq not used
-    #Do something with resulting Jones according to cmdline args
-    if freq == 0.:
-        if action == "plot":
-            plotAllJones(timespy, freqs, Jn)
-        else:
-            printAllJones(timespy, freqs, Jn)
-    else:
-        frqIdx = np.where(np.isclose(freqs,freq,atol=190e3))[0][0]
-        Jnf = Jn[frqIdx,:,:,:].squeeze()
-        if action == "plot":
-            plotJonesFreq(timespy, Jnf)
-        else:
-            printJonesFreq(timespy, Jnf)
+    
+    main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
+                                                                  CelDir)
