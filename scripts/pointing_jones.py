@@ -87,8 +87,12 @@ def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
     #Get the telescopeband instance:
     telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
     #Compute the Jones matrices
-    timespy, freqs, Jn = on_pointing_axis_tracking(telescope, stnID, bTime, duration,
-                                               stepTime, CelDir) #fix: freq not used
+    timespy, freqs, Jn = \
+        on_pointing_axis_tracking(telescope, stnID, bTime, duration, stepTime,
+                                  CelDir) #fix: freq not used
+    if freq < freqs[0] or freq > freqs[-1]:
+        raise ValueError, \
+            "Requested frequency {} Hz outside of band {}".format(freq, band)
     #Do something with resulting Jones according to cmdline args
     if freq == 0.:
         if action == "plot":
