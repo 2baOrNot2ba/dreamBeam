@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(name = 'dreamBeam',
       version = '0.1',
-      description = 'Measurement equation framework for interferometrY in Radio Astronomy.',
+      description = 'Measurement equation framework for interferometry in Radio Astronomy.',
       author = 'Tobia D. Carozzi',
       author_email = 'tobia.carozzi@chalmers.se',
       packages = find_packages(),
@@ -23,7 +23,7 @@ setup(name = 'dreamBeam',
       install_requires=[
           'numpy>=1.10',
           'python-casacore',
-          'matplotlib>=1.5',
+          'matplotlib',
           'antpat'
       ],
       scripts = ['scripts/pointing_jones.py']
