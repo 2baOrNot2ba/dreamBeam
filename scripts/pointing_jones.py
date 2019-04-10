@@ -81,16 +81,6 @@ def plotAllJones(timespy, freqs, Jn):
     plot_polcomp_dynspec(timespy, freqs, Jn)
 
 
-def getnextcmdarg(args, mes):
-    try:
-        arg = args.pop(0)
-    except IndexError:
-        print("Specify "+mes)
-        print(USAGE)
-        exit()
-    return arg
-
-
 def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
          CelDir, freq=None):
     """An python entry_point for the pointing_jones command."""
@@ -121,49 +111,61 @@ def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
 if __name__ == "__main__":
     # Process cmd line arguments
     args = sys.argv[1:]
-    action = getnextcmdarg(args, "output-type:\n  'print' or 'plot'")
-    telescopeName = getnextcmdarg(args, "telescope:\n  "
-                                  + ', '.join(TW.get_telescopes()))
-    band = getnextcmdarg(args, "band/feed:\n  "
-                         + ', '.join(TW.get_bands(telescopeName)))
-    stnID = getnextcmdarg(args, "station-ID:\n  "
-                          + ', '.join(TW.get_stations(telescopeName, band)))
-    antmodel = getnextcmdarg(args, "beam-model:\n  "
-                             + ', '.join(TW.get_beammodels(telescopeName,
-                                                           band)))
     try:
-        bTime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
-    except IndexError:
-        print("Specify start-time (UTC in ISO format: yyyy-mm-ddTHH:MM:SS ).")
-        print(USAGE)
-        exit()
-    try:
-        duration = timedelta(0, float(args[1]))
-    except IndexError:
-        print("Specify duration (in seconds).")
-        print(USAGE)
-        exit()
-    try:
-        stepTime = timedelta(0, float(args[2]))
-    except IndexError:
-        print("Specify step-time (in seconds).")
-        print(USAGE)
-        exit()
-    try:
-        CelDir = (float(args[3]), float(args[4]), 'J2000')
-    except IndexError:
-        print("Specify pointing direction (in radians): RA DEC")
-        print(USAGE)
-        exit()
-    if len(args) > 5:
         try:
-            freq = float(args[5])
-        except ValueError:
-            print("Specify frequency (in Hz).")
-            print(USAGE)
-            exit()
-    else:
-        freq = None
+            action = args.pop(0)
+        except IndexError:
+            raise RuntimeError("Specify output-type:\n  'print' or 'plot'")
+        try:
+            telescope = args.pop(0)
+        except IndexError:
+            raise RuntimeError("Specify telescope:\n  " \
+                               + ', '.join(TW.get_telescopes()))
+        try:
+            band = args.pop(0)
+        except IndexError:
+            raise RuntimeError("Specify band/feed:\n  " \
+                               + ', '.join(TW.get_bands(telescope)))
+        try:
+            stnID = args.pop(0)
+        except IndexError:
+            raise RuntimeError("Specify station-ID:\n  " \
+                               + ', '.join(TW.get_stations(telescope, band)))
+        try:
+            antmodel = args.pop(0)
+        except IndexError:
+            raise RuntimeError("Specify beam-model:\n  " \
+                               + ', '.join(TW.get_beammodels(telescope, band)))
 
-    main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
-         CelDir, freq)
+        try:
+            btime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
+        except IndexError:
+            raise RuntimeError("Specify start-time (UTC in ISO format: yyyy-mm-ddTHH:MM:SS )")
+        except ValueError:
+            raise RuntimeError("Wrong start-time format (yyyy-mm-ddTHH:MM:SS).")
+        try:
+            duration = timedelta(0, float(args[1]))
+        except (IndexError,ValueError):
+            raise RuntimeError("Specify duration (in seconds).")
+        try:
+            steptime = timedelta(0, float(args[2]))
+        except (IndexError, ValueError):
+            raise RuntimeError("Specify step-time (in seconds).")
+        try:
+            celdir = (float(args[3]), float(args[4]), 'J2000')
+        except (IndexError, ValueError):
+            raise RuntimeError("Specify pointing direction (in radians): RA DEC")
+        if len(args) > 5:
+            try:
+                freq = float(args[5])
+            except ValueError:
+                raise RuntimeError("Specify frequency (in Hz).")
+        else:
+            freq = None
+    except RuntimeError as mess:
+        print(mess)
+        print(USAGE)
+        sys.exit(2)
+
+    main(telescope, band, antmodel, stnID, btime, duration, steptime, celdir,
+         freq)
