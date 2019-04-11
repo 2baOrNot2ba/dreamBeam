@@ -18,7 +18,7 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     #celEl = float(celEl)
     (celAz, celEl, celRef) = CelDir
     srcfld = dreambeam.rime.jones.DualPolFieldPointSrc((celAz, celEl, celRef))
-    
+
     #    *Setup Parallatic Jones*
     #duration = ObsTimeEnd-ObsTimeBeg
     timespy = []
@@ -51,7 +51,7 @@ def beamfov(telescope, stnID, ObsTime, CelDir, freq):
     #    *Setup Source*
     (celAz, celEl, celRef) = CelDir
     srcfld = dreambeam.rime.jones.DualPolFieldRegion()
-    
+
     #    *Setup Parallatic Jones*
     pjones = dreambeam.rime.jones.PJones( [ObsTime] )
 
@@ -62,7 +62,7 @@ def beamfov(telescope, stnID, ObsTime, CelDir, freq):
     #    **Select frequency
     freqs = stnDPolel.getfreqs()
     frqIdx = np.where(np.isclose(freqs,freq,atol=190e3))[0][0]
-    ejones = stnBD.getEJones(CelDir, [freqs[frqIdx]]) #Ejones doesnt use CelDir 
+    ejones = stnBD.getEJones(CelDir, [freqs[frqIdx]]) #Ejones doesnt use CelDir
 
     #    *Setup MEq*
     pjonesOfSrc = pjones.op(srcfld)
@@ -92,7 +92,7 @@ def compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg):
         paramat = np.matmul(basisITRF_lcl[i,:,:].T, basisJ2000_ITRF_to)
         #print paramat
         az[i], el[i] = pntsonsphere.crt2sphHorizontal(basisITRF_lcl[i,:,0].squeeze())
-    
+
     # Display pointings in horizontal coordinates
     #print("th, ph", np.rad2deg(np.array([np.pi/2-el, az]).T))
     ax.plot(az, 90-el/np.pi*180, '+', label='Trajectory')
@@ -105,4 +105,3 @@ def compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg):
     plt.annotate('N (stn)', xy=(0,90) )
     plt.annotate('E (stn)', xy=(np.pi/2,90) )
     plt.draw()
-

@@ -108,7 +108,7 @@ class PJones(Jones):
                                               self.jonesmeta['refFrame'],
                                               0, r_sph_me, me)
             jonesbasisMat = getSph2CartTransf(jonesrbasis_to[:, 0])
-            print("to", jonesrbasis_to)
+            #print("to", jonesrbasis_to)
             paraRot[ti, :, :] = jonesbasisMat[:, 1:].H*jonesrbasis_to[:, 1:]
             # paraRot[ti,:,:]=jonesrbasis_to2*jonesbasisMat[:,1:]
             self.jonesbasis[ti, :, :] = jonesbasisMat
