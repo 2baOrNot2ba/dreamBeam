@@ -59,7 +59,7 @@ class PJones(Jones):
     """This is a P-Jones or parallactic Jones. This has a temporal dependence
     given by the epoch of observation."""
 
-    def __init__(self, obsTimespy):
+    def __init__(self, obsTimespy, ITRF2stnrot):
         super(PJones, self).__init__()
         obsTimes_lst = []
         for obsTimepy in obsTimespy:
@@ -69,6 +69,7 @@ class PJones(Jones):
         self.obsTimeUnit = obsTimes_me.get_unit()
         self.jonesmeta = {}
         self.jonesmeta['refFrame'] = 'ITRF'
+        self.ITRF2stnrot = ITRF2stnrot
 
     def computeJonesRes(self):
         if type(self.obsTimes) is float:
@@ -90,9 +91,9 @@ class PJones(Jones):
         me.doframe(measures().position('ITRF', '0m', '0m', '0m'))
         self.jonesbasis = np.zeros((nrOfTimes, 3, 3))
         (az_from, el_from) = crt2sph(self.jonesrbasis[:, 0])
-        r_sph_me = measures().direction(self.jonesrmeta['refFrame'],
-                                        quantity(az_from, 'rad'),
-                                        quantity(el_from, 'rad'))
+        # r_sph_me = measures().direction(self.jonesrmeta['refFrame'],
+        #                                 quantity(az_from, 'rad'),
+        #                                 quantity(el_from, 'rad'))
         for ti in range(0, nrOfTimes):
             # Set current time in reference frame
             timEpoch = me.epoch('UTC', quantity(self.obsTimes[ti],
@@ -104,9 +105,10 @@ class PJones(Jones):
             jonesrbasis_to = np.asmatrix(convertBasis(me, self.jonesrbasis,
                                                    self.jonesrmeta['refFrame'],
                                                    self.jonesmeta['refFrame']))
-            jonesrbasis_to2 = computeSphBasis(self.jonesrmeta['refFrame'],
-                                              self.jonesmeta['refFrame'],
-                                              0, r_sph_me, me)
+            jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
+            # jonesrbasis_to2 = computeSphBasis(self.jonesrmeta['refFrame'],
+            #                                   self.jonesmeta['refFrame'],
+            #                                   0, r_sph_me, me)
             jonesbasisMat = getSph2CartTransf(jonesrbasis_to[:, 0])
             #print("to", jonesrbasis_to)
             paraRot[ti, :, :] = jonesbasisMat[:, 1:].H*jonesrbasis_to[:, 1:]
@@ -174,11 +176,9 @@ class EJones(Jones):
 
     def __init__(self, dualPolElem, position, stnRot, freqSel=None):
         self.position = position
-        #posrot = getPosRot(position)
-        #self.stnRot = npmatmul(posrot, offsetRot)
         self.stnRot = stnRot
         self.dualPolElem = dualPolElem
-        self.dualPolElem.rotateframe(np.asarray(stnRot))  # FIX asarray from mat
+        # self.dualPolElem.rotateframe(np.asarray(stnRot))
         if freqSel is None:
             self.freqChan = self.dualPolElem.getfreqs()
         else:
@@ -191,7 +191,8 @@ class EJones(Jones):
         """
         idxshape = self.jonesrbasis.shape[0:-2]
         jonesrbasis = np.reshape(self.jonesrbasis, (-1, 3, 3))
-        jonesrbasis_to = np.matmul(np.asarray(self.stnRot.T), jonesrbasis)
+        #jonesrbasis_to = np.matmul(np.asarray(self.stnRot.T), jonesrbasis)
+        jonesrbasis_to = jonesrbasis
         (az_from, el_from) = crt2sph(jonesrbasis[..., 0].squeeze().T)
         theta_phi_view = (np.pi/2-el_from.flatten(), az_from.flatten())
         ejones = self.dualPolElem.getJonesAlong(self.freqChan, theta_phi_view)

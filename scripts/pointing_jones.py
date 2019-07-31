@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 from antpat.dualpolelem import plot_polcomp_dynspec
-from dreambeam.rime.scenarios import on_pointing_axis_tracking
+from dreambeam.rime.scenarios import on_pointing_axis_tracking, compute_paral
 from dreambeam.telescopes.rt import TelescopesWiz
 
 
@@ -87,13 +87,16 @@ def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
     # Get the telescopeband instance:
     telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
     # Compute the Jones matrices
-    timespy, freqs, Jn = \
+    timespy, freqs, Jn, srcfld, res, pjonesOfSrc = \
         on_pointing_axis_tracking(telescope, stnID, bTime, duration, stepTime,
-                                  CelDir)  # FIXME: freq not used
+                                  CelDir, xtra_results=True)
     if (freq < freqs[0] or freq > freqs[-1]) and freq is not None:
         raise ValueError("Requested frequency {} Hz outside of band {}"
                          .format(freq, band))
     # Do something with resulting Jones according to cmdline args
+    if action == "plot":
+        stnrot = telescope['Station'][stnID].stnRot
+        compute_paral(srcfld, stnrot, res, pjonesOfSrc, bTime)
     if freq is None:
         if action == "plot":
             plotAllJones(timespy, freqs, Jn)

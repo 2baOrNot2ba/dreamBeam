@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name = 'dreamBeam',
-      version = '0.1',
+      version = '0.2',
       description = 'Measurement equation framework for interferometry in Radio Astronomy.',
       author = 'Tobia D. Carozzi',
       author_email = 'tobia.carozzi@chalmers.se',

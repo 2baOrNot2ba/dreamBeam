@@ -9,9 +9,9 @@ import dreambeam.rime.jones
 
 
 def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
-                              ObsTimeStp, CelDir):
+                              ObsTimeStp, CelDir, xtra_results=False):
     """Computes the Jones matrix along pointing axis while tracking a fixed
-    celestial source. """ #Fix: Doesn't use freq
+    celestial source. """  # # FIXME: Doesn't use freq
     #    *Setup Source*
     #celAz, celEl, celRef = CelDir.split(',')
     #celAz = float(celAz)
@@ -19,18 +19,19 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     (celAz, celEl, celRef) = CelDir
     srcfld = dreambeam.rime.jones.DualPolFieldPointSrc((celAz, celEl, celRef))
 
+    stnBD = telescope['Station'][stnID]
+    stnRot = stnBD.stnRot
+
     #    *Setup Parallatic Jones*
     #duration = ObsTimeEnd-ObsTimeBeg
     timespy = []
     nrTimSamps = int((duration.total_seconds()/ObsTimeStp.seconds))+1
     for ti in range(0, nrTimSamps):
         timespy.append(ObsTimeBeg+ti*ObsTimeStp)
-    pjones = dreambeam.rime.jones.PJones(timespy)
+    pjones = dreambeam.rime.jones.PJones(timespy, np.transpose(stnRot))
 
     #    *Setup EJones*
-    stnBD = telescope['Station'][stnID]
     ejones = stnBD.getEJones(CelDir)
-    stnRot = stnBD.stnRot
     stnDPolel = stnBD.feed_pat
 
     #    *Setup MEq*
@@ -40,9 +41,11 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     #Get the resulting Jones matrices
     #(structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
     Jn = res.getValue()
-    compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg)
     freqs = stnDPolel.getfreqs()
-    return timespy, freqs, Jn
+    if xtra_results:
+        return timespy, freqs, Jn, srcfld, res, pjonesOfSrc
+    else:
+        return timespy, freqs, Jn
 
 
 def beamfov(telescope, stnID, ObsTime, CelDir, freq):
