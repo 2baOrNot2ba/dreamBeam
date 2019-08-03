@@ -55,12 +55,13 @@ def beamfov(telescope, stnID, ObsTime, CelDir, freq):
     (celAz, celEl, celRef) = CelDir
     srcfld = dreambeam.rime.jones.DualPolFieldRegion()
 
-    #    *Setup Parallatic Jones*
-    pjones = dreambeam.rime.jones.PJones( [ObsTime] )
-
-    #    *Setup EJones*
     stnBD = telescope['Station'][stnID]
     stnRot = stnBD.stnRot
+
+    #    *Setup Parallatic Jones*
+    pjones = dreambeam.rime.jones.PJones([ObsTime], np.transpose(stnRot))
+
+    #    *Setup EJones*
     stnDPolel = stnBD.feed_pat
     #    **Select frequency
     freqs = stnDPolel.getfreqs()

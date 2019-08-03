@@ -130,6 +130,7 @@ class PJones(Jones):
                                             self.jonesrbasis[idxi, idxj, :, :],
                                                   self.jonesrmeta['refFrame'],
                                                   self.jonesmeta['refFrame']))
+                jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
                 jonesbasisMat = getSph2CartTransf(jonesrbasis_to[..., 0])
                 paraRot[idxi, idxj, :, :] = jonesbasisMat[:, 1:].H*jonesrbasis_to[:, 1:]
                 self.jonesbasis[idxi, idxj, :, :] = jonesbasisMat
