@@ -3,6 +3,7 @@
 import math
 from datetime import datetime, timedelta
 import numpy as np
+import matplotlib.pyplot as plt
 from jones import PJones, DualPolFieldPointSrc
 from conversionUtils import CEL2TOPOpnts, sph2crt_me, getParallacticRot, \
                             printJones, pyTimes2meTimes, sph2crt, crt2sph, \
@@ -10,12 +11,14 @@ from conversionUtils import CEL2TOPOpnts, sph2crt_me, getParallacticRot, \
 import antpat.reps.sphgridfun
 from casacore.measures import measures
 import dreambeam.telescopes.geometry_ingest as gi
+from dreambeam.rime.scenarios import on_pointing_axis_tracking
+from dreambeam.telescopes.rt import TelescopesWiz
 
 
 def setupObsInstance():
     # Observation interval (approx vernal equinox)
-    beginTime = datetime(2011, 3, 20, 0, 0, 0)
-    endTime = datetime(2011, 3, 21, 0, 0, 0)
+    beginTime = datetime(2011, 3, 20, 6, 0, 0)
+    endTime = datetime(2011, 3, 21, 6, 0, 0)
     stepTime = timedelta(minutes=60)
     td = endTime-beginTime
     Times = []
@@ -28,9 +31,10 @@ def setupObsInstance():
     # celSrcTheta_CasA = np.pi/2-1.026515
     # celSrcPhi_CasA = 6.123487
     #   Celestial origin:
-    celSrcTheta = 0.001*math.pi/2
-    celSrcPhi = 0.
-    celSrcDir = celSrcPhi, (math.pi/2-celSrcTheta), 'J2000'
+    celSrcTheta = 0.4*math.pi/2
+    celSrcEl = 0.6  # (math.pi/2-celSrcTheta)
+    celSrcPhi = 0.0
+    celSrcDir = celSrcPhi, celSrcEl, 'J2000'
 
     # Station position and rotation
     #   Alt1 arbitrarily:
@@ -83,21 +87,64 @@ def tcomputeSphBasis():
     obsTimesArr, obsTimeUnit = pyTimes2meTimes(Times)
     jonesbasis = np.array(getSph2CartTransf(sph2crt(celSrcDir[0],
                                                     celSrcDir[1])))
+    print jonesbasis
     for ti in range(0, len(obsTimesArr)):
         me = setEpoch(obsTimesArr[ti], obsTimeUnit)
         jonesrbasis_to = np.asmatrix(convertBasis(me, jonesbasis, 'J2000',
                                                   'ITRF'))
         jonesbasisMat = getSph2CartTransf(jonesrbasis_to[:, 0])
         print jonesrbasis_to[:, 0]
-        #print obsTimesArr[ti], jonesbasisMat[:,1:].H*jonesrbasis_to[:,1:]
+        # print obsTimesArr[ti], jonesbasisMat[:,1:].H*jonesrbasis_to[:,1:]
         print obsTimesArr[ti], jonesrbasis_to, jonesbasisMat
+
+
+def tStokes():
+    freq = 80e6
+    #cohmatt = 0.5*np.array([[2-1, 0+0.8j], [0-0.8j, 2+1]])  # I,Q,U,V=2,1,0,0.8
+    cohmatt = 0.5*np.array([[2-2, 0], [0, 2+2]])
+    samptimes, srcdir, stnPos, stnRot = setupObsInstance()
+    btime = samptimes[0]
+    duration = (samptimes[-1]-samptimes[0])
+    steptime = (samptimes[1]-samptimes[0])  # .total_seconds()
+    telescope = TelescopesWiz().getTelescopeBand('LOFAR', 'LBA', 'Hamaker')
+    stnid = 'SE607'
+    timespy, freqs, Jn, srcfld, res, pjonesOfSrc = \
+        on_pointing_axis_tracking(telescope, stnid, btime, duration, steptime,
+                                  srcdir, do_parallactic_rot=True,
+                                  xtra_results=True)
+    frqIdx = np.where(np.isclose(freqs, freq, atol=190e3))[0][0]
+    Jnf = Jn[frqIdx, :, :, :].squeeze()
+    if True:
+        plt.figure()
+        plt.plot(np.real(Jnf[:,0,0]))
+        plt.plot(np.real(Jnf[:,0,1]))
+        plt.show()
+    sI = np.zeros(len(timespy))
+    sQ = np.zeros(len(timespy))
+    sU = np.zeros(len(timespy))
+    sV = np.zeros(len(timespy))
+    for ti in range(len(timespy)):
+        jones = Jnf[ti, :, :].squeeze()
+        cohmat = np.matmul(np.matmul(jones, cohmatt), jones.conj().T)
+        sI[ti] = +np.real(cohmat[0, 0]+cohmat[1, 1])
+        sQ[ti] = +np.real(cohmat[0, 0]-cohmat[1, 1])
+        sU[ti] = +np.real(cohmat[0, 1]+cohmat[1, 0])
+        sV[ti] = +np.imag(cohmat[0, 1]-cohmat[1, 0])
+    plt.figure()
+    plt.plot(timespy, sI, label='SI')
+    plt.plot(timespy, sQ, label='SQ')
+    plt.plot(timespy, sU, label='SU')
+    plt.plot(timespy, sV, label='SV')
+    plt.legend()
+    plt.show()
 
 
 if __name__ == '__main__':
     pass
-    #print IAU_pol_basis(0.*np.pi, 0.0001*np.pi)
-    tPJones()
+    # print IAU_pol_basis(0.*np.pi, 0.0001*np.pi)
+    #tPJones()
     # tgetParallacticRot()
     # tModFuncs_CEL2TOPOpnts()
     # tModFuncs_crt2sph()
     # tcomputeSphBasis()
+    tStokes()
