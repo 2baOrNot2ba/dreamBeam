@@ -224,9 +224,9 @@ def getSph2CartTransf(r):
     yu = ru[0, 1]
     zu = ru[0, 2]
     tang2cart = 1.0/np.sqrt(xu*xu+yu*yu)* np.matrix([
-                          [ yu,          xu*zu],
-                          [-xu,          yu*zu],
-                          [ 0., -(xu*xu+yu*yu)]])
+                          [-yu,        -xu*zu],
+                          [ xu,        -yu*zu],
+                          [ 0., (xu*xu+yu*yu)]])
     transf_sph2cart = np.bmat([[ru.T, tang2cart]])
     return transf_sph2cart
 
@@ -247,9 +247,9 @@ def getSph2CartTransfArr(r):
     zu = ru[2, ...]
     nrf = 1.0/np.sqrt(xu*xu+yu*yu)
     transf_sph2cart = np.array([
-                          [xu,             yu*nrf,          xu*zu*nrf],
-                          [yu,            -xu*nrf,          yu*zu*nrf],
-                          [zu, np.zeros(xu.shape), -(xu*xu+yu*yu)*nrf]])
+                          [xu,            -yu*nrf,        -xu*zu*nrf],
+                          [yu,             xu*nrf,        -yu*zu*nrf],
+                          [zu, np.zeros(xu.shape), (xu*xu+yu*yu)*nrf]])
     return transf_sph2cart
 
 
@@ -259,9 +259,9 @@ def computeSph2CrtMat(lmnMatrix):
     m = lmn[0, 1]
     n = lmn[0, 2]
     polz2cart = 1.0/np.sqrt(l*l+m*m)* np.matrix([
-                          [  m,        l*n],
-                          [ -l,        m*n],
-                          [ .0, -(l*l+m*m)]])
+                          [ -m,      -l*n],
+                          [  l,      -m*n],
+                          [ .0, (l*l+m*m)]])
     return polz2cart
 
 
@@ -304,9 +304,9 @@ def IAU_pol_basis(src_az, src_el):
     # While IAU has:
     #   +x pointing to -theta_hat, +y along +phi_hat, +z along -r_hat.
     # HOWEVER, implementation here keeps r_hat in first column, so:
-    IAUtoC09 = np.array([[ 1.,  0.,  0.],
-                         [ 0.,  0., -1.],
-                         [ 0., +1.,  0.]])
+    IAUtoC09 = np.array([[ 1.,  0.,  0.],  # 1, 0, 0
+                         [ 0.,  0.,  1.],  # 0, 0, -1
+                         [ 0.,  1.,  0.]]) # 0, 1, 0
     #IAUtoC09 = np.identity(3)
     basis_C09 = np.array(getSph2CartTransf(sph2crt(src_az, src_el)))
     basis_IAU = np.matmul(basis_C09, IAUtoC09)
