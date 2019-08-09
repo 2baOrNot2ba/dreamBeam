@@ -9,7 +9,8 @@ import dreambeam.rime.jones
 
 
 def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
-                              ObsTimeStp, CelDir, xtra_results=False):
+                              ObsTimeStp, CelDir, do_parallactic_rot=True,
+                              xtra_results=False):
     """Computes the Jones matrix along pointing axis while tracking a fixed
     celestial source. """  # # FIXME: Doesn't use freq
     #    *Setup Source*
@@ -22,13 +23,14 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     stnBD = telescope['Station'][stnID]
     stnRot = stnBD.stnRot
 
-    #    *Setup Parallatic Jones*
+    #    *Setup PJones*
     #duration = ObsTimeEnd-ObsTimeBeg
     timespy = []
     nrTimSamps = int((duration.total_seconds()/ObsTimeStp.seconds))+1
     for ti in range(0, nrTimSamps):
         timespy.append(ObsTimeBeg+ti*ObsTimeStp)
-    pjones = dreambeam.rime.jones.PJones(timespy, np.transpose(stnRot))
+    pjones = dreambeam.rime.jones.PJones(timespy, np.transpose(stnRot),
+                                         do_parallactic_rot=do_parallactic_rot)
 
     #    *Setup EJones*
     ejones = stnBD.getEJones(CelDir)
