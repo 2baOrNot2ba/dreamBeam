@@ -110,7 +110,7 @@ def tStokes():
     stnid = 'SE607'
     timespy, freqs, Jn, srcfld, res, pjonesOfSrc = \
         on_pointing_axis_tracking(telescope, stnid, btime, duration, steptime,
-                                  srcdir, do_parallactic_rot=True,
+                                  srcdir,
                                   xtra_results=True)
     frqIdx = np.where(np.isclose(freqs, freq, atol=190e3))[0][0]
     Jnf = Jn[frqIdx, :, :, :].squeeze()
