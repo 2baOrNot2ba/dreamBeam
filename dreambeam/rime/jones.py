@@ -11,7 +11,8 @@ from conversionUtils import sph2crt, crt2sph, computeSphBasis, convertBasis, \
                             getSph2CartTransf, getSph2CartTransfArr, \
                             IAU_pol_basis, shiftmat2back
 from antpat.reps.sphgridfun.tvecfun import getSph2CartTransfMat
-from antpat.reps.sphgridfun.pntsonsphere import sphericalGrid
+from antpat.reps.sphgridfun.pntsonsphere import sphericalGrid, \
+                                                crt2sphHorizontal
 
 
 class Jones(object):
@@ -59,7 +60,7 @@ class PJones(Jones):
     """This is a P-Jones or parallactic Jones. This has a temporal dependence
     given by the epoch of observation."""
 
-    def __init__(self, obsTimespy, ITRF2stnrot):
+    def __init__(self, obsTimespy, ITRF2stnrot, do_parallactic_rot=True):
         super(PJones, self).__init__()
         obsTimes_lst = []
         for obsTimepy in obsTimespy:
@@ -70,6 +71,7 @@ class PJones(Jones):
         self.jonesmeta = {}
         self.jonesmeta['refFrame'] = 'ITRF'
         self.ITRF2stnrot = ITRF2stnrot
+        self.do_parallactic_rot = do_parallactic_rot
 
     def computeJonesRes(self):
         if type(self.obsTimes) is float:
@@ -78,15 +80,42 @@ class PJones(Jones):
             self.computeJonesRes_overtime()
 
     def computeJonesRes_overtime(self):
-        """Compute the resulting Jones matrix when the parallactic rotation
-        matrix is applied to a source brightness. The structure is:
+        """Compute and apply the P Jones matrix. The structure is:
 
-         jones[ti, sphcompIdx, skycompIdx] =
-             paraRot[timeIdx,sphcompIdx,compIdx]*jonesr[compIdx,skycompIdx]
+          jones[time, sphcomp, skycomp] =
+                Pjones[time, sphcomp, comp]*jonesr[comp, skycomp]
 
+        The Pjones matrix is computed as follows. Consider a direction vector d.
+        Let jonesrbasis be the
+        column concatenation of the 3 spherical basis vectors corresponding to d
+        in the J2000 reference frame,  so
+          jonesrbasis = [[r_J2000],[phi_J2000],[theta_J2000]].T
+        where r_J2000 is along the direction d and theta, phi are the remaining
+        two spherical basis vectors. Let jonesbasis be the basis vectors
+        corresponding to the same direction d but in the STN reference frame,
+        so
+          jonesbasis = [[r_STN],[phi_STN],[theta_STN]].T
+        where r_STN is along the direction d and theta, phi are the remaining
+        two spherical basis vectors in the spherical system associated with the
+        STN.
+
+        The algorithm takes r_J2000 from component 0 of the jonesrbasis and
+        converts it to STN (i.e. finds r_STN) using casacore measures module,
+        along with the other 2 J2000 basis vectors. These converted vectors are
+        called jonesrbasis_to. With r_STN, it also computes the corresponding
+        jonesbasis. A vector in the cartesian J2000 ref sys converted to STN
+        must be equal to the same vector expressed in the cartesian STN ref sys
+        via a coversion from spherical, so
+          jonesbasis * V_STN^sph = jonesrbasis_to * V_J2000^sph
+        which implies that we can convert directly from spherical J2000 to the
+        sppherical STN like this
+          V_STN^sph = (jonesbasis.H * jonesrbasis_to) * V_J2000^sph
+        where the matrix in parentheses is the P Jones matrix.
+
+        The P Jones matrix is then applied to the operand Jones matrix.
         """
         nrOfTimes = len(self.obsTimes)
-        paraRot = np.zeros((nrOfTimes, 2, 2))
+        pjones = np.zeros((nrOfTimes, 2, 2))
         me = measures()
         me.doframe(measures().position('ITRF', '0m', '0m', '0m'))
         self.jonesbasis = np.zeros((nrOfTimes, 3, 3))
@@ -103,19 +132,27 @@ class PJones(Jones):
             #                         self.jonesmeta['refFrame'], r_sph_me, me)
 
             jonesrbasis_to = np.asmatrix(convertBasis(me, self.jonesrbasis,
-                                                   self.jonesrmeta['refFrame'],
-                                                   self.jonesmeta['refFrame']))
+                                self.jonesrmeta['refFrame'],
+                                self.jonesmeta['refFrame']))
             jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
             # jonesrbasis_to2 = computeSphBasis(self.jonesrmeta['refFrame'],
             #                                   self.jonesmeta['refFrame'],
             #                                   0, r_sph_me, me)
             jonesbasisMat = getSph2CartTransf(jonesrbasis_to[:, 0])
-            #print("to", jonesrbasis_to)
-            paraRot[ti, :, :] = jonesbasisMat[:, 1:].H*jonesrbasis_to[:, 1:]
+            if self.do_parallactic_rot:
+                pjones[ti, :, :] = jonesbasisMat[:, 1:].H \
+                                    * jonesrbasis_to[:, 1:]
+            else:
+                azstnXoY = np.arctan2(jonesrbasis_to[1, 0], jonesrbasis_to[0, 0])
+                azstnSoW = -azstnXoY - np.pi/2
+                print np.rad2deg(azstnSoW)
+                az = azstnSoW
+                pjones[ti, :, :] = np.matrix([[ np.cos(az), -np.sin(az)],
+                                              [ np.sin(az), np.cos(az)]])
             # paraRot[ti,:,:]=jonesrbasis_to2*jonesbasisMat[:,1:]
             self.jonesbasis[ti, :, :] = jonesbasisMat
-        self.jones = np.matmul(paraRot, self.jonesr)
-        self.thisjones = paraRot
+        self.jones = np.matmul(pjones, self.jonesr)
+        self.thisjones = pjones
 
     def computeJonesRes_overfield(self):
         paraRot = np.zeros(self.jonesrbasis.shape[0:-2]+(2, 2))
@@ -199,6 +236,9 @@ class EJones(Jones):
         ejones = self.dualPolElem.getJonesAlong(self.freqChan, theta_phi_view)
         #(theta_lcl, phi_lcl) = self.dualPolElem.getBuildCoordinates(math.pi/2-r_sph[1], r_sph[0])
         #print theta_lcl, phi_lcl
+        if True:
+            ejones = ejones[:, :, :, ::-1]  # Flip theta, phi columns for testing
+            ejones[:, :, :, 1] = -ejones[:, :, :, 1]
         r_lcl = crt2sph(jonesrbasis_to[..., 0].squeeze().T)
         #print np.rad2deg(r_lcl)
         jonesbasisMat = getSph2CartTransfMat(jonesrbasis_to[..., 0].squeeze())
