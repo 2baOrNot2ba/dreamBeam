@@ -295,22 +295,24 @@ def sph2crt(azi, ele):
     z = np.sin(ele)
     return(np.array([x, y, z]))
 
+# Here C09 refers to Carozzi2009 vCZ paper: it has
+#   (r_hat, phi_hat, theta_hat).
+# While IAU has:
+#   +x pointing to -theta_hat, +y along +phi_hat, +z along -r_hat.
+# HOWEVER, implementation here keeps r_hat in first column, so:
+IAUtoC09 = np.array([[ 1.,  0.,  0.],  # 1, 0, 0
+                     [ 0.,  0.,  1.],  # 0, 0, -1
+                     [ 0.,  1.,  0.]]) # 0, 1, 0
 
 def IAU_pol_basis(src_az, src_el):
     """Compute the (x_hat, y_hat, z_hat) basis in IAU polarization system for a
     direction given by (azimuth, elevation) tuple typically Ra, Dec."""
-    # Here C09 refers to Carozzi2009 vCZ paper: it has
-    #   (r_hat, phi_hat, theta_hat).
-    # While IAU has:
-    #   +x pointing to -theta_hat, +y along +phi_hat, +z along -r_hat.
-    # HOWEVER, implementation here keeps r_hat in first column, so:
-    IAUtoC09 = np.array([[ 1.,  0.,  0.],  # 1, 0, 0
-                         [ 0.,  0.,  1.],  # 0, 0, -1
-                         [ 0.,  1.,  0.]]) # 0, 1, 0
-    #IAUtoC09 = np.identity(3)
+
+    # IAUtoC09 = np.identity(3)
     basis_C09 = np.array(getSph2CartTransf(sph2crt(src_az, src_el)))
-    basis_IAU = np.matmul(basis_C09, IAUtoC09)
-    return basis_IAU
+    # basis_IAU = np.matmul(basis_C09, IAUtoC09)
+    basis_C09 = np.asmatrix(basis_C09)
+    return basis_C09
 
 
 def pyTimes2meTimes(pyTimes):

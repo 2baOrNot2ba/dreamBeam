@@ -89,7 +89,8 @@ def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
     # Compute the Jones matrices
     timespy, freqs, Jn, srcfld, res, pjonesOfSrc = \
         on_pointing_axis_tracking(telescope, stnID, bTime, duration, stepTime,
-                                  CelDir, xtra_results=True)
+                                  CelDir, xtra_results=True,
+                                  do_parallactic_rot=True)
     if (freq < freqs[0] or freq > freqs[-1]) and freq is not None:
         raise ValueError("Requested frequency {} Hz outside of band {}"
                          .format(freq, band))

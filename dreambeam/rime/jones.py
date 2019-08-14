@@ -9,7 +9,7 @@ from casacore.measures import measures
 from casacore.quanta import quantity
 from conversionUtils import sph2crt, crt2sph, computeSphBasis, convertBasis, \
                             getSph2CartTransf, getSph2CartTransfArr, \
-                            IAU_pol_basis, shiftmat2back
+                            IAU_pol_basis, shiftmat2back, IAUtoC09
 from antpat.reps.sphgridfun.tvecfun import getSph2CartTransfMat
 from antpat.reps.sphgridfun.pntsonsphere import sphericalGrid, \
                                                 crt2sphHorizontal
@@ -149,6 +149,7 @@ class PJones(Jones):
                 az = azstnSoW
                 pjones[ti, :, :] = np.matrix([[ np.cos(az), -np.sin(az)],
                                               [ np.sin(az), np.cos(az)]])
+                pjones[ti, :, :] = np.asmatrix(np.identity(2))
             # paraRot[ti,:,:]=jonesrbasis_to2*jonesbasisMat[:,1:]
             self.jonesbasis[ti, :, :] = jonesbasisMat
         self.jones = np.matmul(pjones, self.jonesr)
@@ -185,9 +186,12 @@ class DualPolFieldPointSrc(Jones):
 
     def __init__(self, src_dir, dualPolField=np.identity(2)):
         (src_az, src_el, src_ref) = src_dir
-        self.jones = dualPolField
+        dualPolField3d = np.asmatrix(np.identity(3))
+        dualPolField3d[1: ,1:] = np.asmatrix(dualPolField)
+        jonesIAU = np.matmul(IAUtoC09, dualPolField3d)[1:, 1:]
+        self.jones = np.asarray(jonesIAU)
         #self.jonesbasis = np.array(getSph2CartTransf(sph2crt(src_az, src_el)))
-        self.jonesbasis = IAU_pol_basis(src_az, src_el)
+        self.jonesbasis = np.asarray(IAU_pol_basis(src_az, src_el))
         self.jonesmeta = {}
         self.jonesmeta['refFrame'] = src_ref
 
