@@ -14,6 +14,7 @@ import sys
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
+from casacore.quanta import quantity
 from antpat.dualpolelem import plot_polcomp_dynspec
 from dreambeam.rime.scenarios import on_pointing_axis_tracking, compute_paral
 from dreambeam.telescopes.rt import TelescopesWiz
@@ -61,18 +62,36 @@ def plotJonesFreq(timespy, Jnf):
     plt.show()
 
 
-def printAllJones(timespy, freqs, Jn):
-    """Print all the Jones matrices over time & frequency."""
-    print "Time, Freq, J11, J12, J21, J22"  # header for CSV
-    # duration.seconds/ObsTimeStp.seconds
+def printAllJones(timespy, freqs, Jn, frmt='csv'):
+    """Print all the Jones matrices over time & frequency.
+    Output format can be select with frmt argument. frmt='csv' outputs
+    comma-separated value style format, while frmt='pac' outputs format
+    compatible with the pac S/W.
+    """
+    def paccompf(Jij):
+        return str(np.real(Jij))+' '+str(np.imag(Jij))
+    if frmt == 'csv':
+        print "Time, Freq, J00, J01, J10, J11"  # header for CSV
     for ti in range(0, len(timespy)):
         for fi, freq in enumerate(freqs):
-            # Create and print a comma-separated string
-            jones_nf_outstring = ",".join(map(
-                                 str, [
-                                    timespy[ti].isoformat(), freq,
-                                    Jn[fi, ti, 0, 0], Jn[fi, ti, 0, 1],
-                                    Jn[fi, ti, 1, 0], Jn[fi, ti, 1, 1]]))
+            J00 = Jn[fi, ti, 0, 0]
+            J01 = Jn[fi, ti, 0, 1]
+            J10 = Jn[fi, ti, 1, 0]
+            J11 = Jn[fi, ti, 1, 1]
+            if frmt == 'csv':
+                # Create and print a comma-separated string
+                delimiter = ','
+                t = timespy[ti].isoformat()
+            elif frmt == 'pac':
+                # Create and print a comma-separated string
+                delimiter = ' '
+                t = quantity(timespy[ti].isoformat()).get_value()
+                J00 = paccompf(J00)
+                J01 = paccompf(J01)
+                J10 = paccompf(J10)
+                J11 = paccompf(J11)
+            jones_nf_outstring = delimiter.join(map(
+                                    str, [t, freq, J00, J01, J10, J11]))
             print jones_nf_outstring
 
 
