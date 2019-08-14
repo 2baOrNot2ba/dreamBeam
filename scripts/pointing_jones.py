@@ -11,6 +11,7 @@
    starting at 2012-04-01T01:02:03 using the Hamaker model.
 """
 import sys
+import argparse
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
@@ -101,7 +102,7 @@ def plotAllJones(timespy, freqs, Jn):
 
 
 def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
-         CelDir, freq=None):
+         CelDir, freq=None, action='print', frmt='csv'):
     """An python entry_point for the pointing_jones command."""
     # Get the telescopeband instance:
     telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
@@ -121,7 +122,7 @@ def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
         if action == "plot":
             plotAllJones(timespy, freqs, Jn)
         else:
-            printAllJones(timespy, freqs, Jn)
+            printAllJones(timespy, freqs, Jn, frmt)
     else:
         frqIdx = np.where(np.isclose(freqs, freq, atol=190e3))[0][0]
         Jnf = Jn[frqIdx, :, :, :].squeeze()
@@ -132,8 +133,16 @@ def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--frmt', default='csv',
+                        help='select output format: csv, pac')
+    parser.add_argument('cmdargs', nargs='*',
+                        help='Commandline arguments')
+    args = parser.parse_args()
+
     # Process cmd line arguments
-    args = sys.argv[1:]
+    frmt = args.frmt
+    args = args.cmdargs
     try:
         try:
             action = args.pop(0)
@@ -163,12 +172,14 @@ if __name__ == "__main__":
         try:
             btime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
         except IndexError:
-            raise RuntimeError("Specify start-time (UTC in ISO format: yyyy-mm-ddTHH:MM:SS )")
+            raise RuntimeError(
+                "Specify start-time (UTC in ISO format: yyyy-mm-ddTHH:MM:SS )")
         except ValueError:
-            raise RuntimeError("Wrong start-time format (yyyy-mm-ddTHH:MM:SS).")
+            raise RuntimeError(
+                "Wrong start-time format (yyyy-mm-ddTHH:MM:SS).")
         try:
             duration = timedelta(0, float(args[1]))
-        except (IndexError,ValueError):
+        except (IndexError, ValueError):
             raise RuntimeError("Specify duration (in seconds).")
         try:
             steptime = timedelta(0, float(args[2]))
@@ -177,7 +188,8 @@ if __name__ == "__main__":
         try:
             celdir = (float(args[3]), float(args[4]), 'J2000')
         except (IndexError, ValueError):
-            raise RuntimeError("Specify pointing direction (in radians): RA DEC")
+            raise RuntimeError(
+                "Specify pointing direction (in radians): RA DEC")
         if len(args) > 5:
             try:
                 freq = float(args[5])
@@ -191,4 +203,4 @@ if __name__ == "__main__":
         sys.exit(2)
 
     main(telescope, band, antmodel, stnID, btime, duration, steptime, celdir,
-         freq)
+         freq=freq, action=action, frmt=frmt)
