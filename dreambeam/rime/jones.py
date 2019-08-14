@@ -143,12 +143,6 @@ class PJones(Jones):
                 pjones[ti, :, :] = jonesbasisMat[:, 1:].H \
                                     * jonesrbasis_to[:, 1:]
             else:
-                azstnXoY = np.arctan2(jonesrbasis_to[1, 0], jonesrbasis_to[0, 0])
-                azstnSoW = -azstnXoY - np.pi/2
-                print np.rad2deg(azstnSoW)
-                az = azstnSoW
-                pjones[ti, :, :] = np.matrix([[ np.cos(az), -np.sin(az)],
-                                              [ np.sin(az), np.cos(az)]])
                 pjones[ti, :, :] = np.asmatrix(np.identity(2))
             # paraRot[ti,:,:]=jonesrbasis_to2*jonesbasisMat[:,1:]
             self.jonesbasis[ti, :, :] = jonesbasisMat
@@ -170,7 +164,8 @@ class PJones(Jones):
                                                   self.jonesmeta['refFrame']))
                 jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
                 jonesbasisMat = getSph2CartTransf(jonesrbasis_to[..., 0])
-                paraRot[idxi, idxj, :, :] = jonesbasisMat[:, 1:].H*jonesrbasis_to[:, 1:]
+                paraRot[idxi, idxj, :, :] = jonesbasisMat[:, 1:].H \
+                                             * jonesrbasis_to[:, 1:]
                 self.jonesbasis[idxi, idxj, :, :] = jonesbasisMat
         self.jones = np.matmul(paraRot, self.jonesr)
         self.thisjones = paraRot
