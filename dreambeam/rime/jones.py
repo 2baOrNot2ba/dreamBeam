@@ -239,11 +239,11 @@ class EJones(Jones):
             ejones = ejones[:, :, :, ::-1]  # Flip theta, phi columns for testing
             ejones[:, :, :, 1] = -ejones[:, :, :, 1]
         r_lcl = crt2sph(jonesrbasis_to[..., 0].squeeze().T)
-        #print np.rad2deg(r_lcl)
-        jonesbasisMat = getSph2CartTransfMat(jonesrbasis_to[..., 0].squeeze())
-        #paraRot = np.matmul(np.conjugate(jonesbasisMat), jonesrbasis_to)
-        self.jonesbasis = np.reshape(jonesbasisMat,
-                                     idxshape+jonesbasisMat.shape[1:])
+
+        #jonesbasisMat = getSph2CartTransfMat(jonesrbasis_to[..., 0].squeeze())
+        #self.jonesbasis = np.reshape(jonesbasisMat,
+        #                             idxshape+jonesbasisMat.shape[1:])
+        self.jonesbasis = self.jonesrbasis  # Basis does not change
         # This is the actual MEq multiplication:
         if ejones.ndim > 3:
             frqdimsz = (ejones.shape[0],)
