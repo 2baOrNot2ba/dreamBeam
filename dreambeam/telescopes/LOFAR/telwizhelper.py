@@ -17,10 +17,10 @@ BANDS = ['LBA', 'HBA']
 ANTMODELS = ['Hamaker']
 oosr2 = 1./numpy.sqrt(2)
 PICKLE_PROTO = pickle.HIGHEST_PROTOCOL
-# + -
-# + +
-polcrdrot = numpy.array([[+oosr2, -oosr2,  0.],
-                         [+oosr2, +oosr2,  0.],
+# Rotation of LOFAR antennas from build frame to station frame.
+# It takes x/y and directed dipoles and places them along (-1,-1)/(+1,-1) resp.
+polcrdrot = numpy.array([[-oosr2, +oosr2,  0.],
+                         [-oosr2, -oosr2,  0.],
                          [    0.,     0.,  1.]])
 LOFAR_HAdata_dir = './share/' #Directory for native telescope project data.
 TELEDATADIR = 'data/'         #Directory for telescope data for RIME level work.
@@ -95,7 +95,7 @@ def gen_antmodelfiles(inpfileL=LOFAR_HAdata_dir+'DefaultCoeffLBA.cc',
     """A convenience function to produce the pickled 'artsdata' for the default
     LOFAR model data stored in the 'lofar_elem_resp' packages c++ header files.
     Also adds nominal LOFAR frequency channels."""
-    
+
     #Adding nominal frequency channels. The HA model for LOFAR has two BANDS
     #while data recording S/W has 3 intervals based on sampling frequency,
     #namely (0,100), (100,200), (200,300), each with 512 channels.
@@ -133,7 +133,7 @@ def save_telescopeband(band, antmodel='Hamaker'):
         stnDPolel = pickle.load(open(DP_BAfile, 'rb'))
     #Rotate 45 degrees since LOFAR elements are 45 degrees to meridian:
     stnDPolel.rotateframe(polcrdrot)
-    
+
     #Create telescope_band_station metadata:
     telescope['Station'] = {}
     if band == BANDS[0]:
@@ -141,9 +141,9 @@ def save_telescopeband(band, antmodel='Hamaker'):
     else:
         LOFAR_BA_stn = LOFAR_HBA_stn
     x, y, z, diam, stnIds = readarrcfg(TELESCOPE_NAME, band)
-    
+
     for stnId in stnIds:
-        
+
     #for stnId in stnlst:
         print(stnId)
         #    *Setup station Jones*
