@@ -98,20 +98,22 @@ def compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg):
     ITRFz_stn = np.matmul(stnRot.T, [[0], [0], [1]])
     ITRFz_stnaz = np.arctan2(ITRFz_stn[0, 0], ITRFz_stn[1, 0])
     ITRFz_stntht = np.rad2deg(np.arccos(ITRFz_stn[2, 0]))
-    ang = []
+    antmeasang = []  # Antenna measured angle
     for i in range(nrsamps):
         basisJ2000_ITRF_to = np.matmul(stnRot, basisJ2000_ITRF[i, :, :])
         paramat = np.matmul(basisITRF_lcl[i, :, :].T, basisJ2000_ITRF_to)
         az[i], el[i] = pntsonsphere.crt2sphHorizontal(
                                             basisITRF_lcl[i, :, 0].squeeze())
-        # Compute ang of the IAU x direction (sign here is wrt N over E)
-        ang.append(np.arctan2(np.real(Jnf[i, 1, 0]), np.real(Jnf[i, 0, 0]))
-                   - 5*np.pi/4)
+        # Compute angle of IAU x direction as seen by dualpol ants
+        # (angle is from N over E)
+        antmeasang.append(-(np.arctan2(
+                    np.real(Jnf[i, 1, 0]), np.real(Jnf[i, 0, 0])) + 3*np.pi/4))
     showIAUx = False
     if showIAUx:
+        print map(np.rad2deg, antmeasang)
         # Create vectors out of ang from origin
-        angsaz = np.stack((ang, np.zeros((len(ang),))))
-        angsr = np.stack((45*np.ones((len(ang),)), np.zeros((len(ang),))))
+        angsaz = np.stack((antmeasang, np.zeros((nrsamps,))))
+        angsr = np.stack((45*np.ones((nrsamps,)), np.zeros((nrsamps,))))
         # Plot IAU x vectors
         ax.plot(angsaz, angsr, '-')
 
