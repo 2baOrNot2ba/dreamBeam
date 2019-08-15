@@ -102,7 +102,8 @@ def plotAllJones(timespy, freqs, Jn):
 
 
 def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
-         CelDir, freq=None, action='print', frmt='csv'):
+         CelDir, freq=None, action='print', frmt='csv',
+         do_parallactic_rot=True):
     """An python entry_point for the pointing_jones command."""
     # Get the telescopeband instance:
     telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
@@ -110,7 +111,7 @@ def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
     timespy, freqs, Jn, srcfld, res, pjonesOfSrc = \
         on_pointing_axis_tracking(telescope, stnID, bTime, duration, stepTime,
                                   CelDir, xtra_results=True,
-                                  do_parallactic_rot=True)
+                                  do_parallactic_rot=do_parallactic_rot)
     if (freq < freqs[0] or freq > freqs[-1]) and freq is not None:
         raise ValueError("Requested frequency {} Hz outside of band {}"
                          .format(freq, band))
@@ -136,11 +137,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--frmt', default='csv',
                         help='select output format: csv, pac')
+    parser.add_argument('--pararot', dest='pararot', action='store_true',
+                        help='Do parallactic rotation (default).')
+    parser.add_argument('--no-pararot', dest='pararot', action='store_false',
+                        help='Do not do parallactic rotation.')
+    parser.set_defaults(pararot=True)
     parser.add_argument('cmdargs', nargs='*',
                         help='Commandline arguments')
     args = parser.parse_args()
 
     # Process cmd line arguments
+    do_parallactic_rot = args.pararot
     frmt = args.frmt
     args = args.cmdargs
     try:
@@ -203,4 +210,5 @@ if __name__ == "__main__":
         sys.exit(2)
 
     main(telescope, band, antmodel, stnID, btime, duration, steptime, celdir,
-         freq=freq, action=action, frmt=frmt)
+         freq=freq, action=action, frmt=frmt,
+         do_parallactic_rot=do_parallactic_rot)
