@@ -114,38 +114,31 @@ class PJones(Jones):
 
         The P Jones matrix is then applied to the operand Jones matrix.
         """
+        ecef_frame = 'ITRF'
         nrOfTimes = len(self.obsTimes)
         pjones = np.zeros((nrOfTimes, 2, 2))
         me = measures()
-        me.doframe(measures().position('ITRF', '0m', '0m', '0m'))
+        me.doframe(measures().position(ecef_frame, '0m', '0m', '0m'))
         self.jonesbasis = np.zeros((nrOfTimes, 3, 3))
         (az_from, el_from) = crt2sph(self.jonesrbasis[:, 0])
-        # r_sph_me = measures().direction(self.jonesrmeta['refFrame'],
-        #                                 quantity(az_from, 'rad'),
-        #                                 quantity(el_from, 'rad'))
         for ti in range(0, nrOfTimes):
             # Set current time in reference frame
             timEpoch = me.epoch('UTC', quantity(self.obsTimes[ti],
                                                 self.obsTimeUnit))
             me.doframe(timEpoch)
-            # paraRot[ti,:,:]=computeParaMat_me(self.jonesrmeta['refFrame'],
-            #                         self.jonesmeta['refFrame'], r_sph_me, me)
-
-            jonesrbasis_to = np.asmatrix(convertBasis(me, self.jonesrbasis,
-                                self.jonesrmeta['refFrame'],
-                                self.jonesmeta['refFrame']))
+            jonesrbasis_to = np.asmatrix(convertBasis(
+                                                me, self.jonesrbasis,
+                                                self.jonesrmeta['refFrame'],
+                                                ecef_frame))
             jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
-            # jonesrbasis_to2 = computeSphBasis(self.jonesrmeta['refFrame'],
-            #                                   self.jonesmeta['refFrame'],
-            #                                   0, r_sph_me, me)
             jonesbasisMat = getSph2CartTransf(jonesrbasis_to[:, 0])
             if self.do_parallactic_rot:
                 pjones[ti, :, :] = jonesbasisMat[:, 1:].H \
                                     * jonesrbasis_to[:, 1:]
             else:
                 pjones[ti, :, :] = np.asmatrix(np.identity(2))
-            # paraRot[ti,:,:]=jonesrbasis_to2*jonesbasisMat[:,1:]
             self.jonesbasis[ti, :, :] = jonesbasisMat
+        self.jonesmeta['refFrame'] = 'STN'  # Reference frame is now station
         self.jones = np.matmul(pjones, self.jonesr)
         self.thisjones = pjones
 
@@ -158,10 +151,11 @@ class PJones(Jones):
         me.doframe(timEpoch)
         for idxi in range(self.jonesrbasis.shape[0]):
             for idxj in range(self.jonesrbasis.shape[1]):
-                jonesrbasis_to = np.asmatrix(convertBasis(me,
+                jonesrbasis_to = np.asmatrix(convertBasis(
+                                            me,
                                             self.jonesrbasis[idxi, idxj, :, :],
-                                                  self.jonesrmeta['refFrame'],
-                                                  self.jonesmeta['refFrame']))
+                                            self.jonesrmeta['refFrame'],
+                                            self.jonesmeta['refFrame']))
                 jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
                 jonesbasisMat = getSph2CartTransf(jonesrbasis_to[..., 0])
                 paraRot[idxi, idxj, :, :] = jonesbasisMat[:, 1:].H \
@@ -228,21 +222,16 @@ class EJones(Jones):
         """
         idxshape = self.jonesrbasis.shape[0:-2]
         jonesrbasis = np.reshape(self.jonesrbasis, (-1, 3, 3))
-        #jonesrbasis_to = np.matmul(np.asarray(self.stnRot.T), jonesrbasis)
         jonesrbasis_to = jonesrbasis
         (az_from, el_from) = crt2sph(jonesrbasis[..., 0].squeeze().T)
         theta_phi_view = (np.pi/2-el_from.flatten(), az_from.flatten())
         ejones = self.dualPolElem.getJonesAlong(self.freqChan, theta_phi_view)
-        #(theta_lcl, phi_lcl) = self.dualPolElem.getBuildCoordinates(math.pi/2-r_sph[1], r_sph[0])
-        #print theta_lcl, phi_lcl
-        if True:
-            ejones = ejones[:, :, :, ::-1]  # Flip theta, phi columns for testing
-            ejones[:, :, :, 1] = -ejones[:, :, :, 1]
-        r_lcl = crt2sph(jonesrbasis_to[..., 0].squeeze().T)
+        # AntPat has column order theta_hat, phi_hat
+        # while C09 has phi_hat, vartheta_hat (where vartheta_hat=-theta_hat).
+        # So flip order and change sign of theta_hat.
+        ejones = ejones[:, :, :, ::-1]
+        ejones[:, :, :, 1] = -ejones[:, :, :, 1]
 
-        #jonesbasisMat = getSph2CartTransfMat(jonesrbasis_to[..., 0].squeeze())
-        #self.jonesbasis = np.reshape(jonesbasisMat,
-        #                             idxshape+jonesbasisMat.shape[1:])
         self.jonesbasis = self.jonesrbasis  # Basis does not change
         # This is the actual MEq multiplication:
         if ejones.ndim > 3:
