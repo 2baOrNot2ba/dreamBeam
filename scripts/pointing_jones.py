@@ -11,9 +11,11 @@
    starting at 2012-04-01T01:02:03 using the Hamaker model.
 """
 import sys
+import argparse
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
+from casacore.quanta import quantity
 from antpat.dualpolelem import plot_polcomp_dynspec
 from dreambeam.rime.scenarios import on_pointing_axis_tracking, compute_paral
 from dreambeam.telescopes.rt import TelescopesWiz
@@ -61,18 +63,36 @@ def plotJonesFreq(timespy, Jnf):
     plt.show()
 
 
-def printAllJones(timespy, freqs, Jn):
-    """Print all the Jones matrices over time & frequency."""
-    print "Time, Freq, J11, J12, J21, J22"  # header for CSV
-    # duration.seconds/ObsTimeStp.seconds
+def printAllJones(timespy, freqs, Jn, frmt='csv'):
+    """Print all the Jones matrices over time & frequency.
+    Output format can be select with frmt argument. frmt='csv' outputs
+    comma-separated value style format, while frmt='pac' outputs format
+    compatible with the pac S/W.
+    """
+    def paccompf(Jij):
+        return str(np.real(Jij))+' '+str(np.imag(Jij))
+    if frmt == 'csv':
+        print "Time, Freq, J00, J01, J10, J11"  # header for CSV
     for ti in range(0, len(timespy)):
         for fi, freq in enumerate(freqs):
-            # Create and print a comma-separated string
-            jones_nf_outstring = ",".join(map(
-                                 str, [
-                                    timespy[ti].isoformat(), freq,
-                                    Jn[fi, ti, 0, 0], Jn[fi, ti, 0, 1],
-                                    Jn[fi, ti, 1, 0], Jn[fi, ti, 1, 1]]))
+            J00 = Jn[fi, ti, 0, 0]
+            J01 = Jn[fi, ti, 0, 1]
+            J10 = Jn[fi, ti, 1, 0]
+            J11 = Jn[fi, ti, 1, 1]
+            if frmt == 'csv':
+                # Create and print a comma-separated string
+                delimiter = ','
+                t = timespy[ti].isoformat()
+            elif frmt == 'pac':
+                # Create and print a comma-separated string
+                delimiter = ' '
+                t = quantity(timespy[ti].isoformat()).get_value()
+                J00 = paccompf(J00)
+                J01 = paccompf(J01)
+                J10 = paccompf(J10)
+                J11 = paccompf(J11)
+            jones_nf_outstring = delimiter.join(map(
+                                    str, [t, freq, J00, J01, J10, J11]))
             print jones_nf_outstring
 
 
@@ -82,14 +102,16 @@ def plotAllJones(timespy, freqs, Jn):
 
 
 def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
-         CelDir, freq=None):
+         CelDir, freq=None, action='print', frmt='csv',
+         do_parallactic_rot=True):
     """An python entry_point for the pointing_jones command."""
     # Get the telescopeband instance:
     telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
     # Compute the Jones matrices
     timespy, freqs, Jn, srcfld, res, pjonesOfSrc = \
         on_pointing_axis_tracking(telescope, stnID, bTime, duration, stepTime,
-                                  CelDir, xtra_results=True)
+                                  CelDir, xtra_results=True,
+                                  do_parallactic_rot=do_parallactic_rot)
     if (freq < freqs[0] or freq > freqs[-1]) and freq is not None:
         raise ValueError("Requested frequency {} Hz outside of band {}"
                          .format(freq, band))
@@ -101,7 +123,7 @@ def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
         if action == "plot":
             plotAllJones(timespy, freqs, Jn)
         else:
-            printAllJones(timespy, freqs, Jn)
+            printAllJones(timespy, freqs, Jn, frmt)
     else:
         frqIdx = np.where(np.isclose(freqs, freq, atol=190e3))[0][0]
         Jnf = Jn[frqIdx, :, :, :].squeeze()
@@ -112,8 +134,22 @@ def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--frmt', default='csv',
+                        help='select output format: csv, pac')
+    parser.add_argument('--pararot', dest='pararot', action='store_true',
+                        help='Do parallactic rotation (default).')
+    parser.add_argument('--no-pararot', dest='pararot', action='store_false',
+                        help='Do not do parallactic rotation.')
+    parser.set_defaults(pararot=True)
+    parser.add_argument('cmdargs', nargs='*',
+                        help='Commandline arguments')
+    args = parser.parse_args()
+
     # Process cmd line arguments
-    args = sys.argv[1:]
+    do_parallactic_rot = args.pararot
+    frmt = args.frmt
+    args = args.cmdargs
     try:
         try:
             action = args.pop(0)
@@ -143,12 +179,14 @@ if __name__ == "__main__":
         try:
             btime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
         except IndexError:
-            raise RuntimeError("Specify start-time (UTC in ISO format: yyyy-mm-ddTHH:MM:SS )")
+            raise RuntimeError(
+                "Specify start-time (UTC in ISO format: yyyy-mm-ddTHH:MM:SS )")
         except ValueError:
-            raise RuntimeError("Wrong start-time format (yyyy-mm-ddTHH:MM:SS).")
+            raise RuntimeError(
+                "Wrong start-time format (yyyy-mm-ddTHH:MM:SS).")
         try:
             duration = timedelta(0, float(args[1]))
-        except (IndexError,ValueError):
+        except (IndexError, ValueError):
             raise RuntimeError("Specify duration (in seconds).")
         try:
             steptime = timedelta(0, float(args[2]))
@@ -157,7 +195,8 @@ if __name__ == "__main__":
         try:
             celdir = (float(args[3]), float(args[4]), 'J2000')
         except (IndexError, ValueError):
-            raise RuntimeError("Specify pointing direction (in radians): RA DEC")
+            raise RuntimeError(
+                "Specify pointing direction (in radians): RA DEC")
         if len(args) > 5:
             try:
                 freq = float(args[5])
@@ -171,4 +210,5 @@ if __name__ == "__main__":
         sys.exit(2)
 
     main(telescope, band, antmodel, stnID, btime, duration, steptime, celdir,
-         freq)
+         freq=freq, action=action, frmt=frmt,
+         do_parallactic_rot=do_parallactic_rot)

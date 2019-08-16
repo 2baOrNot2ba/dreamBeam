@@ -9,7 +9,8 @@ import dreambeam.rime.jones
 
 
 def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
-                              ObsTimeStp, CelDir, xtra_results=False):
+                              ObsTimeStp, CelDir, do_parallactic_rot=True,
+                              xtra_results=False):
     """Computes the Jones matrix along pointing axis while tracking a fixed
     celestial source. """  # # FIXME: Doesn't use freq
     #    *Setup Source*
@@ -22,13 +23,14 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     stnBD = telescope['Station'][stnID]
     stnRot = stnBD.stnRot
 
-    #    *Setup Parallatic Jones*
+    #    *Setup PJones*
     #duration = ObsTimeEnd-ObsTimeBeg
     timespy = []
     nrTimSamps = int((duration.total_seconds()/ObsTimeStp.seconds))+1
     for ti in range(0, nrTimSamps):
         timespy.append(ObsTimeBeg+ti*ObsTimeStp)
-    pjones = dreambeam.rime.jones.PJones(timespy, np.transpose(stnRot))
+    pjones = dreambeam.rime.jones.PJones(timespy, np.transpose(stnRot),
+                                         do_parallactic_rot=do_parallactic_rot)
 
     #    *Setup EJones*
     ejones = stnBD.getEJones(CelDir)
@@ -81,31 +83,49 @@ def beamfov(telescope, stnID, ObsTime, CelDir, freq):
 
 
 def compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg):
-    """Compute parallactic rotation. Also displays pointings in horizontal coordinates."""
-    #print("Parallactic rotation matrix:")
+    """Compute parallactic rotation. Also displays pointings in horizontal
+    coordinates as seen on sky from below."""
     srcbasis = srcfld.jonesbasis
     basisITRF_lcl = res.jonesbasis
     basisJ2000_ITRF = pjonesOfSrc.jonesbasis
     ax = plt.subplot(111, projection='polar')
     ax.set_theta_offset(np.pi/2)
-    nrsamps=basisITRF_lcl.shape[0]
+    nrsamps = basisITRF_lcl.shape[0]
     az = np.zeros((nrsamps))
     el = np.zeros((nrsamps))
+    Jn = res.getValue()
+    Jnf = Jn[256, :, :, :].squeeze()  # Midpoint freq.
+    ITRFz_stn = np.matmul(stnRot.T, [[0], [0], [1]])
+    ITRFz_stnaz = np.arctan2(ITRFz_stn[0, 0], ITRFz_stn[1, 0])
+    ITRFz_stntht = np.rad2deg(np.arccos(ITRFz_stn[2, 0]))
+    antmeasang = []  # Antenna measured angle
     for i in range(nrsamps):
-        basisJ2000_ITRF_to = np.matmul(stnRot, basisJ2000_ITRF[i,:,:])
-        paramat = np.matmul(basisITRF_lcl[i,:,:].T, basisJ2000_ITRF_to)
-        #print paramat
-        az[i], el[i] = pntsonsphere.crt2sphHorizontal(basisITRF_lcl[i,:,0].squeeze())
+        basisJ2000_ITRF_to = np.matmul(stnRot, basisJ2000_ITRF[i, :, :])
+        paramat = np.matmul(basisITRF_lcl[i, :, :].T, basisJ2000_ITRF_to)
+        az[i], el[i] = pntsonsphere.crt2sphHorizontal(
+                                            basisITRF_lcl[i, :, 0].squeeze())
+        # Compute angle of IAU x direction as seen by dualpol ants
+        # (angle is from N over E)
+        antmeasang.append(-(np.arctan2(
+                    np.real(Jnf[i, 1, 0]), np.real(Jnf[i, 0, 0])) + 3*np.pi/4))
+    showIAUx = False
+    if showIAUx:
+        print map(np.rad2deg, antmeasang)
+        # Create vectors out of ang from origin
+        angsaz = np.stack((antmeasang, np.zeros((nrsamps,))))
+        angsr = np.stack((45*np.ones((nrsamps,)), np.zeros((nrsamps,))))
+        # Plot IAU x vectors
+        ax.plot(angsaz, angsr, '-')
 
     # Display pointings in horizontal coordinates
-    #print("th, ph", np.rad2deg(np.array([np.pi/2-el, az]).T))
     ax.plot(az, 90-el/np.pi*180, '+', label='Trajectory')
     # Mark out start point
     ax.plot(az[0], 90-el[0]/np.pi*180, 'r8',
             label='Start: '+ObsTimeBeg.isoformat()+'UT')
+    ax.plot(ITRFz_stnaz, ITRFz_stntht, '*', label='NCP')
     ax.set_rmax(90)
     plt.title('Source trajectory [local coords, ARC projection]')
     ax.legend(numpoints=1, loc='best')
-    plt.annotate('N (stn)', xy=(0,90) )
-    plt.annotate('E (stn)', xy=(np.pi/2,90) )
+    plt.annotate('N (stn)', xy=(0, 90))
+    plt.annotate('E (stn)', xy=(np.pi/2, 90))
     plt.draw()
