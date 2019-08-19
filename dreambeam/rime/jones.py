@@ -229,8 +229,8 @@ class EJones(Jones):
         # AntPat has column order theta_hat, phi_hat
         # while C09 has phi_hat, vartheta_hat (where vartheta_hat=-theta_hat).
         # So flip order and change sign of theta_hat.
-        ejones = ejones[:, :, :, ::-1]
-        ejones[:, :, :, 1] = -ejones[:, :, :, 1]
+        ejones = ejones[..., ::-1]
+        ejones[..., 1] = -ejones[..., 1]
 
         self.jonesbasis = self.jonesrbasis  # Basis does not change
         # This is the actual MEq multiplication:
