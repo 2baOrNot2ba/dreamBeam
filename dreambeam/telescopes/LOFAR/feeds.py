@@ -41,3 +41,23 @@ class LOFAR_HBA_stn(TelescopeBndStn):
         ejones = dreambeam.rime.jones.EJones(self.feed_pat, self.stnPos,
                                              self.stnRot, freqSel)
         return ejones
+
+
+class LOFAR_LHBA_stn(TelescopeBndStn):
+    """Class for LOFAR LBA or HBA station."""
+
+    def __init__(self, stnPos, stnRot):
+        super(LOFAR_LHBA_stn, self).__init__(stnPos, stnRot)
+
+    def getEJones(self, pointing, freqSel=None):
+        """Get e-jones for this pointing for LOFAR LBA or HBA station.
+        The basic model used here is that the antenna elements are all the
+        same on all the stations, i.e. they have the same far-field pattern.
+        Furthermore LOFAR are fixed mounted so 'pointing' LOFAR means
+        electronic pointing. The simple pointing model used here for the LOFAR
+        bands is to take the the response along the pointing-direction to be
+        proportional to the response along the corresponding direction
+        for the far-field pattern of the single antenna element."""
+        ejones = dreambeam.rime.jones.EJones(self.feed_pat, self.stnPos,
+                                             self.stnRot, freqSel)
+        return ejones
