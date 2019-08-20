@@ -115,7 +115,6 @@ def compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg):
     for i in range(nrsamps):
         az[i], el[i] = crt2sph(basisITRF_lcl[i, :, 0])
         az[i] = ISO2horz(az[i])
-        el[i] = el2theta(el[i])
         # Compute angle of IAU x direction as seen by dualpol ants
         # (angle is from N over E)
         antmeasang.append(-(np.arctan2(
