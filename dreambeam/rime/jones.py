@@ -2,17 +2,14 @@
   This module provides a Jones matrix framework for radio interometric
   measurement equations.
 """
-#import math
 import numpy as np
 import matplotlib.pyplot as plt
 from casacore.measures import measures
 from casacore.quanta import quantity
-from conversionUtils import sph2crt, crt2sph, computeSphBasis, convertBasis, \
+from conversionUtils import sph2crt, crt2sph, convertBasis, \
                             getSph2CartTransf, getSph2CartTransfArr, \
                             IAU_pol_basis, shiftmat2back, IAUtoC09
-from antpat.reps.sphgridfun.tvecfun import getSph2CartTransfMat
-from antpat.reps.sphgridfun.pntsonsphere import sphericalGrid, \
-                                                crt2sphHorizontal
+from antpat.reps.sphgridfun.pntsonsphere import sphericalGrid
 
 
 class Jones(object):
@@ -48,6 +45,25 @@ class Jones(object):
     def computeJonesRes(self):
         pass
 
+    def sph2lud3_basis(self, jonesbasis_sph, alignment=None):
+        """Convert sph basis to Ludwig3 frame with an optional rotation
+        alignment."""
+        # The jonesbasis for the antennas is taken to be the Ludwig3 def.
+        # with r,u,v basis expressed wrt the station frame
+        r_refframe = jonesbasis_sph[..., 0]
+        if alignment:
+            r = np.tensordot(alignment, r_refframe, axes=([1, -1]))
+        else:
+            r = r_refframe
+        (az, el) = crt2sph(r.T)
+        lugwig3rot = np.zeros((3, 3, len(az)))
+        lugwig3rot[0, 0, :] = 1.
+        lugwig3rot[1:, 1:, :] = np.array([[np.cos(az), np.sin(az)],
+                                          [-np.sin(az), np.cos(az)]])
+        lugwig3rot = np.moveaxis(lugwig3rot, -1, 0)
+        jonesbasis_lud3 = np.matmul(jonesbasis_sph, lugwig3rot)
+        # print np.rad2deg(np.arctan2(jonesbasis[:,1,1], jonesbasis[:,0,1]))
+        return jonesbasis_lud3
 
 class JonesChain(object):
     jonesproducts = []
@@ -85,10 +101,10 @@ class PJones(Jones):
           jones[time, sphcomp, skycomp] =
                 Pjones[time, sphcomp, comp]*jonesr[comp, skycomp]
 
-        The Pjones matrix is computed as follows. Consider a direction vector d.
-        Let jonesrbasis be the
-        column concatenation of the 3 spherical basis vectors corresponding to d
-        in the J2000 reference frame,  so
+        The Pjones matrix is computed as follows: consider a direction
+        vector d. Let jonesrbasis be the column concatenation of the 3
+        spherical basis vectors corresponding to d in the J2000 reference
+        frame, so
           jonesrbasis = [[r_J2000],[phi_J2000],[theta_J2000]].T
         where r_J2000 is along the direction d and theta, phi are the remaining
         two spherical basis vectors. Let jonesbasis be the basis vectors
@@ -159,7 +175,7 @@ class PJones(Jones):
                 jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
                 jonesbasisMat = getSph2CartTransf(jonesrbasis_to[..., 0])
                 paraRot[idxi, idxj, :, :] = jonesbasisMat[:, 1:].H \
-                                             * jonesrbasis_to[:, 1:]
+                    * jonesrbasis_to[:, 1:]
                 self.jonesbasis[idxi, idxj, :, :] = jonesbasisMat
         self.jones = np.matmul(paraRot, self.jonesr)
         self.thisjones = paraRot
@@ -176,10 +192,9 @@ class DualPolFieldPointSrc(Jones):
     def __init__(self, src_dir, dualPolField=np.identity(2)):
         (src_az, src_el, src_ref) = src_dir
         dualPolField3d = np.asmatrix(np.identity(3))
-        dualPolField3d[1: ,1:] = np.asmatrix(dualPolField)
+        dualPolField3d[1:, 1:] = np.asmatrix(dualPolField)
         jonesIAU = np.matmul(IAUtoC09, dualPolField3d)[1:, 1:]
         self.jones = np.asarray(jonesIAU)
-        #self.jonesbasis = np.array(getSph2CartTransf(sph2crt(src_az, src_el)))
         self.jonesbasis = np.asarray(IAU_pol_basis(src_az, src_el))
         self.jonesmeta = {}
         self.jonesmeta['refFrame'] = src_ref
@@ -189,15 +204,13 @@ class DualPolFieldRegion(Jones):
     """This is a Jones unit flux density field."""
 
     def __init__(self, dualPolField=np.identity(2)):
-        #(src_az0, src_el0, src_ref) = src_dir
         thetamsh, phimsh = sphericalGrid()
         self.elmsh = np.pi/2-thetamsh
         self.azmsh = phimsh
         self.jones = np.broadcast_to(dualPolField,
                                      self.elmsh.shape+dualPolField.shape)
-        self.jonesbasis = shiftmat2back(getSph2CartTransfArr(sph2crt(self.azmsh,
-                                                                  self.elmsh)))
-        #self.jonesbasis = IAU_pol_basis(azmsh, elmsh)
+        self.jonesbasis = shiftmat2back(
+            getSph2CartTransfArr(sph2crt(self.azmsh, self.elmsh)))
         self.jonesmeta = {'refFrame': 'J2000'}
 
 
@@ -209,7 +222,6 @@ class EJones(Jones):
         self.position = position
         self.stnRot = stnRot
         self.dualPolElem = dualPolElem
-        # self.dualPolElem.rotateframe(np.asarray(stnRot))
         if freqSel is None:
             self.freqChan = self.dualPolElem.getfreqs()
         else:
