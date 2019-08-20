@@ -78,7 +78,7 @@ def beamfov(telescope, stnID, ObsTime, CelDir, freq):
     #(structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
     Jn = res.getValue()
     #compute_paral(srcfld, stnRot, res, pjonesOfSrc)
-    #res.getBasis()
+    #res.get_basis()
     return srcfld.azmsh, srcfld.elmsh, Jn, ejones.thisjones
 
 

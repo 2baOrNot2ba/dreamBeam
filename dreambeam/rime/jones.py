@@ -25,7 +25,7 @@ class Jones(object):
     def op(self, jonesobjright):
         """Operate this Jones on to the Jones passed in the argument."""
         self.jonesr = jonesobjright.getValue()
-        self.jonesrbasis = jonesobjright.getBasis()
+        self.jonesrbasis = jonesobjright.get_basis()
         self.jonesrmeta = jonesobjright.getMetadata()
         self.computeJonesRes()
         return self
@@ -34,7 +34,7 @@ class Jones(object):
         """Return value of the Jones matrix"""
         return self.jones
 
-    def getBasis(self):
+    def get_basis(self):
         """Return basis of the Jones matrix"""
         return self.jonesbasis
 

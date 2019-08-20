@@ -61,7 +61,7 @@ def tPJones():
     pjones = PJones(Times, np.transpose(stn2ITRFrot))
     res = pjones.op(srcfld)
     print("Value", res.getValue())
-    print("Basis", res.getBasis())
+    print("Basis", res.get_basis())
 
 
 def tModFuncs_CEL2TOPOpnts():
