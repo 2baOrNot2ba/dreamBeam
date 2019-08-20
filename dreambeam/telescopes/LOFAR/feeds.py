@@ -3,12 +3,11 @@ import dreambeam.rime.jones
 
 
 class LofarFeedJones(dreambeam.rime.jones.EJones):
-    def get_basis(self, jb_sph):
+    def get_basis(self):
+        jb_sph = self.jonesbasis
         feedbasis_stn = self.dualPolElem.basis
         jb_lud3 = self.sph2lud3_basis(jb_sph, feedbasis_stn)
-        #print(feedbasis_stn)
         return jb_lud3
-
 
 
 class LOFAR_LHBA_stn(TelescopeBndStn):
@@ -26,8 +25,6 @@ class LOFAR_LHBA_stn(TelescopeBndStn):
         bands is to take the the response along the pointing-direction to be
         proportional to the response along the corresponding direction
         for the far-field pattern of the single antenna element."""
-        #ejones = dreambeam.rime.jones.EJones(self.feed_pat, self.stnPos,
-        #                                     self.stnRot, freqsel)
         ejones = LofarFeedJones(self.feed_pat, self.stnPos, self.stnRot,
                                 freqsel)
         return ejones
