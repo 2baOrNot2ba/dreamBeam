@@ -12,7 +12,6 @@ TELESCOPE_NAME = 'LOFAR'
 NR_POLS = 2
 SAMPFREQ = 100e6
 NR_CHANNELS = 512
-BANDS = ['LBA', 'HBA']
 ANTMODELS = ['Hamaker']
 OOSR2 = 1./numpy.sqrt(2)
 PICKLE_PROTO = pickle.HIGHEST_PROTOCOL
@@ -29,7 +28,7 @@ DP_LBA_FILE_DEF = TELEDATADIR+'DP_model_LBA.p'
 DP_HBA_FILE_DEF = TELEDATADIR+'DP_model_HBA.p'
 DP_BAFILES = {'LBA': DP_LBA_FILE_DEF, 'HBA': DP_HBA_FILE_DEF}
 
-bands = DP_BAFILES.keys()
+BANDS = DP_BAFILES.keys()
 
 # Start up a telescope wizard:
 TW = rt.TelescopesWiz()
@@ -118,8 +117,8 @@ def gen_antmodelfiles(inpfileL=LOFAR_HA_DATADIR+'DefaultCoeffLBA.cc',
 def save_telescopeband(band, antmodel='Hamaker'):
     """Save all the data relevant to the telescope-band beam modeling into
     one file."""
-    assert band in bands, ("Error: {} is not one of the available bands.\n"
-                           "(Available bands are: {})").format(band, bands)
+    assert band in BANDS, ("Error: {} is not one of the available bands.\n"
+                           "(Available bands are: {})").format(band, BANDS)
     assert antmodel in ANTMODELS, (
         """Error: {} is not one of the available models.
         Available models are: {}""").format(antmodel, ANTMODELS)
