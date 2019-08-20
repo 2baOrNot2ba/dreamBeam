@@ -51,8 +51,8 @@ class Jones(object):
         # The jonesbasis for the antennas is taken to be the Ludwig3 def.
         # with r,u,v basis expressed wrt the station frame
         r_refframe = jonesbasis_sph[..., 0]
-        if alignment:
-            r = np.tensordot(alignment, r_refframe, axes=([1, -1]))
+        if alignment is not None:
+            r = np.tensordot(r_refframe, alignment, axes=([-1, 1]))
         else:
             r = r_refframe
         (az, el) = crt2sph(r.T)
@@ -62,8 +62,10 @@ class Jones(object):
                                           [-np.sin(az), np.cos(az)]])
         lugwig3rot = np.moveaxis(lugwig3rot, -1, 0)
         jonesbasis_lud3 = np.matmul(jonesbasis_sph, lugwig3rot)
-        # print np.rad2deg(np.arctan2(jonesbasis[:,1,1], jonesbasis[:,0,1]))
+        # ang_u = np.rad2deg(np.arctan2(jonesbasis_lud3[:,1,1], jonesbasis_lud3[:,0,1]))
+        # print ang_u
         return jonesbasis_lud3
+
 
 class JonesChain(object):
     jonesproducts = []
