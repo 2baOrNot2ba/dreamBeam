@@ -4,8 +4,8 @@ It implements basic Jones chains or Measurement Equations.
 '''
 import numpy as np
 import matplotlib.pyplot as plt
-from antpat.reps.sphgridfun import pntsonsphere
 import dreambeam.rime.jones
+from dreambeam.rime.conversionUtils import crt2sph
 
 
 def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
@@ -85,25 +85,37 @@ def beamfov(telescope, stnID, ObsTime, CelDir, freq):
 def compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg):
     """Compute parallactic rotation. Also displays pointings in horizontal
     coordinates as seen on sky from below."""
-    srcbasis = srcfld.jonesbasis
+    def ISO2horz(az=None, aztype='NoE'):
+        if aztype == 'NoE':
+            azoffset = np.pi/2
+            azsign = -1
+        if az is None:
+            return azoffset
+        else:
+            return azsign*az+azoffset
+
+    def el2theta(el):
+        return np.pi/2-el
+
     basisITRF_lcl = res.jonesbasis
-    basisJ2000_ITRF = pjonesOfSrc.jonesbasis
     ax = plt.subplot(111, projection='polar')
-    ax.set_theta_offset(np.pi/2)
+    # Will use horizontal crd sys here with N over E
+    ax.set_theta_offset(ISO2horz())
     nrsamps = basisITRF_lcl.shape[0]
     az = np.zeros((nrsamps))
     el = np.zeros((nrsamps))
     Jn = res.getValue()
     Jnf = Jn[256, :, :, :].squeeze()  # Midpoint freq.
-    ITRFz_stn = np.matmul(stnRot.T, [[0], [0], [1]])
-    ITRFz_stnaz = np.arctan2(ITRFz_stn[0, 0], ITRFz_stn[1, 0])
-    ITRFz_stntht = np.rad2deg(np.arccos(ITRFz_stn[2, 0]))
+    itrf_z_stn = np.matmul(stnRot.T, [[0], [0], [1]])
+    itrf_z_az, itrf_z_el = crt2sph(itrf_z_stn)
+    itrf_z_az = ISO2horz(itrf_z_az)
+    itrf_z_tht = np.rad2deg(el2theta(itrf_z_el))
+
     antmeasang = []  # Antenna measured angle
     for i in range(nrsamps):
-        basisJ2000_ITRF_to = np.matmul(stnRot, basisJ2000_ITRF[i, :, :])
-        paramat = np.matmul(basisITRF_lcl[i, :, :].T, basisJ2000_ITRF_to)
-        az[i], el[i] = pntsonsphere.crt2sphHorizontal(
-                                            basisITRF_lcl[i, :, 0].squeeze())
+        az[i], el[i] = crt2sph(basisITRF_lcl[i, :, 0])
+        az[i] = ISO2horz(az[i])
+        el[i] = el2theta(el[i])
         # Compute angle of IAU x direction as seen by dualpol ants
         # (angle is from N over E)
         antmeasang.append(-(np.arctan2(
@@ -118,11 +130,11 @@ def compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg):
         ax.plot(angsaz, angsr, '-')
 
     # Display pointings in horizontal coordinates
-    ax.plot(az, 90-el/np.pi*180, '+', label='Trajectory')
+    ax.plot(az, np.rad2deg(el2theta(el)), '+', label='Trajectory')
     # Mark out start point
-    ax.plot(az[0], 90-el[0]/np.pi*180, 'r8',
+    ax.plot(az[0], np.rad2deg(el2theta(el[0])), 'r8',
             label='Start: '+ObsTimeBeg.isoformat()+'UT')
-    ax.plot(ITRFz_stnaz, ITRFz_stntht, '*', label='NCP')
+    ax.plot(itrf_z_az, itrf_z_tht, '*', label='NCP')
     ax.set_rmax(90)
     plt.title('Source trajectory [local coords, ARC projection]')
     ax.legend(numpoints=1, loc='best')
