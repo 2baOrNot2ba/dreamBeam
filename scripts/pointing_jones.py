@@ -4,7 +4,8 @@
 
 
    Example:
-   $ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 60 1 6.11 1.02 60E6
+   $ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 \
+                       60 1 6.11 1.02 60E6
 
    This prints out the Jones matrices for the LOFAR LBA antenna at 60.e6 Hz for
    the SE607 station tracking a source at RA-DEC 6.11 1.02 (radians) for 60s
@@ -42,7 +43,9 @@ def printJonesFreq(timespy, Jnf):
                              Jnf[ti, 1, 0], Jnf[ti, 1, 1]]))
         print jones_1f_outstring
         # Print out data for BST-mode comparison (ie powers of p & q channels):
-        #print("{0} {1} {2}".format( (timespy[ti]-timespy[0]).total_seconds(), np.abs(Jnf[ti,0,0])**2+np.abs(Jnf[ti,0,1])**2, np.abs(Jnf[ti,1,0])**2+np.abs(Jnf[ti,1,1])**2) )
+        # print("{0} {1} {2}".format((timespy[ti]-timespy[0]).total_seconds(),\
+        # np.abs(Jnf[ti, 0, 0])**2+np.abs(Jnf[ti, 0, 1])**2, \
+        # np.abs(Jnf[ti, 1, 0])**2+np.abs(Jnf[ti, 1, 1])**2))
 
 
 def plotJonesFreq(timespy, Jnf):
@@ -158,22 +161,22 @@ if __name__ == "__main__":
         try:
             telescope = args.pop(0)
         except IndexError:
-            raise RuntimeError("Specify telescope:\n  " \
+            raise RuntimeError("Specify telescope:\n  "
                                + ', '.join(TW.get_telescopes()))
         try:
             band = args.pop(0)
         except IndexError:
-            raise RuntimeError("Specify band/feed:\n  " \
+            raise RuntimeError("Specify band/feed:\n  "
                                + ', '.join(TW.get_bands(telescope)))
         try:
             stnID = args.pop(0)
         except IndexError:
-            raise RuntimeError("Specify station-ID:\n  " \
+            raise RuntimeError("Specify station-ID:\n  "
                                + ', '.join(TW.get_stations(telescope, band)))
         try:
             antmodel = args.pop(0)
         except IndexError:
-            raise RuntimeError("Specify beam-model:\n  " \
+            raise RuntimeError("Specify beam-model:\n  "
                                + ', '.join(TW.get_beammodels(telescope, band)))
 
         try:

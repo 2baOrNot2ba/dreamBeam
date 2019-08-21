@@ -13,9 +13,7 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     """Computes the Jones matrix along pointing axis while tracking a fixed
     celestial source. """  # # FIXME: Doesn't use freq
     #    *Setup Source*
-    #celAz, celEl, celRef = CelDir.split(',')
-    #celAz = float(celAz)
-    #celEl = float(celEl)
+    # celAz, celEl, celRef = CelDir.split(',')
     (celAz, celEl, celRef) = CelDir
     srcfld = dreambeam.rime.jones.DualPolFieldPointSrc((celAz, celEl, celRef))
 
@@ -23,7 +21,6 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     stnRot = stnBD.stnRot
 
     #    *Setup PJones*
-    #duration = ObsTimeEnd-ObsTimeBeg
     timespy = []
     nrTimSamps = int((duration.total_seconds()/ObsTimeStp.seconds))+1
     for ti in range(0, nrTimSamps):
@@ -39,8 +36,8 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     pjonesOfSrc = pjones.op(srcfld)
     res = ejones.op(pjonesOfSrc)
 
-    #Get the resulting Jones matrices
-    #(structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
+    # Get the resulting Jones matrices
+    # (structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
     Jn = res.getValue()
     freqs = stnDPolel.getfreqs()
     return timespy, freqs, Jn, res
@@ -63,17 +60,18 @@ def beamfov(telescope, stnID, ObsTime, CelDir, freq):
     stnDPolel = stnBD.feed_pat
     #    **Select frequency
     freqs = stnDPolel.getfreqs()
-    frqIdx = np.where(np.isclose(freqs,freq,atol=190e3))[0][0]
-    ejones = stnBD.getEJones(CelDir, [freqs[frqIdx]]) #Ejones doesnt use CelDir
+    frqIdx = np.where(np.isclose(freqs, freq, atol=190e3))[0][0]
+    # N.B. Ejones doesn't really use CelDir
+    ejones = stnBD.getEJones(CelDir, [freqs[frqIdx]])
 
     #    *Setup MEq*
     pjonesOfSrc = pjones.op(srcfld)
     res = ejones.op(pjonesOfSrc)
 
-    #Get the resulting Jones matrices
-    #(structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
+    # Get the resulting Jones matrices
+    # (structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
     Jn = res.getValue()
-    #res.get_basis()
+    # res.get_basis()  # Get basis set for cumulative Jones
     return srcfld.azmsh, srcfld.elmsh, Jn, ejones.thisjones
 
 
