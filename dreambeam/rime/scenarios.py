@@ -9,8 +9,7 @@ from dreambeam.rime.conversionUtils import crt2sph
 
 
 def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
-                              ObsTimeStp, CelDir, do_parallactic_rot=True,
-                              xtra_results=False):
+                              ObsTimeStp, CelDir, do_parallactic_rot=True):
     """Computes the Jones matrix along pointing axis while tracking a fixed
     celestial source. """  # # FIXME: Doesn't use freq
     #    *Setup Source*
@@ -44,10 +43,7 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     #(structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
     Jn = res.getValue()
     freqs = stnDPolel.getfreqs()
-    if xtra_results:
-        return timespy, freqs, Jn, srcfld, res, pjonesOfSrc
-    else:
-        return timespy, freqs, Jn
+    return timespy, freqs, Jn, res
 
 
 def beamfov(telescope, stnID, ObsTime, CelDir, freq):
@@ -77,14 +73,15 @@ def beamfov(telescope, stnID, ObsTime, CelDir, freq):
     #Get the resulting Jones matrices
     #(structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
     Jn = res.getValue()
-    #compute_paral(srcfld, stnRot, res, pjonesOfSrc)
     #res.get_basis()
     return srcfld.azmsh, srcfld.elmsh, Jn, ejones.thisjones
 
 
-def compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg):
-    """Compute parallactic rotation. Also displays pointings in horizontal
-    coordinates as seen on sky from below."""
+def display_pointings(res, obstimebeg=None):
+    """Display pointings in horizontal coordinates (as seen on sky from below)
+    based on the final cumulative Jones res. The I The time of the first Jones
+    matrix obstimebeg is used for labelling.
+    """
     def ISO2horz(az=None, aztype='NoE'):
         if aztype == 'NoE':
             azoffset = np.pi/2
@@ -106,7 +103,7 @@ def compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg):
     el = np.zeros((nrsamps))
     Jn = res.getValue()
     Jnf = Jn[256, :, :, :].squeeze()  # Midpoint freq.
-    itrf_z_stn = np.matmul(stnRot.T, [[0], [0], [1]])
+    itrf_z_stn = np.matmul(res.stnRot.T, [[0], [0], [1]])
     itrf_z_az, itrf_z_el = crt2sph(itrf_z_stn)
     itrf_z_az = ISO2horz(itrf_z_az)
     itrf_z_tht = np.rad2deg(el2theta(itrf_z_el))
@@ -121,7 +118,7 @@ def compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg):
                     np.real(Jnf[i, 1, 0]), np.real(Jnf[i, 0, 0])) + 3*np.pi/4))
     showIAUx = False
     if showIAUx:
-        print map(np.rad2deg, antmeasang)
+        print np.rad2deg(antmeasang)
         # Create vectors out of ang from origin
         angsaz = np.stack((antmeasang, np.zeros((nrsamps,))))
         angsr = np.stack((45*np.ones((nrsamps,)), np.zeros((nrsamps,))))
@@ -132,7 +129,7 @@ def compute_paral(srcfld, stnRot, res, pjonesOfSrc, ObsTimeBeg):
     ax.plot(az, np.rad2deg(el2theta(el)), '+', label='Trajectory')
     # Mark out start point
     ax.plot(az[0], np.rad2deg(el2theta(el[0])), 'r8',
-            label='Start: '+ObsTimeBeg.isoformat()+'UT')
+            label='Start: '+obstimebeg.isoformat()+'UT')
     ax.plot(itrf_z_az, itrf_z_tht, '*', label='NCP')
     ax.set_rmax(90)
     plt.title('Source trajectory [local coords, ARC projection]')
