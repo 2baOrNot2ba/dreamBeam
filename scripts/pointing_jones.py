@@ -121,7 +121,9 @@ def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
                          .format(freq, band))
     # Do something with resulting Jones according to cmdline args
     if action == "plot":
-        display_pointings(res, bTime)
+        obsinfo = {'stnid': stnID, 'band': band, 'freq': freq,
+                   'starttime': bTime, 'antmodel': antmodel}
+        display_pointings(res, obsinfo, do_parallactic_rot=do_parallactic_rot)
     if freq is None:
         if action == "plot":
             plotAllJones(timespy, freqs, Jn)
