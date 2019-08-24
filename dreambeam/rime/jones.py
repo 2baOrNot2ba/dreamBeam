@@ -2,6 +2,7 @@
   This module provides a Jones matrix framework for radio interometric
   measurement equations.
 """
+import numpy.ma as ma
 import numpy as np
 import matplotlib.pyplot as plt
 from casacore.measures import measures
@@ -132,13 +133,13 @@ class PJones(Jones):
 
         The P Jones matrix is then applied to the operand Jones matrix.
         """
-        ecef_frame = 'ITRF'
         nrOfTimes = len(self.obsTimes)
+        ecef_frame = 'ITRF'
         pjones = np.zeros((nrOfTimes, 2, 2))
         me = measures()
         me.doframe(measures().position(ecef_frame, '0m', '0m', '0m'))
         self.jonesbasis = np.zeros((nrOfTimes, 3, 3))
-        (az_from, el_from) = crt2sph(self.jonesrbasis[:, 0])
+        #(az_from, el_from) = crt2sph(self.jonesrbasis[:, 0])
         for ti in range(0, nrOfTimes):
             # Set current time in reference frame
             timEpoch = me.epoch('UTC', quantity(self.obsTimes[ti],
@@ -161,9 +162,12 @@ class PJones(Jones):
         self.thisjones = pjones
 
     def computeJonesRes_overfield(self):
-        paraRot = np.zeros(self.jonesrbasis.shape[0:-2]+(2, 2))
+        """Compute the PJones over field of directions for one frequency.
+        """
+        ecef_frame = 'ITRF'
+        pjones = np.zeros(self.jonesrbasis.shape[0:-2]+(2, 2))
         me = measures()
-        me.doframe(measures().position('ITRF', '0m', '0m', '0m'))
+        me.doframe(measures().position(ecef_frame, '0m', '0m', '0m'))
         self.jonesbasis = np.zeros(self.jonesrbasis.shape)
         timEpoch = me.epoch('UTC', quantity(self.obsTimes, self.obsTimeUnit))
         me.doframe(timEpoch)
@@ -176,11 +180,12 @@ class PJones(Jones):
                                             self.jonesmeta['refFrame']))
                 jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
                 jonesbasisMat = getSph2CartTransf(jonesrbasis_to[..., 0])
-                paraRot[idxi, idxj, :, :] = jonesbasisMat[:, 1:].H \
+                pjones[idxi, idxj, :, :] = jonesbasisMat[:, 1:].H \
                     * jonesrbasis_to[:, 1:]
                 self.jonesbasis[idxi, idxj, :, :] = jonesbasisMat
-        self.jones = np.matmul(paraRot, self.jonesr)
-        self.thisjones = paraRot
+        self.jonesmeta['refFrame'] = 'STN'  # Reference frame is now station
+        self.jones = np.matmul(pjones, self.jonesr)
+        self.thisjones = pjones
 
 
 class DualPolFieldPointSrc(Jones):
@@ -209,7 +214,10 @@ class DualPolFieldRegion(Jones):
         thetamsh, phimsh = sphericalGrid()
         self.elmsh = np.pi/2-thetamsh
         self.azmsh = phimsh
-        self.jones = np.broadcast_to(dualPolField,
+        dualPolField3d = np.asmatrix(np.identity(3))
+        dualPolField3d[1:, 1:] = np.asmatrix(dualPolField)
+        jonesIAU = np.matmul(IAUtoC09, dualPolField3d)[1:, 1:]
+        self.jones = np.broadcast_to(jonesIAU,
                                      self.elmsh.shape+dualPolField.shape)
         self.jonesbasis = shiftmat2back(
             getSph2CartTransfArr(sph2crt(self.azmsh, self.elmsh)))
@@ -270,20 +278,21 @@ class DualPolFieldSink(Jones):
         self.jonesmeta = self.jonesrmeta
 
 
-def plotJonesField(az, el, jonesfld, rep='abs-Jones'):
+def plotJonesField(az, el, jonesfld, jbasis, rep='abs-Jones'):
+    """Plot a Jones field."""
     if rep == 'abs-Jones':
         restitle = 'Beam Jones on sky'
         res00 = np.abs(jonesfld[:, :, 0, 0])
-        res00 = np.ma.masked_invalid(res00)
+        res00 = ma.masked_invalid(res00)
         res00lbl = r'|J_{p\phi}|'
         res01 = np.abs(jonesfld[:, :, 0, 1])
-        res01 = np.ma.masked_invalid(res01)
+        res01 = ma.masked_invalid(res01)
         res01lbl = r'|J_{p\theta}|'
         res10 = np.abs(jonesfld[:, :, 1, 0])
-        res10 = np.ma.masked_invalid(res10)
+        res10 = ma.masked_invalid(res10)
         res10lbl = r'|J_{q\phi}|'
         res11 = np.abs(jonesfld[:, :, 1, 1])
-        res11 = np.ma.masked_invalid(res11)
+        res11 = ma.masked_invalid(res11)
         res11lbl = r'|J_{q\theta}|'
     elif rep == 'Stokes':
         corrmat = np.matmul(jonesfld, np.swapaxes(jonesfld.conj(), -2, -1))
@@ -301,33 +310,51 @@ def plotJonesField(az, el, jonesfld, rep='abs-Jones'):
         res11 = SV/S0
         res11lbl = 'v'
     else:
-        print "Unknown Jones representation."
-        exit(1)
-
+        raise Exception("Unknown Jones representation {}.".format(rep))
+    refframe = 'J2000'
+    if refframe == 'STN':
+        # Directions in Cartesian station crds
+        x = jbasis[..., 0, 0]
+        y = jbasis[..., 1, 0]
+        z = jbasis[..., 2, 0]
+        belowhrz = ma.getmask(ma.masked_less(z, .0))
+        x = ma.MaskedArray(x, mask=belowhrz)
+        y = ma.MaskedArray(y, mask=belowhrz)
+        res00 = ma.MaskedArray(res00, mask=belowhrz)
+        res01 = ma.MaskedArray(res01, mask=belowhrz)
+        res10 = ma.MaskedArray(res10, mask=belowhrz)
+        res11 = ma.MaskedArray(res11, mask=belowhrz)
+        xlabel = 'STN X'
+        ylabel = 'STN Y'
+    elif refframe == 'J2000':
+        x = az
+        y = el
+        xlabel = 'RA'
+        ylabel = 'DEC'
     fig = plt.figure()
     fig.suptitle(restitle)
     ax = plt.subplot(221, polar=False)
-    plt.pcolormesh(az, el, res00, vmin=0., vmax=2.0)
+    plt.pcolormesh(x, y, res00, vmin=0., vmax=2.0)
     plt.colorbar()
     ax.set_title(res00lbl)
-    plt.ylabel('DEC')
+    plt.ylabel(ylabel)
 
     ax = plt.subplot(222, polar=False)
-    plt.pcolormesh(az, el, res01, vmin=-1., vmax=1.)
+    plt.pcolormesh(x, y, res01)
     plt.colorbar()
     ax.set_title(res01lbl)
 
     ax = plt.subplot(223, polar=False)
-    plt.pcolormesh(az, el, res10, vmin=-1., vmax=1.)
+    plt.pcolormesh(x, y, res10)
     plt.colorbar()
     ax.set_title(res10lbl)
-    plt.xlabel('RA')
-    plt.ylabel('DEC')
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
 
     ax = plt.subplot(224, polar=False)
-    plt.pcolormesh(az, el, res11, vmin=-1., vmax=1.)
+    plt.pcolormesh(x, y, res11, vmin=np.nanmin(res11), vmax=np.nanmax(res11))
     plt.colorbar()
     ax.set_title(res11lbl)
-    plt.xlabel('RA')
+    plt.xlabel(xlabel)
 
     plt.show()

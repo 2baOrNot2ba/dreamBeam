@@ -28,13 +28,13 @@ def getnextcmdarg(args, mes):
 
 SCRIPTNAME = sys.argv[0].split('/')[-1]
 USAGE = "Usage:\n  {} print|plot telescope band stnID beammodel timeUTC pointingRA pointingDEC frequency".format(SCRIPTNAME)
-#Example: 
+#Example:
 #$ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 60 1 6.11 1.02 60E6
 if __name__ == "__main__":
     #Startup a telescope wizard
     TW = TelescopesWiz()
     #Process cmd line arguments
-    args = sys.argv[1:] 
+    args = sys.argv[1:]
     action = getnextcmdarg(args, "output-type:\n  'print' or 'plot'")
     telescopeName = getnextcmdarg(args, "telescope:\n  "+', '.join(TW.get_telescopes()))
     band = getnextcmdarg(args, "band/feed:\n  "+', '.join(TW.get_bands(telescopeName)))
@@ -62,9 +62,9 @@ if __name__ == "__main__":
     #Get the telescopeband instance:
     telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
     #Compute the Jones matrices
-    az, el, Jnf, ej = beamfov(telescope, stnID, bTime, CelDir, freq)
+    az, el, jonesfld, jbasis = beamfov(telescope, stnID, bTime, CelDir, freq)
     #Do something with resulting Jones according to cmdline args
     if action == "plot":
-        plotJonesField(az, el, Jnf, rep='Stokes')
+        plotJonesField(az, el, jonesfld, jbasis, rep='Stokes')
     else:
-        printJonesField(az, el, Jnf)
+        printJonesField(az, el, jonesfld)

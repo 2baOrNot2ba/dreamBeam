@@ -71,9 +71,9 @@ def beamfov(telescope, stnID, ObsTime, CelDir, freq):
 
     # Get the resulting Jones matrices
     # (structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
-    Jn = res.getValue()
-    # res.get_basis()  # Get basis set for cumulative Jones
-    return srcfld.azmsh, srcfld.elmsh, Jn, ejones.thisjones
+    res_jones = res.getValue()
+
+    return srcfld.azmsh, srcfld.elmsh, res_jones, res.jonesbasis
 
 
 def display_pointings(jones, obsinfo=None, do_3D=False,
