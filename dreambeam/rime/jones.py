@@ -9,8 +9,7 @@ from casacore.measures import measures
 from casacore.quanta import quantity
 from conversionUtils import sph2crt, crt2sph, convertBasis, \
                             getSph2CartTransf, getSph2CartTransfArr, \
-                            IAU_pol_basis, shiftmat2back, IAUtoC09
-from antpat.reps.sphgridfun.pntsonsphere import sphericalGrid
+                            IAU_pol_basis, shiftmat2back, IAUtoC09, sphmeshgrid
 
 
 class Jones(object):
@@ -19,6 +18,9 @@ class Jones(object):
     The basis is such that:
         self.jonesbasis=array([[r_hat], [phi_hat], [theta_hat]]).
     """
+    _ecef_frame = 'ITRF'
+    _eci_frame = 'J2000'
+    _topo_frame = 'STN'
 
     def __init__(self):
         pass
@@ -88,7 +90,6 @@ class PJones(Jones):
         self.obsTimes = obsTimes_me.get_value()
         self.obsTimeUnit = obsTimes_me.get_unit()
         self.jonesmeta = {}
-        self.jonesmeta['refFrame'] = 'ITRF'
         self.ITRF2stnrot = ITRF2stnrot
         self.do_parallactic_rot = do_parallactic_rot
 
@@ -134,22 +135,28 @@ class PJones(Jones):
         The P Jones matrix is then applied to the operand Jones matrix.
         """
         nrOfTimes = len(self.obsTimes)
-        ecef_frame = 'ITRF'
         pjones = np.zeros((nrOfTimes, 2, 2))
         me = measures()
-        me.doframe(measures().position(ecef_frame, '0m', '0m', '0m'))
+        me.doframe(measures().position(self._ecef_frame, '0m', '0m', '0m'))
         self.jonesbasis = np.zeros((nrOfTimes, 3, 3))
-        #(az_from, el_from) = crt2sph(self.jonesrbasis[:, 0])
+        if self.jonesrmeta['refFrame'] == self._eci_frame:
+            convert2irf = self._ecef_frame
+            jonesrbasis = self.jonesrbasis
+            jr_refframe = self.jonesrmeta['refFrame']
+        else:
+            convert2irf = self._eci_frame
+            jonesrbasis = np.matmul(self.ITRF2stnrot.T, self.jonesrbasis)
+            jr_refframe = self._ecef_frame
         for ti in range(0, nrOfTimes):
             # Set current time in reference frame
             timEpoch = me.epoch('UTC', quantity(self.obsTimes[ti],
                                                 self.obsTimeUnit))
             me.doframe(timEpoch)
-            jonesrbasis_to = np.asmatrix(convertBasis(
-                                                me, self.jonesrbasis,
-                                                self.jonesrmeta['refFrame'],
-                                                ecef_frame))
-            jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
+            jonesrbasis_to = np.asmatrix(convertBasis(me, jonesrbasis,
+                                                      jr_refframe,
+                                                      convert2irf))
+            if convert2irf == self._ecef_frame:
+                jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
             jonesbasisMat = getSph2CartTransf(jonesrbasis_to[:, 0])
             if self.do_parallactic_rot:
                 pjones[ti, :, :] = jonesbasisMat[:, 1:].H \
@@ -157,33 +164,46 @@ class PJones(Jones):
             else:
                 pjones[ti, :, :] = np.asmatrix(np.identity(2))
             self.jonesbasis[ti, :, :] = jonesbasisMat
-        self.jonesmeta['refFrame'] = 'STN'  # Reference frame is now station
+        if convert2irf == self._ecef_frame:
+            self.jonesmeta['refFrame'] = 'STN'  # Final Ref frame is station
+        else:
+            self.jonesmeta['refFrame'] = self._eci_frame
         self.jones = np.matmul(pjones, self.jonesr)
         self.thisjones = pjones
 
     def computeJonesRes_overfield(self):
         """Compute the PJones over field of directions for one frequency.
         """
-        ecef_frame = 'ITRF'
         pjones = np.zeros(self.jonesrbasis.shape[0:-2]+(2, 2))
         me = measures()
-        me.doframe(measures().position(ecef_frame, '0m', '0m', '0m'))
+        me.doframe(measures().position(self._ecef_frame, '0m', '0m', '0m'))
         self.jonesbasis = np.zeros(self.jonesrbasis.shape)
+        if self.jonesrmeta['refFrame'] == self._eci_frame:
+            convert2irf = self._ecef_frame
+            jonesrbasis = self.jonesrbasis
+            jr_refframe = self.jonesrmeta['refFrame']
+        else:
+            convert2irf = self._eci_frame
+            jonesrbasis = np.matmul(self.ITRF2stnrot.T, self.jonesrbasis)
+            jr_refframe = self._ecef_frame
         timEpoch = me.epoch('UTC', quantity(self.obsTimes, self.obsTimeUnit))
         me.doframe(timEpoch)
         for idxi in range(self.jonesrbasis.shape[0]):
             for idxj in range(self.jonesrbasis.shape[1]):
                 jonesrbasis_to = np.asmatrix(convertBasis(
-                                            me,
-                                            self.jonesrbasis[idxi, idxj, :, :],
-                                            self.jonesrmeta['refFrame'],
-                                            self.jonesmeta['refFrame']))
-                jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
+                                                 me,
+                                                 jonesrbasis[idxi, idxj, :, :],
+                                                 jr_refframe, convert2irf))
+                if convert2irf == self._ecef_frame:
+                    jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
                 jonesbasisMat = getSph2CartTransf(jonesrbasis_to[..., 0])
                 pjones[idxi, idxj, :, :] = jonesbasisMat[:, 1:].H \
                     * jonesrbasis_to[:, 1:]
                 self.jonesbasis[idxi, idxj, :, :] = jonesbasisMat
-        self.jonesmeta['refFrame'] = 'STN'  # Reference frame is now station
+        if convert2irf == self._ecef_frame:
+            self.jonesmeta['refFrame'] = 'STN'  # Final Ref frame is station
+        else:
+            self.jonesmeta['refFrame'] = self._eci_frame
         self.jones = np.matmul(pjones, self.jonesr)
         self.thisjones = pjones
 
@@ -210,18 +230,19 @@ class DualPolFieldPointSrc(Jones):
 class DualPolFieldRegion(Jones):
     """This is a Jones unit flux density field."""
 
-    def __init__(self, dualPolField=np.identity(2)):
-        thetamsh, phimsh = sphericalGrid()
+    def __init__(self, refframe='J2000', dualPolField=np.identity(2),
+                 obstimespy=None, ITRF2stnrot=None):
+        thetamsh, phimsh = sphmeshgrid()
         self.elmsh = np.pi/2-thetamsh
         self.azmsh = phimsh
         dualPolField3d = np.asmatrix(np.identity(3))
         dualPolField3d[1:, 1:] = np.asmatrix(dualPolField)
-        jonesIAU = np.matmul(IAUtoC09, dualPolField3d)[1:, 1:]
-        self.jones = np.broadcast_to(jonesIAU,
+        src_jones = np.matmul(IAUtoC09, dualPolField3d)[1:, 1:]
+        self.jones = np.broadcast_to(src_jones,
                                      self.elmsh.shape+dualPolField.shape)
         self.jonesbasis = shiftmat2back(
             getSph2CartTransfArr(sph2crt(self.azmsh, self.elmsh)))
-        self.jonesmeta = {'refFrame': 'J2000'}
+        self.jonesmeta = {'refFrame': refframe}
 
 
 class EJones(Jones):
