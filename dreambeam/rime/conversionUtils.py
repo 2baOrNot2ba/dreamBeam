@@ -25,20 +25,18 @@ def CEL2TOPOpnts(obsTimes, stnPos, celPnt):
     obsTimes_lst = []
     for obsTime in obsTimes:
         obsTimes_lst.append(quantity(obsTime.isoformat()).get_value())
-    obsTimes_me = quantity(obsTimes_lst,'d')
+    obsTimes_me = quantity(obsTimes_lst, 'd')
     # Convert source direction to pyrap
     celPntTheta, celPntPhi, celPntRefFrame = celPnt
     celPnt = celPntRefFrame, str(celPntPhi), str(math.pi/2-celPntTheta)
-    celPnt_me = measures().direction(celPnt[0],
-                                   celPnt[1]+'rad',
-                                   celPnt[2]+'rad')
-    stnPos_me = measures().position('ITRF', str(stnPos[0,0])+'m',
-                            str(stnPos[1,0])+'m',
-                            str(stnPos[2,0])+'m')
+    celPnt_me = measures().direction(celPnt[0], celPnt[1]+'rad',
+                                     celPnt[2]+'rad')
+    stnPos_me = measures().position('ITRF', str(stnPos[0, 0])+'m',
+                                    str(stnPos[1, 0])+'m',
+                                    str(stnPos[2, 0])+'m')
     celPntBasis = getSph2CartTransf(sph2crt_me(celPnt_me))
     obsTimesArr = obsTimes_me.get_value()
     obsTimeUnit = obsTimes_me.get_unit()
-    #CelRot=zeros((len(obsTimesArr),2,2))
     rotang = np.zeros(len(obsTimesArr))
     me = measures()
     # Set position of reference frame w.r.t. ITRF
@@ -95,7 +93,7 @@ def getParallacticRot(obsTimes, stnPos, srcDir, doPolPrec=True):
         me.doframe(timEpoch)
 
         # Compute polariz comps in spherical sys to cartesian Station coord sys
-        #paraMtc=computeParaMat_tc('J2000', 'ITRF', srcDir_me, me)
+        # paraMtc=computeParaMat_tc('J2000', 'ITRF', srcDir_me, me)
 
         # Alternatively:
         paraMme = computeParaMat_me('J2000', 'AZEL', srcDir_me, me)
@@ -145,14 +143,9 @@ def getSkyPrecessionMat(me, srcDirection):
     deltaTruvec = sph2crt(raD, decD)
 
     cosPrecAng = ((alphaTruvec*alphaJ2000vec.T)[0, 0]
-                +(deltaTruvec*deltaJ2000vec.T)[0, 0])/2.0
+                  + (deltaTruvec*deltaJ2000vec.T)[0, 0]) / 2.0
     sinPrecAng = ((alphaTruvec*deltaJ2000vec.T)[0, 0]
-                -(deltaTruvec*alphaJ2000vec.T)[0, 0])/2.0
-    # Precession of polarization basis is
-    #precMat=np.matrix([ [(alphaTruvec*alphaJ2000vec.T)[0,0],
-    #                     (alphaTruvec*deltaJ2000vec.T)[0,0]],
-    #                    [(deltaTruvec*alphaJ2000vec.T)[0,0],
-    #                     (deltaTruvec*deltaJ2000vec.T)[0,0]] ])
+                  - (deltaTruvec*alphaJ2000vec.T)[0, 0]) / 2.0
     precMat = np.matrix([[+cosPrecAng, sinPrecAng],
                          [-sinPrecAng, cosPrecAng]])
     return precMat
@@ -223,10 +216,10 @@ def getSph2CartTransf(r):
     xu = ru[0, 0]
     yu = ru[0, 1]
     zu = ru[0, 2]
-    tang2cart = 1.0/np.sqrt(xu*xu+yu*yu)* np.matrix([
-                          [-yu,        -xu*zu],
-                          [ xu,        -yu*zu],
-                          [ 0., (xu*xu+yu*yu)]])
+    tang2cart = 1.0/np.sqrt(xu*xu+yu*yu) * np.matrix(
+                        [[-yu,        -xu*zu],
+                         [ xu,        -yu*zu],
+                         [ 0., (xu*xu+yu*yu)]])
     transf_sph2cart = np.bmat([[ru.T, tang2cart]])
     return transf_sph2cart
 
@@ -240,7 +233,7 @@ def getSph2CartTransfArr(r):
     """
     r = np.array(r)
     r = r.squeeze()
-    #ru = r/np.sqrt(np.tensordot(r,r, axes=([0],[0])))
+    # ru = r/np.sqrt(np.tensordot(r,r, axes=([0],[0])))
     ru = r/np.sqrt(r[0, ...]**2+r[1, ...]**2+r[2, ...]**2)
     xu = ru[0, ...]
     yu = ru[1, ...]
@@ -258,10 +251,10 @@ def computeSph2CrtMat(lmnMatrix):
     l = lmn[0, 0]
     m = lmn[0, 1]
     n = lmn[0, 2]
-    polz2cart = 1.0/np.sqrt(l*l+m*m)* np.matrix([
-                          [ -m,      -l*n],
-                          [  l,      -m*n],
-                          [ .0, (l*l+m*m)]])
+    polz2cart = 1.0/np.sqrt(l*l+m*m) * np.matrix(
+                        [[ -m,      -l*n],
+                         [  l,      -m*n],
+                         [ .0, (l*l+m*m)]])
     return polz2cart
 
 
@@ -277,8 +270,8 @@ def crt2sph(dir_crt):
     azi = np.arctan2(y, x)
     ele = np.arcsin(z)
     # Radial component (not needed for unit directions)
-    #r=np.sqrt(x**2+y**2+z**2)
-    #ele=np.arcsin(z/r)
+    # r=np.sqrt(x**2+y**2+z**2)
+    # ele=np.arcsin(z/r)
     return azi, ele
 
 
@@ -295,14 +288,16 @@ def sph2crt(azi, ele):
     z = np.sin(ele)
     return(np.array([x, y, z]))
 
+
 # Here C09 refers to Carozzi2009 vCZ paper: it has
 #   (r_hat, phi_hat, theta_hat).
 # While IAU has:
-#   +x pointing to -theta_hat, +y along +phi_hat, +z along -r_hat.
+#   +x pointing to +vartheta_hat, +y along +phi_hat, +z along -r_hat.
 # HOWEVER, implementation here keeps r_hat in first column, so:
-IAUtoC09 = np.array([[ 1.,  0.,  0.],  # 1, 0, 0
-                     [ 0.,  0.,  1.],  # 0, 0, -1
-                     [ 0.,  1.,  0.]]) # 0, 1, 0
+IAUtoC09 = np.array([[1., 0., 0.],
+                     [0., 0., 1.],
+                     [0., 1., 0.]])
+
 
 def IAU_pol_basis(src_az, src_el):
     """Compute the (x_hat, y_hat, z_hat) basis in IAU polarization system for a
@@ -315,11 +310,29 @@ def IAU_pol_basis(src_az, src_el):
     return basis_C09
 
 
+def sphmeshgrid(nrThetas=128, nrPhis=256, distr='isodeltaang'):
+    """Provides a polar angles grid on a 2-sphere. Azimuthal dimension should
+    not wrap around to ensure uniqueness on sphere. The mesh has theta
+    increasing along rows and phi along columns."""
+    if distr == 'isodeltaang':
+        # Add one to include endpoint:
+        theta = np.linspace(0.0, math.pi, nrThetas+1, endpoint=True)
+        # Don't overlap 0 and 2*pi
+        phi = np.linspace(0.0, 2*math.pi, nrPhis, endpoint=False)
+        phimsh, thetamsh = np.meshgrid(phi, theta)
+    elif distr == 'lm':
+        pass  # TODO:   Implement this section
+        # l = np.linspace(-1., 1, 100, endpoint=True)
+        # m = np.linspace(-1., 1, 100, endpoint=True)
+
+    return thetamsh, phimsh
+
+
 def pyTimes2meTimes(pyTimes):
     obsTimes_lst = []
     for obsTime in pyTimes:
         obsTimes_lst.append(quantity(obsTime.isoformat()).get_value())
-    obsTimes_me = quantity(obsTimes_lst,'d')
+    obsTimes_me = quantity(obsTimes_lst, 'd')
     obsTimesArr = obsTimes_me.get_value()
     obsTimeUnit = obsTimes_me.get_unit()
     return obsTimesArr, obsTimeUnit
