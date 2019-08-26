@@ -68,13 +68,14 @@ class Jones(object):
                                           [-np.sin(az), np.cos(az)]])
         lugwig3rot = np.moveaxis(lugwig3rot, -1, 0)
         jonesbasis_lud3 = np.matmul(jonesbasis_sph, lugwig3rot)
-        # ang_u = np.rad2deg(np.arctan2(jonesbasis_lud3[:,1,1], jonesbasis_lud3[:,0,1]))
+        # ang_u = np.rad2deg(
+        #           np.arctan2(jonesbasis_lud3[:,1,1], jonesbasis_lud3[:,0,1]))
         # print ang_u
         return jonesbasis_lud3
 
     def convert2iaucmp(self):
         if not self.iaucmp:
-            self.jones = np.matmul(self.jones, IAUtoC09)
+            self.jones = np.matmul(self.jones, IAUtoC09[1:, 1:])
             self.iaucmp = True
 
 
