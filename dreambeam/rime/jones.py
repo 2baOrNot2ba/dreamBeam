@@ -2,6 +2,7 @@
   This module provides a Jones matrix framework for radio interometric
   measurement equations.
 """
+import copy
 import numpy.ma as ma
 import numpy as np
 import matplotlib.pyplot as plt
@@ -28,7 +29,7 @@ class Jones(object):
     def op(self, jonesobjright):
         """Operate this Jones on to the Jones passed in the argument."""
         self.jonesr = jonesobjright.getValue()
-        self.jonesrbasis = jonesobjright.get_basis()
+        self.jonesrbasis_from = jonesobjright.get_basis()
         self.jonesrmeta = jonesobjright.getMetadata()
         self.computeJonesRes()
         return self
@@ -141,18 +142,19 @@ class PJones(Jones):
         self.jonesbasis = np.zeros((nrOfTimes, 3, 3))
         if self.jonesrmeta['refFrame'] == self._eci_frame:
             convert2irf = self._ecef_frame
-            jonesrbasis = self.jonesrbasis
+            jonesrbasis_from = self.jonesrbasis_from
             jr_refframe = self.jonesrmeta['refFrame']
         else:
             convert2irf = self._eci_frame
-            jonesrbasis = np.matmul(self.ITRF2stnrot.T, self.jonesrbasis)
+            jonesrbasis_from = np.matmul(self.ITRF2stnrot.T,
+                                         self.jonesrbasis_from)
             jr_refframe = self._ecef_frame
         for ti in range(0, nrOfTimes):
             # Set current time in reference frame
             timEpoch = me.epoch('UTC', quantity(self.obsTimes[ti],
                                                 self.obsTimeUnit))
             me.doframe(timEpoch)
-            jonesrbasis_to = np.asmatrix(convertBasis(me, jonesrbasis,
+            jonesrbasis_to = np.asmatrix(convertBasis(me, jonesrbasis_from,
                                                       jr_refframe,
                                                       convert2irf))
             if convert2irf == self._ecef_frame:
@@ -174,28 +176,30 @@ class PJones(Jones):
     def computeJonesRes_overfield(self):
         """Compute the PJones over field of directions for one frequency.
         """
-        pjones = np.zeros(self.jonesrbasis.shape[0:-2]+(2, 2))
+        pjones = np.zeros(self.jonesrbasis_from.shape[0:-2]+(2, 2))
         me = measures()
         me.doframe(measures().position(self._ecef_frame, '0m', '0m', '0m'))
-        self.jonesbasis = np.zeros(self.jonesrbasis.shape)
+        self.jonesbasis = np.zeros(self.jonesrbasis_from.shape)
         if self.jonesrmeta['refFrame'] == self._eci_frame:
             convert2irf = self._ecef_frame
-            jonesrbasis = self.jonesrbasis
+            jonesrbasis_from = self.jonesrbasis_from
             jr_refframe = self.jonesrmeta['refFrame']
         else:
             convert2irf = self._eci_frame
-            jonesrbasis = np.matmul(self.ITRF2stnrot.T, self.jonesrbasis)
+            jonesrbasis_from = np.matmul(self.ITRF2stnrot.T,
+                                         self.jonesrbasis_from)
             jr_refframe = self._ecef_frame
         timEpoch = me.epoch('UTC', quantity(self.obsTimes, self.obsTimeUnit))
         me.doframe(timEpoch)
-        for idxi in range(self.jonesrbasis.shape[0]):
-            for idxj in range(self.jonesrbasis.shape[1]):
+        for idxi in range(self.jonesrbasis_from.shape[0]):
+            for idxj in range(self.jonesrbasis_from.shape[1]):
                 jonesrbasis_to = np.asmatrix(convertBasis(
-                                                 me,
-                                                 jonesrbasis[idxi, idxj, :, :],
-                                                 jr_refframe, convert2irf))
+                                            me,
+                                            jonesrbasis_from[idxi, idxj, :, :],
+                                            jr_refframe, convert2irf))
                 if convert2irf == self._ecef_frame:
-                    jonesrbasis_to = np.matmul(self.ITRF2stnrot, jonesrbasis_to)
+                    jonesrbasis_to = np.matmul(self.ITRF2stnrot,
+                                               jonesrbasis_to)
                 jonesbasisMat = getSph2CartTransf(jonesrbasis_to[..., 0])
                 pjones[idxi, idxj, :, :] = jonesbasisMat[:, 1:].H \
                     * jonesrbasis_to[:, 1:]
@@ -216,29 +220,34 @@ class DualPolFieldPointSrc(Jones):
     It may have a spectral dimension. The src_dir should be a tuple with
     (az, el, ref)."""
 
-    def __init__(self, src_dir, dualPolField=np.identity(2)):
+    def __init__(self, src_dir, dualPolField=np.identity(2), iaucmp=True):
         (src_az, src_el, src_ref) = src_dir
         dualPolField3d = np.asmatrix(np.identity(3))
         dualPolField3d[1:, 1:] = np.asmatrix(dualPolField)
-        jonesIAU = np.matmul(IAUtoC09, dualPolField3d)[1:, 1:]
-        self.jones = np.asarray(jonesIAU)
+        if iaucmp:
+            jones = np.matmul(IAUtoC09, dualPolField3d)[1:, 1:]
+        else:
+            jones = dualPolField3d[1:, 1:]
+        self.jones = np.asarray(jones)
         self.jonesbasis = np.asarray(IAU_pol_basis(src_az, src_el))
-        self.jonesmeta = {}
-        self.jonesmeta['refFrame'] = src_ref
+        self.jonesmeta = {'refFrame': src_ref}
 
 
 class DualPolFieldRegion(Jones):
     """This is a Jones unit flux density field."""
 
     def __init__(self, refframe='J2000', dualPolField=np.identity(2),
-                 obstimespy=None, ITRF2stnrot=None):
+                 iaucmp=True):
         thetamsh, phimsh = sphmeshgrid()
         self.elmsh = np.pi/2-thetamsh
         self.azmsh = phimsh
         dualPolField3d = np.asmatrix(np.identity(3))
         dualPolField3d[1:, 1:] = np.asmatrix(dualPolField)
-        src_jones = np.matmul(IAUtoC09, dualPolField3d)[1:, 1:]
-        self.jones = np.broadcast_to(src_jones,
+        if iaucmp:
+            jones = np.matmul(IAUtoC09, dualPolField3d)[1:, 1:]
+        else:
+            jones = dualPolField3d[1:, 1:]
+        self.jones = np.broadcast_to(jones,
                                      self.elmsh.shape+dualPolField.shape)
         self.jonesbasis = shiftmat2back(
             getSph2CartTransfArr(sph2crt(self.azmsh, self.elmsh)))
@@ -263,8 +272,8 @@ class EJones(Jones):
         right.
         The structure of the jonesrbasis is [timeIdx, sphIdx, skycompIdx].
         """
-        idxshape = self.jonesrbasis.shape[0:-2]
-        jonesrbasis = np.reshape(self.jonesrbasis, (-1, 3, 3))
+        idxshape = self.jonesrbasis_from.shape[0:-2]
+        jonesrbasis = np.reshape(self.jonesrbasis_from, (-1, 3, 3))
         jonesrbasis_to = jonesrbasis
         (az_from, el_from) = crt2sph(jonesrbasis[..., 0].squeeze().T)
         theta_phi_view = (np.pi/2-el_from.flatten(), az_from.flatten())
@@ -275,7 +284,7 @@ class EJones(Jones):
         ejones = ejones[..., ::-1]
         ejones[..., 1] = -ejones[..., 1]
 
-        self.jonesbasis = self.jonesrbasis  # Basis does not change
+        self.jonesbasis = self.jonesrbasis_from  # Basis does not change
         # This is the actual MEq multiplication:
         if ejones.ndim > 3:
             frqdimsz = (ejones.shape[0],)
@@ -297,6 +306,18 @@ class DualPolFieldSink(Jones):
     def computeJonesRes(self):
         self.jones = self.jonesr
         self.jonesmeta = self.jonesrmeta
+
+
+def inverse(jonesobj):
+    """Return a Jones object that is the inverse of jonesobj."""
+    inv_jones = copy.copy(jonesobj)
+    jmat = jonesobj.getValue()
+    inv_jones.jones = np.linalg.inv(jmat)
+    jframe = jonesobj.getMetadata()['refFrame']
+    jrframe = jonesobj.jonesrmeta['refFrame']
+    inv_jones.jonesmeta = {'refFrame': jrframe}
+    inv_jones.jonesrmeta = {'refFrame': jframe}
+    return inv_jones
 
 
 def plotJonesField(az, el, jonesfld, jbasis, rep='abs-Jones'):
@@ -332,7 +353,7 @@ def plotJonesField(az, el, jonesfld, jbasis, rep='abs-Jones'):
         res11lbl = 'v'
     else:
         raise Exception("Unknown Jones representation {}.".format(rep))
-    refframe = 'J2000'
+    refframe = 'STN'
     if refframe == 'STN':
         # Directions in Cartesian station crds
         x = jbasis[..., 0, 0]

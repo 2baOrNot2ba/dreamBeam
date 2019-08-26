@@ -44,15 +44,15 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     return timespy, freqs, Jn, res
 
 
-def beamfov(telescope, stnID, ObsTime, CelDir, freq):
+def beamfov(telescope, stnID, ObsTime, celdir, freq):
     """Computes the Jones matrix over the beam fov for pointing.
     """
-    #    *Setup Source*
-    (celAz, celEl, celRef) = CelDir
-    srcfld = dreambeam.rime.jones.DualPolFieldRegion()
-
     stnBD = telescope['Station'][stnID]
     stnRot = stnBD.stnRot
+
+    #    *Setup Source*
+    (az, el, refframe) = celdir
+    srcfld = dreambeam.rime.jones.DualPolFieldRegion(refframe)
 
     #    *Setup Parallatic Jones*
     pjones = dreambeam.rime.jones.PJones([ObsTime], np.transpose(stnRot))
@@ -63,11 +63,15 @@ def beamfov(telescope, stnID, ObsTime, CelDir, freq):
     freqs = stnDPolel.getfreqs()
     frqIdx = np.where(np.isclose(freqs, freq, atol=190e3))[0][0]
     # N.B. Ejones doesn't really use CelDir
-    ejones = stnBD.getEJones(CelDir, [freqs[frqIdx]])
+    ejones = stnBD.getEJones(celdir, [freqs[frqIdx]])
 
     #    *Setup MEq*
-    pjonesOfSrc = pjones.op(srcfld)
-    res = ejones.op(pjonesOfSrc)
+    pjones_src = pjones.op(srcfld)
+    if refframe == dreambeam.rime.jones.Jones._topo_frame:
+        # Since refFrame is STN, pjones is inverse of ordinary J2000 to STN.
+        # By inverting it, one gets the ordinary conversion back.
+        pjones_src = dreambeam.rime.jones.inverse(pjones_src)
+    res = ejones.op(pjones_src)
 
     # Get the resulting Jones matrices
     # (structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
@@ -81,8 +85,8 @@ def display_pointings(jones, obsinfo=None, do_3D=False,
     """Display pointings in topocentric station coordinates, the antenna
     basis and the antenna response to IAU x and y. The plots are based on the
     final cumulative jones.
-    For informative labelling, include the optional arguments obsinfo, The I The time of the first Jones
-    matrix obstimebeg is used for labelling.
+    For informative labelling, include the optional argument obsinfo, which
+    contains fields 'stnid', 'band', 'freq', 'starttime', and 'antmodel'.
     """
     def plotsphgrid():
         # Plot grid for the LCL spherical crd sys
@@ -102,7 +106,7 @@ def display_pointings(jones, obsinfo=None, do_3D=False,
             (xth_itrf, yth_itrf, zth_itrf) = (xyzth_itrf[0], xyzth_itrf[1],
                                               xyzth_itrf[2])
             if hidebelowhrz:
-                abovehrz =  zth_itrf > 0
+                abovehrz = zth_itrf > 0
                 xth_itrf = xth_itrf[abovehrz]
                 yth_itrf = yth_itrf[abovehrz]
                 zth_itrf = zth_itrf[abovehrz]
