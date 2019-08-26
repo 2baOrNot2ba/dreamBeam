@@ -30,7 +30,7 @@ class Jones(object):
         """Operate this Jones on to the Jones passed in the argument."""
         self.jonesr = jonesobjright.getValue()
         self.jonesrbasis_from = jonesobjright.get_basis()
-        self.jonesrmeta = jonesobjright.getMetadata()
+        self.refframe_r = jonesobjright.get_refframe()
         self.computeJonesRes()
         return self
 
@@ -42,9 +42,9 @@ class Jones(object):
         """Return basis of the Jones matrix"""
         return self.jonesbasis
 
-    def getMetadata(self):
+    def get_refframe(self):
         """Return the data about the Jones matrix."""
-        return self.jonesmeta
+        return self.refframe
 
     def computeJonesRes(self):
         pass
@@ -90,7 +90,6 @@ class PJones(Jones):
         obsTimes_me = quantity(obsTimes_lst, 'd')
         self.obsTimes = obsTimes_me.get_value()
         self.obsTimeUnit = obsTimes_me.get_unit()
-        self.jonesmeta = {}
         self.ITRF2stnrot = ITRF2stnrot
         self.do_parallactic_rot = do_parallactic_rot
 
@@ -140,10 +139,10 @@ class PJones(Jones):
         me = measures()
         me.doframe(measures().position(self._ecef_frame, '0m', '0m', '0m'))
         self.jonesbasis = np.zeros((nrOfTimes, 3, 3))
-        if self.jonesrmeta['refFrame'] == self._eci_frame:
+        if self.refframe_r == self._eci_frame:
             convert2irf = self._ecef_frame
             jonesrbasis_from = self.jonesrbasis_from
-            jr_refframe = self.jonesrmeta['refFrame']
+            jr_refframe = self.refframe_r
         else:
             convert2irf = self._eci_frame
             jonesrbasis_from = np.matmul(self.ITRF2stnrot.T,
@@ -167,9 +166,9 @@ class PJones(Jones):
                 pjones[ti, :, :] = np.asmatrix(np.identity(2))
             self.jonesbasis[ti, :, :] = jonesbasisMat
         if convert2irf == self._ecef_frame:
-            self.jonesmeta['refFrame'] = 'STN'  # Final Ref frame is station
+            self.refframe = 'STN'  # Final Ref frame is station
         else:
-            self.jonesmeta['refFrame'] = self._eci_frame
+            self.refframe = self._eci_frame
         self.jones = np.matmul(pjones, self.jonesr)
         self.thisjones = pjones
 
@@ -180,10 +179,10 @@ class PJones(Jones):
         me = measures()
         me.doframe(measures().position(self._ecef_frame, '0m', '0m', '0m'))
         self.jonesbasis = np.zeros(self.jonesrbasis_from.shape)
-        if self.jonesrmeta['refFrame'] == self._eci_frame:
+        if self.refframe_r == self._eci_frame:
             convert2irf = self._ecef_frame
             jonesrbasis_from = self.jonesrbasis_from
-            jr_refframe = self.jonesrmeta['refFrame']
+            jr_refframe = self.refframe_r
         else:
             convert2irf = self._eci_frame
             jonesrbasis_from = np.matmul(self.ITRF2stnrot.T,
@@ -205,9 +204,9 @@ class PJones(Jones):
                     * jonesrbasis_to[:, 1:]
                 self.jonesbasis[idxi, idxj, :, :] = jonesbasisMat
         if convert2irf == self._ecef_frame:
-            self.jonesmeta['refFrame'] = 'STN'  # Final Ref frame is station
+            self.refframe = 'STN'  # Final Ref frame is station
         else:
-            self.jonesmeta['refFrame'] = self._eci_frame
+            self.refframe = self._eci_frame
         self.jones = np.matmul(pjones, self.jonesr)
         self.thisjones = pjones
 
@@ -230,7 +229,7 @@ class DualPolFieldPointSrc(Jones):
             jones = dualPolField3d[1:, 1:]
         self.jones = np.asarray(jones)
         self.jonesbasis = np.asarray(IAU_pol_basis(src_az, src_el))
-        self.jonesmeta = {'refFrame': src_ref}
+        self.refframe = src_ref
 
 
 class DualPolFieldRegion(Jones):
@@ -251,7 +250,7 @@ class DualPolFieldRegion(Jones):
                                      self.elmsh.shape+dualPolField.shape)
         self.jonesbasis = shiftmat2back(
             getSph2CartTransfArr(sph2crt(self.azmsh, self.elmsh)))
-        self.jonesmeta = {'refFrame': refframe}
+        self.refframe = refframe
 
 
 class EJones(Jones):
@@ -305,7 +304,7 @@ class EJones(Jones):
 class DualPolFieldSink(Jones):
     def computeJonesRes(self):
         self.jones = self.jonesr
-        self.jonesmeta = self.jonesrmeta
+        self.refframe = self.refframe_r
 
 
 def inverse(jonesobj):
@@ -313,10 +312,10 @@ def inverse(jonesobj):
     inv_jones = copy.copy(jonesobj)
     jmat = jonesobj.getValue()
     inv_jones.jones = np.linalg.inv(jmat)
-    jframe = jonesobj.getMetadata()['refFrame']
-    jrframe = jonesobj.jonesrmeta['refFrame']
-    inv_jones.jonesmeta = {'refFrame': jrframe}
-    inv_jones.jonesrmeta = {'refFrame': jframe}
+    jframe = jonesobj.get_refframe()
+    jrframe = jonesobj.refframe_r
+    inv_jones.refframe = jrframe
+    inv_jones.refframe_r = jframe
     return inv_jones
 
 
