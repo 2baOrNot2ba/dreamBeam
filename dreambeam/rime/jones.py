@@ -10,7 +10,8 @@ from casacore.measures import measures
 from casacore.quanta import quantity
 from conversionUtils import sph2crt, crt2sph, convertBasis, \
                             getSph2CartTransf, getSph2CartTransfArr, \
-                            IAU_pol_basis, shiftmat2back, IAUtoC09, sphmeshgrid
+                            IAU_pol_basis, shiftmat2back, IAUtoC09, C09toIAU,\
+                            sphmeshgrid
 
 
 class Jones(object):
@@ -31,6 +32,7 @@ class Jones(object):
         self.jonesr = jonesobjright.getValue()
         self.jonesrbasis_from = jonesobjright.get_basis()
         self.refframe_r = jonesobjright.get_refframe()
+        self.iaucmp = jonesobjright.iaucmp
         self.computeJonesRes()
         return self
 
@@ -43,7 +45,7 @@ class Jones(object):
         return self.jonesbasis
 
     def get_refframe(self):
-        """Return the data about the Jones matrix."""
+        """Return the reference frame of the Jones matrix."""
         return self.refframe
 
     def computeJonesRes(self):
@@ -69,6 +71,11 @@ class Jones(object):
         # ang_u = np.rad2deg(np.arctan2(jonesbasis_lud3[:,1,1], jonesbasis_lud3[:,0,1]))
         # print ang_u
         return jonesbasis_lud3
+
+    def convert2iaucmp(self):
+        if not self.iaucmp:
+            self.jones = np.matmul(self.jones, IAUtoC09)
+            self.iaucmp = True
 
 
 class JonesChain(object):
@@ -225,8 +232,10 @@ class DualPolFieldPointSrc(Jones):
         dualPolField3d[1:, 1:] = np.asmatrix(dualPolField)
         if iaucmp:
             jones = np.matmul(IAUtoC09, dualPolField3d)[1:, 1:]
+            self.iaucmp = True
         else:
             jones = dualPolField3d[1:, 1:]
+            self.iaucmp = False
         self.jones = np.asarray(jones)
         self.jonesbasis = np.asarray(IAU_pol_basis(src_az, src_el))
         self.refframe = src_ref
@@ -244,8 +253,10 @@ class DualPolFieldRegion(Jones):
         dualPolField3d[1:, 1:] = np.asmatrix(dualPolField)
         if iaucmp:
             jones = np.matmul(IAUtoC09, dualPolField3d)[1:, 1:]
+            self.iaucmp = True
         else:
             jones = dualPolField3d[1:, 1:]
+            self.iaucmp = False
         self.jones = np.broadcast_to(jones,
                                      self.elmsh.shape+dualPolField.shape)
         self.jonesbasis = shiftmat2back(

@@ -297,6 +297,10 @@ def sph2crt(azi, ele):
 IAUtoC09 = np.array([[1., 0., 0.],
                      [0., 0., 1.],
                      [0., 1., 0.]])
+C09toIAU = np.linalg.inv(IAUtoC09)
+# C09toIAU = np.array([[1., 0., 0.],
+#                      [0., 0., 1.],
+#                      [0., 1., 0.]])
 
 
 def IAU_pol_basis(src_az, src_el):

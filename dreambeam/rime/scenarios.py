@@ -52,7 +52,7 @@ def beamfov(telescope, stnID, ObsTime, celdir, freq):
 
     #    *Setup Source*
     (az, el, refframe) = celdir
-    srcfld = dreambeam.rime.jones.DualPolFieldRegion(refframe)
+    srcfld = dreambeam.rime.jones.DualPolFieldRegion(refframe, iaucmp=False)
 
     #    *Setup Parallatic Jones*
     pjones = dreambeam.rime.jones.PJones([ObsTime], np.transpose(stnRot))
@@ -72,6 +72,8 @@ def beamfov(telescope, stnID, ObsTime, celdir, freq):
         # By inverting it, one gets the ordinary conversion back.
         pjones_src = dreambeam.rime.jones.inverse(pjones_src)
     res = ejones.op(pjones_src)
+    # Because we started off with iaucmp=False, but want IAU components:
+    res.convert2iaucmp()
 
     # Get the resulting Jones matrices
     # (structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
