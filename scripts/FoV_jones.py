@@ -38,27 +38,28 @@ USAGE = """Usage:{}
 
 if __name__ == "__main__":
     # Startup a telescope wizard
-    TW = TelescopesWiz()
+    tw = TelescopesWiz()
     # Process cmd line arguments
     args = sys.argv[1:]
     action = getnextcmdarg(args, "output-type:\n  'print' or 'plot'")
-    telescopeName = getnextcmdarg(args, "telescope:\n  "
-                                  + ', '.join(TW.get_telescopes()))
+    telescopename = getnextcmdarg(args, "telescope:\n  "
+                                  + ', '.join(tw.get_telescopes()))
     band = getnextcmdarg(args, "band/feed:\n  "
-                         + ', '.join(TW.get_bands(telescopeName)))
-    stnID = getnextcmdarg(args, "station-ID:\n  "
-                          + ', '.join(TW.get_stations(telescopeName, band)))
+                         + ', '.join(tw.get_bands(telescopename)))
+    stnid = getnextcmdarg(args, "station-ID:\n  "
+                          + ', '.join(tw.get_stations(telescopename, band)))
     antmodel = getnextcmdarg(args, "beam-model:\n  "
-                             + ', '.join(TW.get_beammodels(telescopeName,
+                             + ', '.join(tw.get_beammodels(telescopename,
                                                            band)))
+    del tw
     try:
-        bTime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
+        obstime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
     except IndexError:
         print("Specify time (UTC in ISO format: yy-mm-ddTHH:MM:SS ).")
         print(USAGE)
         exit()
     try:
-        CelDir = (float(args[1]), float(args[2]), 'J2000')
+        celdir = (float(args[1]), float(args[2]), 'J2000')
     except IndexError:
         print("Specify pointing direction (in radians): RA DEC")
         print(USAGE)
@@ -70,10 +71,9 @@ if __name__ == "__main__":
         print(USAGE)
         exit()
 
-    # Get the telescopeband instance:
-    telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
     # Compute the Jones matrices
-    az, el, jonesfld, jbasis = beamfov(telescope, stnID, bTime, CelDir, freq)
+    az, el, jonesfld, jbasis = beamfov(telescopename, band, antmodel, stnid,
+                                       obstime, celdir, freq)
     # Do something with resulting Jones according to cmdline args
     if action == "plot":
         plotJonesField(az, el, jonesfld, jbasis, rep='Stokes')

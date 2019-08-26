@@ -7,30 +7,38 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import dreambeam.rime.jones
 from dreambeam.rime.conversionUtils import crt2sph
+from dreambeam.telescopes.rt import TelescopesWiz
 
 
-def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
-                              ObsTimeStp, CelDir, do_parallactic_rot=True):
+def on_pointing_axis_tracking(telescopename, band, antmodel, stnid, obstimebeg,
+                              duration, obstimestp, celdir,
+                              do_parallactic_rot=True):
     """Computes the Jones matrix along pointing axis while tracking a fixed
     celestial source. """  # # FIXME: Doesn't use freq
-    #    *Setup Source*
-    # celAz, celEl, celRef = CelDir.split(',')
-    (celAz, celEl, celRef) = CelDir
-    srcfld = dreambeam.rime.jones.DualPolFieldPointSrc((celAz, celEl, celRef))
 
-    stnBD = telescope['Station'][stnID]
+    # Startup a telescope wizard
+    tw = TelescopesWiz()
+
+    # Get the telescopeband instance:
+    telescope = tw.getTelescopeBand(telescopename, band, antmodel)
+
+    #    *Setup Source*
+    (celaz, celel, celref) = celdir
+    srcfld = dreambeam.rime.jones.DualPolFieldPointSrc((celaz, celel, celref))
+
+    stnBD = telescope['Station'][stnid]
     stnRot = stnBD.stnRot
 
     #    *Setup PJones*
     timespy = []
-    nrTimSamps = int((duration.total_seconds()/ObsTimeStp.seconds))+1
+    nrTimSamps = int((duration.total_seconds()/obstimestp.seconds))+1
     for ti in range(0, nrTimSamps):
-        timespy.append(ObsTimeBeg+ti*ObsTimeStp)
+        timespy.append(obstimebeg+ti*obstimestp)
     pjones = dreambeam.rime.jones.PJones(timespy, np.transpose(stnRot),
                                          do_parallactic_rot=do_parallactic_rot)
 
     #    *Setup EJones*
-    ejones = stnBD.getEJones(CelDir)
+    ejones = stnBD.getEJones(celdir)
     stnDPolel = stnBD.feed_pat
 
     #    *Setup MEq*
@@ -44,10 +52,15 @@ def on_pointing_axis_tracking(telescope, stnID, ObsTimeBeg, duration,
     return timespy, freqs, Jn, res
 
 
-def beamfov(telescope, stnID, ObsTime, celdir, freq):
+def beamfov(telescopename, band, antmodel, stnid, obstime, celdir, freq):
     """Computes the Jones matrix over the beam fov for pointing.
     """
-    stnBD = telescope['Station'][stnID]
+    # Startup a telescope wizard
+    tw = TelescopesWiz()
+
+    # Get the telescopeband instance:
+    telescope = tw.getTelescopeBand(telescopename, band, antmodel)
+    stnBD = telescope['Station'][stnid]
     stnRot = stnBD.stnRot
 
     #    *Setup Source*
@@ -55,7 +68,7 @@ def beamfov(telescope, stnID, ObsTime, celdir, freq):
     srcfld = dreambeam.rime.jones.DualPolFieldRegion(refframe, iaucmp=False)
 
     #    *Setup Parallatic Jones*
-    pjones = dreambeam.rime.jones.PJones([ObsTime], np.transpose(stnRot))
+    pjones = dreambeam.rime.jones.PJones([obstime], np.transpose(stnRot))
 
     #    *Setup EJones*
     stnDPolel = stnBD.feed_pat

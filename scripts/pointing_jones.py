@@ -27,9 +27,6 @@ SCRIPTNAME = sys.argv[0].split('/')[-1]
 USAGE = """Usage:\n  {} print|plot telescope band stnID beammodel beginUTC \
 duration timeStep pointingRA pointingDEC [frequency]""".format(SCRIPTNAME)
 
-# Startup a telescope wizard
-TW = TelescopesWiz()
-
 
 def printJonesFreq(timespy, Jnf):
     # Select one frequency
@@ -109,12 +106,11 @@ def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
          CelDir, freq=None, action='print', frmt='csv',
          do_parallactic_rot=True):
     """An python entry_point for the pointing_jones command."""
-    # Get the telescopeband instance:
-    telescope = TW.getTelescopeBand(telescopeName, band, antmodel)
+
     # Compute the Jones matrices
     timespy, freqs, Jn, res = \
-        on_pointing_axis_tracking(telescope, stnID, bTime, duration, stepTime,
-                                  CelDir,
+        on_pointing_axis_tracking(telescopeName, band, antmodel, stnID, bTime,
+                                  duration, stepTime, CelDir,
                                   do_parallactic_rot=do_parallactic_rot)
     if (freq < freqs[0] or freq > freqs[-1]) and freq is not None:
         raise ValueError("Requested frequency {} Hz outside of band {}"
@@ -151,6 +147,9 @@ if __name__ == "__main__":
                         help='Commandline arguments')
     args = parser.parse_args()
 
+    # Startup a telescope wizard
+    tw = TelescopesWiz()
+
     # Process cmd line arguments
     do_parallactic_rot = args.pararot
     frmt = args.frmt
@@ -164,25 +163,25 @@ if __name__ == "__main__":
             telescope = args.pop(0)
         except IndexError:
             raise RuntimeError("Specify telescope:\n  "
-                               + ', '.join(TW.get_telescopes()))
+                               + ', '.join(tw.get_telescopes()))
         try:
             band = args.pop(0)
         except IndexError:
             raise RuntimeError("Specify band/feed:\n  "
-                               + ', '.join(TW.get_bands(telescope)))
+                               + ', '.join(tw.get_bands(telescope)))
         try:
-            stnID = args.pop(0)
+            stnid = args.pop(0)
         except IndexError:
             raise RuntimeError("Specify station-ID:\n  "
-                               + ', '.join(TW.get_stations(telescope, band)))
+                               + ', '.join(tw.get_stations(telescope, band)))
         try:
             antmodel = args.pop(0)
         except IndexError:
             raise RuntimeError("Specify beam-model:\n  "
-                               + ', '.join(TW.get_beammodels(telescope, band)))
-
+                               + ', '.join(tw.get_beammodels(telescope, band)))
+        del tw
         try:
-            btime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
+            obstimebeg = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
         except IndexError:
             raise RuntimeError(
                 "Specify start-time (UTC in ISO format: yyyy-mm-ddTHH:MM:SS )")
@@ -214,6 +213,6 @@ if __name__ == "__main__":
         print(USAGE)
         sys.exit(2)
 
-    main(telescope, band, antmodel, stnID, btime, duration, steptime, celdir,
-         freq=freq, action=action, frmt=frmt,
+    main(telescope, band, antmodel, stnid, obstimebeg, duration, steptime,
+         celdir, freq=freq, action=action, frmt=frmt,
          do_parallactic_rot=do_parallactic_rot)
