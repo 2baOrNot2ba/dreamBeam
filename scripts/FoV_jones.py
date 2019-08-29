@@ -85,11 +85,14 @@ if __name__ == "__main__":
     pointing = (az, el, refframe)
 
     # Compute the Jones matrices
-    az, el, jonesfld, jbasis, refframe = beamfov(telescopename, band, antmodel,
-                                                 stnid, freq,
-                                                 pointing=pointing,
-                                                 obstime=obstime,
-                                                 lmgrid=lmgrid)
+    az, el, jonesfld, stnbasis, j2000basis = beamfov(
+                                    telescopename, band, antmodel, stnid, freq,
+                                    pointing=pointing, obstime=obstime,
+                                    lmgrid=lmgrid)
+    if refframe == 'STN':
+        jbasis = stnbasis
+    else:
+        jbasis = j2000basis
     # Do something with resulting Jones according to cmdline args
     if action == "plot":
         plotJonesField(az, el, jonesfld, jbasis, refframe, rep='Stokes')
