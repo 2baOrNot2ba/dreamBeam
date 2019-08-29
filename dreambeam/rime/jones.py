@@ -10,8 +10,8 @@ from casacore.measures import measures
 from casacore.quanta import quantity
 from conversionUtils import sph2crt, crt2sph, convertBasis, \
                             getSph2CartTransf, getSph2CartTransfArr, \
-                            IAU_pol_basis, shiftmat2back, IAUtoC09, C09toIAU,\
-                            sphmeshgrid
+                            IAU_pol_basis, shiftmat2back, IAUtoC09, \
+                            sphmeshgrid, dc_hrz2vrt
 
 
 class Jones(object):
@@ -246,10 +246,16 @@ class DualPolFieldRegion(Jones):
     """This is a Jones unit flux density field."""
 
     def __init__(self, refframe='J2000', dualPolField=np.identity(2),
-                 iaucmp=True):
-        thetamsh, phimsh = sphmeshgrid()
-        self.elmsh = np.pi/2-thetamsh
-        self.azmsh = phimsh
+                 iaucmp=True, lmgrid=None):
+        if not lmgrid:
+            azimsh, elemsh = sphmeshgrid()
+            lmn = sph2crt(azimsh, elemsh)
+        else:
+            nn = dc_hrz2vrt(*lmgrid)
+            lmn = np.array(lmgrid+(nn,))
+            azimsh, elemsh = crt2sph(lmn)
+        self.azmsh = azimsh
+        self.elmsh = elemsh
         dualPolField3d = np.asmatrix(np.identity(3))
         dualPolField3d[1:, 1:] = np.asmatrix(dualPolField)
         if iaucmp:
@@ -259,9 +265,8 @@ class DualPolFieldRegion(Jones):
             jones = dualPolField3d[1:, 1:]
             self.iaucmp = False
         self.jones = np.broadcast_to(jones,
-                                     self.elmsh.shape+dualPolField.shape)
-        self.jonesbasis = shiftmat2back(
-            getSph2CartTransfArr(sph2crt(self.azmsh, self.elmsh)))
+                                     elemsh.shape+dualPolField.shape)
+        self.jonesbasis = shiftmat2back(getSph2CartTransfArr(lmn))
         self.refframe = refframe
 
 
@@ -277,6 +282,7 @@ class EJones(Jones):
             self.freqChan = self.dualPolElem.getfreqs()
         else:
             self.freqChan = freqSel
+        self.refframe = 'STN'
 
     def computeJonesRes(self):
         """Compute the Jones that results from applying the E-Jones to the
@@ -285,7 +291,6 @@ class EJones(Jones):
         """
         idxshape = self.jonesrbasis_from.shape[0:-2]
         jonesrbasis = np.reshape(self.jonesrbasis_from, (-1, 3, 3))
-        jonesrbasis_to = jonesrbasis
         (az_from, el_from) = crt2sph(jonesrbasis[..., 0].squeeze().T)
         theta_phi_view = (np.pi/2-el_from.flatten(), az_from.flatten())
         ejones = self.dualPolElem.getJonesAlong(self.freqChan, theta_phi_view)
@@ -324,6 +329,9 @@ def inverse(jonesobj):
     inv_jones = copy.copy(jonesobj)
     jmat = jonesobj.getValue()
     inv_jones.jones = np.linalg.inv(jmat)
+    # Swap basis between left and right:
+    inv_jones.jonesbasis = jonesobj.jonesrbasis_from
+    inv_jones.jonesrbasis_from = jonesobj.jonesbasis
     jframe = jonesobj.get_refframe()
     jrframe = jonesobj.refframe_r
     inv_jones.refframe = jrframe
@@ -331,7 +339,20 @@ def inverse(jonesobj):
     return inv_jones
 
 
-def plotJonesField(az, el, jonesfld, jbasis, rep='abs-Jones'):
+def fix_imaginary_directions(jonesobj, fill=np.identity(2)):
+    """Replace jones matrices with imaginary directions in a Jones object.
+
+When specifying 2D Cartesian direction cosines, it is possible that the
+corresponding direction is not physical, e.g. when l,m = 1,1. In such cases,
+the Jones radius basis will have an imaginary vertical component. This function
+will find such 'directions' and replace the corresponding Jones matrix will the
+fill matrix specified by the `fill` argument.
+    """
+    idxs = np.where(np.imag(jonesobj.jonesbasis[..., 0, 2]))
+    jonesobj.jones[idxs[0], idxs[1], ...] = fill
+
+
+def plotJonesField(az, el, jonesfld, jbasis, refframe, rep='abs-Jones'):
     """Plot a Jones field."""
     if rep == 'abs-Jones':
         restitle = 'Beam Jones on sky'
@@ -364,7 +385,6 @@ def plotJonesField(az, el, jonesfld, jbasis, rep='abs-Jones'):
         res11lbl = 'v'
     else:
         raise Exception("Unknown Jones representation {}.".format(rep))
-    refframe = 'STN'
     if refframe == 'STN':
         # Directions in Cartesian station crds
         x = jbasis[..., 0, 0]
