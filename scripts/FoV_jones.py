@@ -3,6 +3,7 @@
 """
 import sys
 from datetime import datetime
+import numpy as np
 from dreambeam.rime.scenarios import beamfov
 from dreambeam.telescopes.rt import TelescopesWiz
 from dreambeam.rime.jones import plotJonesField
@@ -59,23 +60,38 @@ if __name__ == "__main__":
         print(USAGE)
         exit()
     try:
-        celdir = (float(args[1]), float(args[2]), 'J2000')
-    except IndexError:
-        print("Specify pointing direction (in radians): RA DEC")
+        (az, el, refframe) = args[1].split(',')
+        az, el = float(az), float(el)
+    except ValueError:
+        print("""Specify pointing direction (in radians): 'RA,DEC,J200'
+                                         or 'AZ,EL,AZEL'""")
         print(USAGE)
         exit()
     try:
-        freq = float(args[3])
+        freq = float(args[2])
     except ValueError:
         print("Specify frequency (in Hz).")
         print(USAGE)
         exit()
 
+    if refframe == 'AZEL':
+        refframe = 'STN'
+        l = np.linspace(-1., 1., 10)
+        m = np.linspace(-1., 1., 10)
+        ll, mm = np.meshgrid(l, m)
+        lmgrid = (ll, mm)
+    else:
+        lmgrid = None
+    pointing = (az, el, refframe)
+
     # Compute the Jones matrices
-    az, el, jonesfld, jbasis = beamfov(telescopename, band, antmodel, stnid,
-                                       obstime, celdir, freq)
+    az, el, jonesfld, jbasis, refframe = beamfov(telescopename, band, antmodel,
+                                                 stnid, freq,
+                                                 pointing=pointing,
+                                                 obstime=obstime,
+                                                 lmgrid=lmgrid)
     # Do something with resulting Jones according to cmdline args
     if action == "plot":
-        plotJonesField(az, el, jonesfld, jbasis, rep='Stokes')
+        plotJonesField(az, el, jonesfld, jbasis, refframe, rep='Stokes')
     else:
         printJonesField(az, el, jonesfld)
