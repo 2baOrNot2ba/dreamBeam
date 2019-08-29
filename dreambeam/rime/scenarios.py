@@ -81,19 +81,23 @@ def beamfov(telescopename, band, antmodel, stnid, freq,
     #    *Setup MEq*
     pjones_src = pjones.op(srcfld)
     if refframe == dreambeam.rime.jones.Jones._topo_frame:
+        j2000basis = pjones_src.jonesbasis
         # Since refFrame is STN, pjones is inverse of ordinary J2000 to STN.
         # By inverting it, one gets the ordinary conversion back.
         pjones_src = dreambeam.rime.jones.inverse(pjones_src)
+    else:
+        j2000basis = srcfld.jonesbasis
     res = ejones.op(pjones_src)
     # Because we started off with iaucmp=False, but want IAU components:
     res.convert2iaucmp()
 
     dreambeam.rime.jones.fix_imaginary_directions(res)
+    stnbasis = res.jonesbasis
     # Get the resulting Jones matrices
     # (structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
     res_jones = res.getValue()
 
-    return srcfld.azmsh, srcfld.elmsh, res_jones, res.jonesbasis, res.refframe
+    return(srcfld.azmsh, srcfld.elmsh, res_jones, stnbasis, j2000basis)
 
 
 def display_pointings(jones, obsinfo=None, do_3D=False,
