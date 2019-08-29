@@ -1,5 +1,6 @@
 """Functions for converting between astronomical reference frames, etc."""
 
+import warnings
 import numpy as np
 from casacore.measures import measures
 from casacore.quanta import quantity
@@ -264,11 +265,26 @@ def rotzMat2ang(rotMat):
 
 
 def crt2sph(dir_crt):
+    """Cartesian to spherical conversion.
+
+N.B. When using direction cosines (Db uses them), regions outside the horizon
+(such as l,m=1,1) will have an imaginary vertical component. This function will
+neglect the imaginary part of the vertical component, so the elevation will be
+0, rather than raise an exception. This is so that further processing can
+proceed. The user should check the vertical component of the radial base of the
+basis attribute, i.e. jones.basis[...,0,2], to see if it is imaginary and act
+accordingly.
+    """
     x = np.squeeze(dir_crt[0])
     y = np.squeeze(dir_crt[1])
     z = np.squeeze(dir_crt[2])
-    azi = np.arctan2(y, x)
-    ele = np.arcsin(z)
+    # x,y should be real but since z could be imaginary, dir_crt may have
+    # dtype complex, so x,y will seem complex. Therefore take the real parts
+    # of x and y here:
+    azi = np.arctan2(np.real(y), np.real(x))
+    ele = np.arcsin(np.real(z))
+    if np.any(np.imag(z)):
+         warnings.warn("Some z-components are imaginary.")
     # Radial component (not needed for unit directions)
     # r=np.sqrt(x**2+y**2+z**2)
     # ele=np.arcsin(z/r)
@@ -314,22 +330,23 @@ def IAU_pol_basis(src_az, src_el):
     return basis_C09
 
 
-def sphmeshgrid(nrThetas=128, nrPhis=256, distr='isodeltaang'):
+def sphmeshgrid(nr_ele=128, nr_azi=256):
     """Provides a polar angles grid on a 2-sphere. Azimuthal dimension should
     not wrap around to ensure uniqueness on sphere. The mesh has theta
     increasing along rows and phi along columns."""
-    if distr == 'isodeltaang':
-        # Add one to include endpoint:
-        theta = np.linspace(0.0, math.pi, nrThetas+1, endpoint=True)
-        # Don't overlap 0 and 2*pi
-        phi = np.linspace(0.0, 2*math.pi, nrPhis, endpoint=False)
-        phimsh, thetamsh = np.meshgrid(phi, theta)
-    elif distr == 'lm':
-        pass  # TODO:   Implement this section
-        # l = np.linspace(-1., 1, 100, endpoint=True)
-        # m = np.linspace(-1., 1, 100, endpoint=True)
+    # Include endpoint:
+    ele = np.linspace(math.pi/2, -math.pi/2, nr_ele, endpoint=True)
+    # Don't overlap 0 and 2*pi
+    azi = np.linspace(0.0, 2*math.pi, nr_azi, endpoint=False)
+    azimsh, elemsh = np.meshgrid(azi, ele)
+    return azimsh, elemsh
 
-    return thetamsh, phimsh
+
+def dc_hrz2vrt(ll, mm, hemisph=+1):
+    """Compute vertical component of an array of 2D horizontal direction
+    cosines."""
+    nn = hemisph * np.sqrt((1-ll**2-mm**2).astype(complex))
+    return nn
 
 
 def pyTimes2meTimes(pyTimes):
