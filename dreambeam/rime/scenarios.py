@@ -4,9 +4,7 @@ It implements basic Jones chains or Measurement Equations.
 '''
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import dreambeam.rime.jones
-from dreambeam.rime.conversionUtils import crt2sph
 from dreambeam.telescopes.rt import TelescopesWiz
 
 
@@ -52,7 +50,8 @@ def on_pointing_axis_tracking(telescopename, band, antmodel, stnid, obstimebeg,
     return timespy, freqs, Jn, res
 
 
-def beamfov(telescopename, band, antmodel, stnid, obstime, celdir, freq):
+def beamfov(telescopename, band, antmodel, stnid, freq,
+            pointing=(0., np.pi/2, 'STN'), obstime=None, lmgrid=None):
     """Computes the Jones matrix over the beam fov for pointing.
     """
     # Startup a telescope wizard
@@ -64,8 +63,9 @@ def beamfov(telescopename, band, antmodel, stnid, obstime, celdir, freq):
     stnRot = stnBD.stnRot
 
     #    *Setup Source*
-    (az, el, refframe) = celdir
-    srcfld = dreambeam.rime.jones.DualPolFieldRegion(refframe, iaucmp=False)
+    (az, el, refframe) = pointing
+    srcfld = dreambeam.rime.jones.DualPolFieldRegion(refframe, iaucmp=False,
+                                                     lmgrid=lmgrid)
 
     #    *Setup Parallatic Jones*
     pjones = dreambeam.rime.jones.PJones([obstime], np.transpose(stnRot))
@@ -75,8 +75,8 @@ def beamfov(telescopename, band, antmodel, stnid, obstime, celdir, freq):
     #    **Select frequency
     freqs = stnDPolel.getfreqs()
     frqIdx = np.where(np.isclose(freqs, freq, atol=190e3))[0][0]
-    # N.B. Ejones doesn't really use CelDir
-    ejones = stnBD.getEJones(celdir, [freqs[frqIdx]])
+    # N.B. Ejones doesn't really use pointing
+    ejones = stnBD.getEJones(pointing, [freqs[frqIdx]])
 
     #    *Setup MEq*
     pjones_src = pjones.op(srcfld)
@@ -88,11 +88,12 @@ def beamfov(telescopename, band, antmodel, stnid, obstime, celdir, freq):
     # Because we started off with iaucmp=False, but want IAU components:
     res.convert2iaucmp()
 
+    dreambeam.rime.jones.fix_imaginary_directions(res)
     # Get the resulting Jones matrices
     # (structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
     res_jones = res.getValue()
 
-    return srcfld.azmsh, srcfld.elmsh, res_jones, res.jonesbasis
+    return srcfld.azmsh, srcfld.elmsh, res_jones, res.jonesbasis, res.refframe
 
 
 def display_pointings(jones, obsinfo=None, do_3D=False,
