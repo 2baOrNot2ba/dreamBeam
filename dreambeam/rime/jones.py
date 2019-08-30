@@ -352,7 +352,7 @@ fill matrix specified by the `fill` argument.
     jonesobj.jones[idxs[0], idxs[1], ...] = fill
 
 
-def plotJonesField(az, el, jonesfld, jbasis, refframe, rep='abs-Jones'):
+def plotJonesField(jonesfld, jbasis, refframe, rep='abs-Jones'):
     """Plot a Jones field."""
     if rep == 'abs-Jones':
         restitle = 'Beam Jones on sky'
@@ -400,10 +400,13 @@ def plotJonesField(az, el, jonesfld, jbasis, refframe, rep='abs-Jones'):
         xlabel = 'STN X'
         ylabel = 'STN Y'
     elif refframe == 'J2000':
+        r = np.swapaxes(np.squeeze(jbasis[..., :, 0]), -1, 0)
+        az, el = crt2sph(r)
         x = az
         y = el
         xlabel = 'RA'
         ylabel = 'DEC'
+    print x.shape, y.shape
     fig = plt.figure()
     fig.suptitle(restitle)
     ax = plt.subplot(221, polar=False)
