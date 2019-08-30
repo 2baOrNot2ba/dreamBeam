@@ -9,13 +9,19 @@ from dreambeam.telescopes.rt import TelescopesWiz
 from dreambeam.rime.jones import plotJonesField
 
 
-def printJonesField(az, el, Jnf):
-    # Select one frequency
-    for idxi in range(az.shape[0]):
-        for idxj in range(az.shape[1]):
-            print("az, el:", az[idxi, idxj], el[idxi, idxj])
-            print("Jones:", Jnf[idxi, idxj, 0, 0], Jnf[idxi, idxj, 0, 1],
-                  Jnf[idxi, idxj, 1, 0], Jnf[idxi, idxj, 1, 1])
+def printJonesField(jnf, jbasis):
+    (nr_xs, nr_ys, _, _) = jbasis.shape
+    print("x, y, J00, J01, J10, J11")
+    for idxi in range(nr_xs):
+        for idxj in range(nr_ys):
+            x = np.real(jbasis[idxi, idxj, 0, 0])
+            y = np.real(jbasis[idxi, idxj, 1, 0])
+            J00 = jnf[idxi, idxj, 0, 0]
+            J01 = jnf[idxi, idxj, 0, 1]
+            J10 = jnf[idxi, idxj, 1, 0]
+            J11 = jnf[idxi, idxj, 1, 1]
+            jones_1f_outstring = ",".join(map(str, [x, y, J00, J01, J10, J11]))
+            print(jones_1f_outstring)
 
 
 def getnextcmdarg(args, mes):
@@ -34,7 +40,7 @@ USAGE = """Usage:{}
          pointingRA pointingDEC frequency""".format(SCRIPTNAME)
 
 # Example:
-# $ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 60 1\
+# $ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 \
 #   6.11 1.02 60E6
 
 if __name__ == "__main__":
@@ -85,8 +91,8 @@ if __name__ == "__main__":
     pointing = (az, el, refframe)
 
     # Compute the Jones matrices
-    az, el, jonesfld, stnbasis, j2000basis = beamfov(
-                                    telescopename, band, antmodel, stnid, freq,
+    jonesfld, stnbasis, j2000basis = beamfov(
+                                    telescopename, stnid, band, antmodel, freq,
                                     pointing=pointing, obstime=obstime,
                                     lmgrid=lmgrid)
     if refframe == 'STN':
@@ -95,6 +101,6 @@ if __name__ == "__main__":
         jbasis = j2000basis
     # Do something with resulting Jones according to cmdline args
     if action == "plot":
-        plotJonesField(az, el, jonesfld, jbasis, refframe, rep='Stokes')
+        plotJonesField(jonesfld, jbasis, refframe, rep='Stokes')
     else:
-        printJonesField(az, el, jonesfld)
+        printJonesField(jonesfld, jbasis)

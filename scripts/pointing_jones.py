@@ -102,22 +102,22 @@ def plotAllJones(timespy, freqs, Jn):
     plot_polcomp_dynspec(timespy, freqs, Jn)
 
 
-def main(telescopeName, band, antmodel, stnID, bTime, duration, stepTime,
-         CelDir, freq=None, action='print', frmt='csv',
+def main(telescopename, stnid, band, antmodel, bTime, duration, stepTime,
+         celdir, freq=None, action='print', frmt='csv',
          do_parallactic_rot=True):
     """An python entry_point for the pointing_jones command."""
 
     # Compute the Jones matrices
     timespy, freqs, Jn, res = \
-        on_pointing_axis_tracking(telescopeName, band, antmodel, stnID, bTime,
-                                  duration, stepTime, CelDir,
+        on_pointing_axis_tracking(telescopename, stnid, band, antmodel, bTime,
+                                  duration, stepTime, celdir,
                                   do_parallactic_rot=do_parallactic_rot)
     if (freq < freqs[0] or freq > freqs[-1]) and freq is not None:
         raise ValueError("Requested frequency {} Hz outside of band {}"
                          .format(freq, band))
     # Do something with resulting Jones according to cmdline args
     if action == "plot":
-        obsinfo = {'stnid': stnID, 'band': band, 'freq': freq,
+        obsinfo = {'stnid': stnid, 'band': band, 'freq': freq,
                    'starttime': bTime, 'antmodel': antmodel}
         display_pointings(res, obsinfo, do_parallactic_rot=do_parallactic_rot)
     if freq is None:
@@ -213,6 +213,6 @@ if __name__ == "__main__":
         print(USAGE)
         sys.exit(2)
 
-    main(telescope, band, antmodel, stnid, obstimebeg, duration, steptime,
+    main(telescope, stnid, band, antmodel, obstimebeg, duration, steptime,
          celdir, freq=freq, action=action, frmt=frmt,
          do_parallactic_rot=do_parallactic_rot)
