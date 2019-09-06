@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import dreambeam.rime.jones
 from dreambeam.telescopes.rt import TelescopesWiz
+from dreambeam.rime.conversion_utils import basis2basis_transf, IAUtoC09, \
+                                            C09toIAU
 
 
 def on_pointing_axis_tracking(telescopename, stnid, band, antmodel, obstimebeg,
@@ -125,6 +127,7 @@ def on_pointing_axis_tracking(telescopename, stnid, band, antmodel, obstimebeg,
     #    *Setup EJones*
     ejones = stnBD.getEJones(pointingdir)
     stnDPolel = stnBD.feed_pat
+    freqs = stnDPolel.getfreqs()
 
     #    *Setup MEq*
     pjonesOfSrc = pjones.op(srcfld)
@@ -133,7 +136,14 @@ def on_pointing_axis_tracking(telescopename, stnid, band, antmodel, obstimebeg,
     # Get the resulting Jones matrices
     # (structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
     jones = jonesobj.getValue()
-    freqs = stnDPolel.getfreqs()
+    if not do_parallactic_rot:
+        basis_from = jonesobj.get_basis()
+        basis_to = pjonesOfSrc.get_basis()
+        btransmat2d = basis2basis_transf(basis_from, basis_to)[..., 1:, 1:]
+        # Tranformation from IAU2C09 has to be (right) transformed back 1st
+        transmat2d = np.matmul(C09toIAU[1:, 1:], btransmat2d)
+        jones = np.matmul(jones, transmat2d)
+        jonesobj.jones = jones
     return timespy, freqs, jones, jonesobj
 
 
@@ -179,6 +189,8 @@ def beamfov(telescopename, stnid, band, antmodel, freq,
     res.convert2iaucmp()
 
     dreambeam.rime.jones.fix_imaginary_directions(res)
+    # NOTE: Not using get_basis() method, in order to get station basis instead
+    # of antenna basis:
     stnbasis = res.jonesbasis
     # Get the resulting Jones matrices
     # (structure is Jn[freqIdx, timeIdx, chanIdx, compIdx] )
@@ -341,11 +353,11 @@ def display_pointings(jones, obsinfo=None, do_3D=False,
             ax.plot([xp[i], xp[i]+s*jbresp[i, 0, j]],
                     [yp[i], yp[i]+s*jbresp[i, 1, j]],
                     [zp[i], zp[i]+s*jbresp[i, 2, j]],
-                    'b', linewidth=lw, label='respIAU_'+respiaucmp)
+                    'b', linewidth=lw, label='respSKY_'+respiaucmp)
         else:
             ax.plot([xp[i], xp[i]+s*jbresp[i, 0, j]],
                     [yp[i], yp[i]+s*jbresp[i, 1, j]],
-                    'b', linewidth=lw, label='respIAU_'+respiaucmp)
+                    'b', linewidth=lw, label='respSKY_'+respiaucmp)
 
     # Plot NCP (ITRF z-base in STN crdsys)
     if do_3D:
@@ -360,11 +372,11 @@ def display_pointings(jones, obsinfo=None, do_3D=False,
 Start @ {}, Model: {}, Pararot: {}"""\
                  .format(obsinfo['stnid'], obsinfo['band'],
                          obsinfo['freq']/1e6,
-                         obsinfo['starttime'].isoformat()+'UT',
+                         obsinfo['starttime'].isoformat()+' UT',
                          obsinfo['antmodel'],
                          do_parallactic_rot)
     # Plot origin
-    ax.plot([0.], [0.], 'k.', label='Origin')
+    ax.plot([0.], [0.], 'k.', label='Origin/Zenith')
     if do_3D:
         ax.set_xlim3d(left=-1.0, right=1.0)
         ax.set_ylim3d(bottom=-1.0, top=1.0)

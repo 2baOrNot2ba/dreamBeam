@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from casacore.measures import measures
 from casacore.quanta import quantity
-from conversionUtils import sph2crt, crt2sph, convertBasis, \
+from conversion_utils import sph2crt, crt2sph, convertBasis, \
                             getSph2CartTransf, getSph2CartTransfArr, \
                             IAU_pol_basis, shiftmat2back, IAUtoC09, \
                             sphmeshgrid, dc_hrz2vrt

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 from jones import PJones, DualPolFieldPointSrc
-from conversionUtils import CEL2TOPOpnts, sph2crt_me, getParallacticRot, \
+from conversion_utils import CEL2TOPOpnts, sph2crt_me, getParallacticRot, \
                             printJones, pyTimes2meTimes, sph2crt, crt2sph, \
                             getSph2CartTransf, setEpoch, convertBasis
 import antpat.reps.sphgridfun

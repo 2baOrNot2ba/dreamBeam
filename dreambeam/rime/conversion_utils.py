@@ -7,6 +7,48 @@ from casacore.quanta import quantity
 import math
 
 
+def basis2basis_transf(basis_from, basis_to):
+    """Compute tranform matrix between two bases.
+
+    The basis matrices are assumed to be in the last two axes, and that the
+    component vector is summed over the last index (i.e. applied to basis
+    matrix from the left).
+
+    Parameters
+    ----------
+    basis_from: array
+        The basis matrices that wishes to transform from. Matrices reside
+        in last two axes.
+    basis_to: array
+        The basis matrices that wishes to transform to. Matrices reside
+        in last two axes.
+
+    Returns
+    -------
+    array:
+        The transformation matrix.
+
+    Notes
+    -----
+    Given some coord sys, and two bases, any vector must be equal in these
+    two bases:
+
+    basis_to . v_to =  basis_from . v_from
+
+    where '.' stands from matrix vector multiplication. So the transformation
+    from the 'from' system to the 'to' is
+
+    v_to = basis_to^H . basis_from . v_from = T . v_from
+
+    where '^H' stands for hermitian transpose and
+
+    T = basis_to^H . basis_from
+
+    is the transformation matrix that is returned.
+    """
+    return np.matmul(np.conj(np.swapaxes(basis_to, -2, -1)), basis_from)
+
+
 def convertBasis(me, rbasis, from_refFrame, to_refFrame):
     basis = np.zeros((3, 3))
     for comp in range(3):
