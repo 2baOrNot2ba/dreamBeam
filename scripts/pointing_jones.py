@@ -18,8 +18,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from casacore.quanta import quantity
 from antpat.dualpolelem import plot_polcomp_dynspec
-from dreambeam.rime.scenarios import on_pointing_axis_tracking, \
-                                    display_pointings
+from dreambeam.rime.scenarios import on_pointing_axis_tracking
+from dreambeam.rime.diagnostics import display_pointings
 from dreambeam.telescopes.rt import TelescopesWiz
 
 
