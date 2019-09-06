@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - 2019-08-21
+## [0.4] - 2019-09-06
 ### Added
 - New method in `Jones` class called `sph2lud3_basis` that converts spherical
   basis vectors to the Ludwig3 basis. It has an optional `alignment` rotation
@@ -11,7 +11,31 @@ All notable changes to this project will be documented in this file.
   specific details of its `EJones`. Basis of final Jones is now the unit
   vectors of the X/Y dipole vectors projected onto the plane transverse to the
   pointing direction, using a conversion to Ludwig3.
+- New class `LOFAR_LHBA_stn` (subclass of `TelescopeBndStn`) which is a merger
+  of `LOFAR_LBA_stn` and `LOFAR_HBA_stn` classes (which were identical/redundant
+  to each other).
 - `CHANGELOG.md` file.
+- Another way of specifying pointing in FoV_jones.py script: AZEL or STN frame,
+  in addition to previous J2000.
+- Direction cosine map argument to `beamfov()` in `scenarios` module. This means
+  that primary beam corrections to interferometric images can be done in drB.
+- New method `convert2iau()` in `Jones` class, to allow enforcing IAU coord sys
+  of a Jones matrix.
+- `inverse()` function for `Jones` objects, which computes the inverse of the
+  Jones matrix. It is used e.g. to compute sky coordinates from pointings in
+  station coordinates in `PJones` objects.
+- New `diagnostics` module, for analyzing results.
+
+### Changed
+- New interpretation of the no-pararot algorithm: instead of computing in terms
+  of an alt-az basis, the algorithm uses the actual antenna basis. This becomes
+  the usual no-pararot for alt-az mounts but is different for a fixed mount
+  such as LOFAR.
+- Moved `display_pointings()` to `diagnostics` module. It has been heavily
+  reworked to plot sph grid sys and bases, and support 3D option.
+- Refactored `Jones` class to make it simpler (`jonesmeta` and `jonesmetar`
+  dict data, now full attributes) and more python naming style (`get_basis()`
+  instead of `getBasis()`).
 
 
 ## [0.3] - 2019-08-19
