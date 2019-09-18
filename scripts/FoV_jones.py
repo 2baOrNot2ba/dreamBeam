@@ -4,7 +4,7 @@
 import sys
 from datetime import datetime
 import numpy as np
-from dreambeam.rime.scenarios import beamfov
+from dreambeam.rime.scenarios import primarybeampat
 from dreambeam.telescopes.rt import TelescopesWiz
 from dreambeam.rime.jones import plotJonesField
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     pointing = (az, el, refframe)
 
     # Compute the Jones matrices
-    jonesfld, stnbasis, j2000basis = beamfov(
+    jonesfld, stnbasis, j2000basis = primarybeampat(
                                     telescopename, stnid, band, antmodel, freq,
                                     pointing=pointing, obstime=obstime,
                                     lmgrid=lmgrid)
