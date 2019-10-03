@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+
+## [Unreleased]
+### Added
+- New module `polarimetry` with function `convertxy2stokes()`.
+
+### Changed
+- Renamed `beamfov()` in scenarios modules to `primarybeampat()`.
+
+
 ## [0.4] - 2019-09-06
 ### Added
 - New method in `Jones` class called `sph2lud3_basis` that converts spherical
