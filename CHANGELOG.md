@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Renamed `beamfov()` in scenarios modules to `primarybeampat()`.
+- Moved `read_LOFAR_HAcc()`, `convLOFARccHA()`, `convHA2DPE()` functions to
+  AntPat package.
 
 
 ## [0.4] - 2019-09-06
