@@ -66,6 +66,10 @@ def on_pointing_axis_tracking(telescopename, stnid, band, antmodel, obstimebeg,
     jones : array_like
         Array over time steps and frequencies of the Jones matrix corresponding
         to RIME for this set of input parameters.
+    jonesobj : Jones(object)
+        Resulting instance of Jones(). jonesobj.jones is a copy of the
+        other return variable: jones. In addition, it has more info regarding
+        this Jones matrix such as its basis.
 
     Notes
     -----
