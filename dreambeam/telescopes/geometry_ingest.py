@@ -22,6 +22,9 @@ def readarrcfg(telescope, band):
     arrcfg_file = os.path.join(arrcfg_folder, '{}_{}.cfg'.format(telescope,
                                                                  band))
     x, y, z, diam, name = np.loadtxt(arrcfg_file, CASA_CFG_DTYPE, unpack=True)
+    if name.ndim == 0:
+        x, y, z, diam, name = (np.array([x]), np.array([y]), np.array([z]),
+                               np.array([diam]), np.array([name]))
     return x, y, z, diam, name
 
 
