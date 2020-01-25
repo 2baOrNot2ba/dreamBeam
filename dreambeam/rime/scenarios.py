@@ -4,7 +4,7 @@ It implements basic Jones chains or Measurement Equations.
 '''
 import numpy as np
 import dreambeam.rime.jones
-from dreambeam.telescopes.rt import TelescopesWiz
+from dreambeam.telescopes.rt import open_telescopebndmodel
 from dreambeam.rime.conversion_utils import basis2basis_transf, C09toIAU
 
 
@@ -106,11 +106,8 @@ def on_pointing_axis_tracking(telescopename, stnid, band, antmodel, obstimebeg,
      [ 0.39298880-0.02620409j -0.38686167-0.01691861j]]
 
     """
-    # Startup a telescope wizard
-    tw = TelescopesWiz()
-
     # Get the telescopeband instance:
-    telescope = tw.getTelescopeBand(telescopename, band, antmodel)
+    telescope = open_telescopebndmodel(telescopename, band, antmodel)
 
     #    *Setup Source*
     srcfld = dreambeam.rime.jones.DualPolFieldPointSrc(pointingdir)
@@ -153,11 +150,8 @@ def primarybeampat(telescopename, stnid, band, antmodel, freq,
             pointing=(0., np.pi/2, 'STN'), obstime=None, lmgrid=None):
     """Computes the Jones matrix over the beam fov for pointing.
     """
-    # Startup a telescope wizard
-    tw = TelescopesWiz()
-
     # Get the telescopeband instance:
-    telescope = tw.getTelescopeBand(telescopename, band, antmodel)
+    telescope = open_telescopebndmodel(telescopename, band, antmodel)
     stnBD = telescope['Station'][stnid]
     stnRot = stnBD.stnRot
 
