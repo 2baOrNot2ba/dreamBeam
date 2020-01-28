@@ -28,7 +28,7 @@ USAGE = """Usage:\n  {} print|plot telescope band stnID beammodel beginUTC \
 duration timeStep pointingRA pointingDEC [frequency]""".format(SCRIPTNAME)
 
 
-def printJonesFreq(timespy, Jnf):
+def printJonesFreq(timespy, Jnf, freq):
     # Select one frequency
     print("Time, Freq, J11, J12, J21, J22")  # header for CSV
     for ti in range(len(timespy)):
@@ -131,10 +131,12 @@ def main(telescopename, stnid, band, antmodel, bTime, duration, stepTime,
         if action == "plot":
             plotJonesFreq(timespy, Jnf)
         else:
-            printJonesFreq(timespy, Jnf)
+            printJonesFreq(timespy, Jnf, freq)
 
 
-if __name__ == "__main__":
+def cli_main():
+    import sys
+    print sys.path
     parser = argparse.ArgumentParser()
     parser.add_argument('--frmt', default='csv',
                         help='select output format: csv, pac')
@@ -216,3 +218,7 @@ if __name__ == "__main__":
     main(telescope, stnid, band, antmodel, obstimebeg, duration, steptime,
          celdir, freq=freq, action=action, frmt=frmt,
          do_parallactic_rot=do_parallactic_rot)
+
+
+if __name__ == "__main__":
+    cli_main()
