@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+from dreambeam import __version__
 
-setup(name = 'dreamBeam',
-      version = '0.4',
-      description = 'Measurement equation framework for interferometry in Radio Astronomy.',
-      author = 'Tobia D. Carozzi',
-      author_email = 'tobia.carozzi@chalmers.se',
-      packages = find_packages(),
-      package_data = {'dreambeam.telescopes.LOFAR':
-                ['share/*.cc','share/simmos/*.cfg','share/alignment/*.txt','data/*teldat.p']},
-      license = 'ISC',
-      classifiers = [
+setup(name='dreamBeam',
+      version=__version__,
+      description='Measurement equation framework for radio interferometry.',
+      author='Tobia D. Carozzi',
+      author_email='tobia.carozzi@chalmers.se',
+      packages=find_packages(),
+      package_data={'dreambeam.telescopes.LOFAR':
+                    ['share/*.cc', 'share/simmos/*.cfg',
+                     'share/alignment/*.txt', 'data/*teldat.p']},
+      license='ISC',
+      classifiers=[
           'Development Status :: 1 - Planning',
           'Intended Audience :: Science/Research',
           'License :: OSI Approved :: ISC License',
@@ -26,5 +28,7 @@ setup(name = 'dreamBeam',
           'matplotlib',
           'antpat'
       ],
-      scripts = ['scripts/pointing_jones.py']
-     )
+      entry_points={
+        'console_scripts': ['pointing_jones = scripts.pointing_jones:cli_main']
+      }
+      )
