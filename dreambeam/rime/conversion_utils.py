@@ -413,7 +413,7 @@ def setEpoch(obsTimesArr, obsTimeUnit):
 
 def printJones(Jn):
     for ti in range(0, Jn.shape[0]):
-        print Jn[ti, :, :]
+        print(Jn[ti, :, :])
 
 
 def shiftmat2back(arr):

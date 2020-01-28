@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from casacore.measures import measures
 from casacore.quanta import quantity
-from conversion_utils import sph2crt, crt2sph, convertBasis, \
+from .conversion_utils import sph2crt, crt2sph, convertBasis, \
                             getSph2CartTransf, getSph2CartTransfArr, \
                             IAU_pol_basis, shiftmat2back, IAUtoC09, \
                             sphmeshgrid, dc_hrz2vrt
@@ -406,7 +406,7 @@ def plotJonesField(jonesfld, jbasis, refframe, rep='abs-Jones'):
         y = el
         xlabel = 'RA'
         ylabel = 'DEC'
-    print x.shape, y.shape
+    print(x.shape, y.shape)
     fig = plt.figure()
     fig.suptitle(restitle)
     ax = plt.subplot(221, polar=False)

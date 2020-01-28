@@ -55,7 +55,7 @@ def list_stations(telescope, band=None):
 
 
 if __name__ == "__main__":
-    print list_stations('LOFAR')
+    print(list_stations('LOFAR'))
     stnPos, stnRot = getArrayBandParams('LOFAR', 'SE607', 'HBA')
-    print stnPos
-    print stnRot
+    print(stnPos)
+    print(stnRot)
