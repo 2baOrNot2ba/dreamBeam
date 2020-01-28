@@ -39,11 +39,16 @@ USAGE = """Usage:{}
          print|plot telescope band stnID beammodel timeUTC
          pointingRA pointingDEC frequency""".format(SCRIPTNAME)
 
-# Example:
-# $ pointing_jones.py print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 \
-#   6.11 1.02 60E6
 
-if __name__ == "__main__":
+def main():
+    """
+    Plot or print the Jones matrices over the field-of-view.
+
+    Example
+    -------
+    >>> FoV_jones print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 \
+           6.11 1.02 60E6
+    """
     # Startup a telescope wizard
     tw = TelescopesWiz()
     # Process cmd line arguments
@@ -104,3 +109,7 @@ if __name__ == "__main__":
         plotJonesField(jonesfld, jbasis, refframe, rep='Stokes')
     else:
         printJonesField(jonesfld, jbasis)
+
+
+if __name__ == "__main__":
+    main()

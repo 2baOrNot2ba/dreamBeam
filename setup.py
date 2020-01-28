@@ -25,10 +25,14 @@ setup(name='dreamBeam',
       install_requires=[
           'numpy>=1.10',
           'python-casacore',
-          'matplotlib',
+          'matplotlib>2.0',
           'antpat'
       ],
       entry_points={
-        'console_scripts': ['pointing_jones = scripts.pointing_jones:cli_main']
+        'console_scripts': [
+            'pointing_jones = scripts.pointing_jones:cli_main',
+            'FoV_jones = scripts.FoV_jones:main'
+        ]
+
       }
       )
