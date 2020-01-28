@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def display_pointings(jones, obsinfo=None, do_3D=False,
                       do_parallactic_rot=None):
     """Display pointings in topocentric station coordinates, the antenna
