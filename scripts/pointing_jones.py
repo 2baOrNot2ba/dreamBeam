@@ -135,8 +135,6 @@ def main(telescopename, stnid, band, antmodel, bTime, duration, stepTime,
 
 
 def cli_main():
-    import sys
-    print sys.path
     parser = argparse.ArgumentParser()
     parser.add_argument('--frmt', default='csv',
                         help='select output format: csv, pac')
