@@ -13,8 +13,6 @@ from dreambeam.telescopes.feeds import FixedMountStn
 
 TELESCOPES_DIR = os.path.dirname(dbtel.__file__)
 ANTMODELS = ['Hamaker']
-SHAREDIR = 'share'  # Dir for native telescope project data.
-DATADIR = 'data'    # Dir for telescope data for RIME level work.
 
 
 def _get_helpers():
@@ -83,6 +81,8 @@ class TelescopesWiz():
 
 class TelWizHelper(object):
     """Plugin for a generic telescope."""
+    SHAREDIR = 'share'  # Dir for native telescope project data.
+    DATADIR = 'data'    # Dir for telescope data for RIME level work.
 
     def __init__(self, tscopename, bandchns, haversion, modeltype, polcrdrot):
         self.name = tscopename
@@ -114,7 +114,7 @@ class TelWizHelper(object):
 
     def get_stndpolel(self, dp_bafile):
         """Get DualPolElem object for this station."""
-        dpepath = os.path.join(self.path_, "data", dp_bafile)
+        dpepath = os.path.join(self.path_, self.DATADIR, dp_bafile)
         with open(dpepath, 'rb') as fp:
             stnDPolel = pickle.load(fp)
         return stnDPolel
@@ -124,7 +124,7 @@ class TelWizHelper(object):
         Open the TelescopeBndStn object given by band and beammodel.
         """
         tbdata_fname = self._get_teldat_fname(band, self.modeltype)
-        tbdata_path = os.path.join(self.path_, "data", tbdata_fname)
+        tbdata_path = os.path.join(self.path_, self.DATADIR, tbdata_fname)
         with open(tbdata_path, 'rb') as f:
             telbnddata = pickle.load(f)
         return telbnddata
@@ -136,8 +136,8 @@ class TelWizHelper(object):
         Also adds nominal LOFAR frequency channels."""
         inpfile = self._get_inpfile(band)
         outfile = self._get_outfile(band)
-        inppath = os.path.join(self.path_, SHAREDIR, inpfile)
-        outpath = os.path.join(self.path_, DATADIR, outfile)
+        inppath = os.path.join(self.path_, self.SHAREDIR, inpfile)
+        outpath = os.path.join(self.path_, self.DATADIR, outfile)
         channels = self.bandchns[band]
         convLOFARcc2DPE(inppath, channels, outpath)
 
@@ -189,6 +189,6 @@ class TelWizHelper(object):
             telescope['Station'][stnId] = stnbnd
         teldatdir = self.path_
         savename = self._get_teldat_fname(band, self.modeltype)
-        with open(os.path.join(teldatdir, DATADIR, savename), 'wb') as fp:
+        with open(os.path.join(teldatdir, self.DATADIR, savename), 'wb') as fp:
             pickle.dump(telescope, fp, pickle.HIGHEST_PROTOCOL)
         print("Saved '"+savename+"' in "+teldatdir)
