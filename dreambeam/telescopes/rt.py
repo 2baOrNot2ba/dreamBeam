@@ -150,28 +150,25 @@ class TelWizHelper(object):
         when configuration data has changed."""
         self.telescope_specific_init()
         for band in self.bands:
-            outfile = self._get_outfile(band)
-            # channels = self.bandchns[band]
             self.gen_antmodelfiles(band)
-            self.save_telescopeband(band, outfile, FixedMountStn,
-                                    self.polcrdrot, self.modeltype)
+            self.save_telescopeband(band, FixedMountStn)
 
-    def save_telescopeband(self, band, DP_BAfile, telbndstn_class,
-                           polcrdrot, antmodel='Hamaker'):
+    def save_telescopeband(self, band, telbndstn_class):
         """
         Save all the data relevant to the telescope-band beam modeling into
         one file.
         """
         tscopename = self.name
         print("""Generating '{}' beam-model for the band {} of the {} telescope
-              with stations:""".format(antmodel, band, tscopename))
+              with stations:""".format(self.modeltype, band, tscopename))
         # Create telescope-bands metadata:
-        telescope = {'Name': tscopename, 'Band': band, 'Beam-model': antmodel}
+        telescope = {'Name': tscopename, 'Band': band,
+                     'Beam-model': self.modeltype}
         #   * Create station's antenna model
-        if antmodel == 'Hamaker':
-            stnDPolel = self.get_stndpolel(DP_BAfile)
-        # Rotate 45 degrees since LOFAR elements are 45 degrees to meridian:
-        stnDPolel.rotateframe(polcrdrot)
+        if self.modeltype == 'Hamaker':
+            stnDPolel = self.get_stndpolel(self._get_outfile(band))
+        # Rotate by polcrdrot:
+        stnDPolel.rotateframe(self.polcrdrot)
 
         # Create telescope_band_station metadata:
         telescope['Station'] = {}
@@ -180,9 +177,9 @@ class TelWizHelper(object):
         for stnId in stnIds:
             print(stnId)
             #    *Setup station Jones*
-            # Get metadata for the LOFAR station. stnRot is transformation
+            # Get metadata for the station. stnRot is transformation
             # matrix:
-            #   ITRF_crds = stnRot*LOFAR_crds
+            #   ITRF_crds = stnRot*LOCAL_crds
             stnid_idx = stnIds.tolist().index(stnId)
             stnPos = [x[stnid_idx], y[stnid_idx], z[stnid_idx]]
             stnRot = gi.readalignment(tscopename, stnId, band)
@@ -191,7 +188,7 @@ class TelWizHelper(object):
             stnbnd.feed_pat = stnDPolel
             telescope['Station'][stnId] = stnbnd
         teldatdir = self.path_
-        savename = self._get_teldat_fname(band, antmodel)
+        savename = self._get_teldat_fname(band, self.modeltype)
         with open(os.path.join(teldatdir, DATADIR, savename), 'wb') as fp:
             pickle.dump(telescope, fp, pickle.HIGHEST_PROTOCOL)
         print("Saved '"+savename+"' in "+teldatdir)
