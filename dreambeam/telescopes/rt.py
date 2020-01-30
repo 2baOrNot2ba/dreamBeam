@@ -2,10 +2,14 @@
 rt (i.e. Radio Telescopes) module is for handling real telescope meta-data.
 """
 import os
-import glob
 import pickle
+import importlib
+import pkgutil
+from antpat.reps.hamaker import convLOFARcc2DPE
 import dreambeam.telescopes as dbtel
 import dreambeam.telescopes.geometry_ingest as gi
+from dreambeam.telescopes.feeds import FixedMountStn
+
 
 TELESCOPES_DIR = os.path.dirname(dbtel.__file__)
 ANTMODELS = ['Hamaker']
@@ -13,30 +17,29 @@ SHAREDIR = 'share'  # Dir for native telescope project data.
 DATADIR = 'data'    # Dir for telescope data for RIME level work.
 
 
-class TelescopeBndStn(object):
-    """Model of one station and one band of a telescope."""
-    feed_pat = None
-
-    def __init__(self, stnPos, stnRot):
-        """Set the station's position and attitude."""
-        self.stnPos = stnPos
-        self.stnRot = stnRot
-
-    def getEJones(self):
-        """Create ejones for station based on antenna patterns."""
-        ejones = None
-        return ejones
+def _get_helpers():
+    telescope_plugins = {}
+    # print(dbtel.__path__, dbtel.__name__ )
+    for _, pluginname, ispkg in pkgutil.iter_modules(dbtel. __path__):
+        # print("Found submodule %s (is a package: %s)" % (pluginname, ispkg))
+        if ispkg:
+            tpi = os.path.join(dbtel.__path__[0], pluginname)
+            # print(tpi)
+            for _, modnamesub, ispkg in pkgutil.iter_modules([tpi], ""):
+                if modnamesub == "telwizhelper":
+                    pluginpath = dbtel.__name__+"."+pluginname
+                    telwizmod = importlib.import_module(".telwizhelper",
+                                                        pluginpath)
+                    telescope_plugins[pluginname] = telwizmod.telhelper
+    return telescope_plugins
 
 
 def open_telescopebndmodel(tscopename, band, beammodel):
     """
     Open the TelescopeBndStn object given by tscopename, band and beammodel.
     """
-    tbdata_dir = _get_telbnddatadir(tscopename)
-    tbdata_fname = _get_teldat_fname(band, beammodel)
-    tbdata_path = os.path.join(tbdata_dir, tbdata_fname)
-    with open(tbdata_path, 'rb') as f:
-        telbnddata = pickle.load(f)
+    telescope_plugins = _get_helpers()
+    telbnddata = telescope_plugins[tscopename].open_bndmodel(band, beammodel)
     return telbnddata
 
 
@@ -44,32 +47,12 @@ class TelescopesWiz():
     """Database over available telescopes patterns."""
 
     def __init__(self):
-        # Register telescope plugin
-        # A telescope plugin must exist in the TELESCOPES_DIR and have a
-        # directory named DATADIR.
-        ls = os.listdir(TELESCOPES_DIR)
-        ds = []
-        for p in ls:
-            if os.path.isdir(os.path.join(TELESCOPES_DIR, p)):
-                ds.append(p)
+        telescope_plugins = _get_helpers()
         self.tbdata = {}
-        for dd in ds:
-            tbdata_dir = _get_telbnddatadir(dd)
-            if os.path.isdir(tbdata_dir):
-                t = os.path.basename(dd)
-                self.tbdata[t] = {}
         # Find bands & models per telescope
-        for tel in self.tbdata.keys():
-            teldat_path = _get_telbnddatadir(tel)
-            tbfiles = glob.glob(teldat_path+'/*_*.teldat.pkl')
-            bands = []
-            antmodels = []
-            for tbfile in tbfiles:
-                filename = os.path.basename(tbfile)
-                (band, modelsuffix) = filename.split('_')
-                bands.append(band)
-                antmodel = modelsuffix.split('.', 2)[0]
-                antmodels.append(antmodel)
+        for tel in telescope_plugins.keys():
+            bands = telescope_plugins[tel].get_bands()
+            antmodels = telescope_plugins[tel].get_beammodels()
             self.tbdata[tel] = {}
             for band in bands:
                 self.tbdata[tel][band] = {}
@@ -79,9 +62,10 @@ class TelescopesWiz():
         for tel in self.tbdata.keys():
             for band in self.tbdata[tel].keys():
                 for beammodel in self.tbdata[tel][band].keys():
-                    telbnddata = open_telescopebndmodel(tel, band, beammodel)
+                    bnddata = telescope_plugins[tel].open_bndmodel(band,
+                                                                   beammodel)
                     self.tbdata[tel][band][antmodel] = \
-                        telbnddata['Station'].keys()
+                        bnddata['Station'].keys()
 
     def get_telescopes(self):
         return self.tbdata.keys()
@@ -97,60 +81,117 @@ class TelescopesWiz():
         return self.tbdata[telescope][band].keys()
 
 
-def _get_teldat_fname(band, beammodel):
-    """Get telescope data file name.
-    """
-    tbdata_fname = band+"_"+beammodel+".teldat.pkl"
-    return tbdata_fname
+class TelWizHelper(object):
+    """Plugin for a generic telescope."""
 
+    def __init__(self, tscopename, bandchns, haversion, modeltype, polcrdrot):
+        self.name = tscopename
+        self.bandchns = bandchns
+        self.haversion = haversion
+        self.modeltype = modeltype
+        self.polcrdrot = polcrdrot
+        self.bands = self.bandchns.keys()
 
-def _get_telbnddatadir(tscopename):
-    """Get path to data directory for tscopename.
-    Format of the path returned is:
-       absolute_directory=/<TELESCOPES_DIR>/<tscopename>/data/
-    """
-    tbdata_dir = os.path.join(TELESCOPES_DIR, tscopename, DATADIR)
-    return tbdata_dir
+    def get_bands(self):
+        return self.bands
 
+    def get_beammodels(self):
+        return [self.modeltype]
 
-def save_telescopeband(tscopename, band, DP_BAfile, telbndstn_class,
-                       polcrdrot, antmodel='Hamaker'):
-    """
-    Save all the data relevant to the telescope-band beam modeling into
-    one file.
-    """
-    print("""Generating '{}' beam-model for the band {} of the {} telescope
-          with stations:""".format(antmodel, band, tscopename))
-    # Create telescope-bands metadata:
-    telescope = {'Name': tscopename, 'Band': band, 'Beam-model': antmodel}
-    #   * Create station's antenna model
-    if antmodel == 'Hamaker':
-        # This is an example of dual-pol element built from a monolithic
-        # Jones representation.
-        dpepath = os.path.join(_get_telbnddatadir(tscopename), DP_BAfile)
+    def _get_teldat_fname(self, band, modeltype):
+        """Get telescope data file name.
+        """
+        tbdata_fname = band+"_"+modeltype+".teldat.pkl"
+        return tbdata_fname
+
+    def _get_inpfile(self, band):
+        inpfile = self.haversion+"Coeff"+band+".cc"
+        return inpfile
+
+    def _get_outfile(self, band):
+        outfile = "DP_model_"+band+".pkl"
+        return outfile
+
+    def get_stndpolel(self, dp_bafile):
+        """Get DualPolElem object for this station."""
+        dpepath = os.path.join(self.path_, "data", dp_bafile)
         with open(dpepath, 'rb') as fp:
             stnDPolel = pickle.load(fp)
-    # Rotate 45 degrees since LOFAR elements are 45 degrees to meridian:
-    stnDPolel.rotateframe(polcrdrot)
+        return stnDPolel
 
-    # Create telescope_band_station metadata:
-    telescope['Station'] = {}
-    x, y, z, diam, stnIds = gi.readarrcfg(tscopename, band)
+    def open_bndmodel(self, band, beammodel):
+        """
+        Open the TelescopeBndStn object given by band and beammodel.
+        """
+        tbdata_fname = self._get_teldat_fname(band, self.modeltype)
+        tbdata_path = os.path.join(self.path_, "data", tbdata_fname)
+        with open(tbdata_path, 'rb') as f:
+            telbnddata = pickle.load(f)
+        return telbnddata
 
-    for stnId in stnIds:
-        print(stnId)
-        #    *Setup station Jones*
-        # Get metadata for the LOFAR station. stnRot is transformation matrix
-        #  ITRF_crds = stnRot*LOFAR_crds
-        stnid_idx = stnIds.tolist().index(stnId)
-        stnPos = [x[stnid_idx], y[stnid_idx], z[stnid_idx]]
-        stnRot = gi.readalignment(tscopename, stnId, band)
-        # Create a StationBand object for this
-        stnbnd = telbndstn_class(stnPos, stnRot)
-        stnbnd.feed_pat = stnDPolel
-        telescope['Station'][stnId] = stnbnd
-    teldatdir = _get_telbnddatadir(tscopename)
-    savename = _get_teldat_fname(band, antmodel)
-    with open(os.path.join(teldatdir, savename), 'wb') as fp:
-        pickle.dump(telescope, fp, pickle.HIGHEST_PROTOCOL)
-    print("Saved '"+savename+"' in "+teldatdir)
+    def gen_antmodelfiles(self, band):
+        """Reads the 'lofar_elem_resp' packages c++ header files of
+        Hamaker-Arts coefficients and writes pickled instances of DualPolElem
+        class.
+        Also adds nominal LOFAR frequency channels."""
+        inpfile = self._get_inpfile(band)
+        outfile = self._get_outfile(band)
+        inppath = os.path.join(self.path_, SHAREDIR, inpfile)
+        outpath = os.path.join(self.path_, DATADIR, outfile)
+        channels = self.bandchns[band]
+        convLOFARcc2DPE(inppath, channels, outpath)
+
+    def telescope_specific_init(self):
+        """Override this method for telescope specific initialization."""
+        pass
+
+    def initialize(self):
+        """Use this to produce telescope data files for use in dreamBeam, or
+        when configuration data has changed."""
+        self.telescope_specific_init()
+        for band in self.bands:
+            outfile = self._get_outfile(band)
+            # channels = self.bandchns[band]
+            self.gen_antmodelfiles(band)
+            self.save_telescopeband(band, outfile, FixedMountStn,
+                                    self.polcrdrot, self.modeltype)
+
+    def save_telescopeband(self, band, DP_BAfile, telbndstn_class,
+                           polcrdrot, antmodel='Hamaker'):
+        """
+        Save all the data relevant to the telescope-band beam modeling into
+        one file.
+        """
+        tscopename = self.name
+        print("""Generating '{}' beam-model for the band {} of the {} telescope
+              with stations:""".format(antmodel, band, tscopename))
+        # Create telescope-bands metadata:
+        telescope = {'Name': tscopename, 'Band': band, 'Beam-model': antmodel}
+        #   * Create station's antenna model
+        if antmodel == 'Hamaker':
+            stnDPolel = self.get_stndpolel(DP_BAfile)
+        # Rotate 45 degrees since LOFAR elements are 45 degrees to meridian:
+        stnDPolel.rotateframe(polcrdrot)
+
+        # Create telescope_band_station metadata:
+        telescope['Station'] = {}
+        x, y, z, diam, stnIds = gi.readarrcfg(tscopename, band)
+
+        for stnId in stnIds:
+            print(stnId)
+            #    *Setup station Jones*
+            # Get metadata for the LOFAR station. stnRot is transformation
+            # matrix:
+            #   ITRF_crds = stnRot*LOFAR_crds
+            stnid_idx = stnIds.tolist().index(stnId)
+            stnPos = [x[stnid_idx], y[stnid_idx], z[stnid_idx]]
+            stnRot = gi.readalignment(tscopename, stnId, band)
+            # Create a StationBand object for this
+            stnbnd = telbndstn_class(stnPos, stnRot)
+            stnbnd.feed_pat = stnDPolel
+            telescope['Station'][stnId] = stnbnd
+        teldatdir = self.path_
+        savename = self._get_teldat_fname(band, antmodel)
+        with open(os.path.join(teldatdir, DATADIR, savename), 'wb') as fp:
+            pickle.dump(telescope, fp, pickle.HIGHEST_PROTOCOL)
+        print("Saved '"+savename+"' in "+teldatdir)
