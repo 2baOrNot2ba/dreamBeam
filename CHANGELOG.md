@@ -2,14 +2,33 @@
 All notable changes to this project will be documented in this file.
 
 
-## [Unreleased]
+## [0.5] - 2020-01-30
 ### Added
+- New base class `TelWizHelper` that is meant to be inherited for each
+  telescope plug-in.
 - New module `polarimetry` with function `convertxy2stokes()`.
 
 ### Changed
+- Moved `TelescopeBndStn` to `feeds` module.
+- `TelescopesWiz` now uses `pkgutil` to find telescope plug-ins.
+- Moved `_get_teldat_fname` and `_get_telbnddatadir` from `rt` to telescope
+ `telwizhelper`s.
+- Renamed `LofarFeedJones` to `FixedMountEJones`
+  and `LOFAR_LHBA_stn` to `FixedMountStn`.
+- Moved `Feeds` module out of `LOFAR` and put it directly under `telescopes`.
 - Renamed `beamfov()` in scenarios modules to `primarybeampat()`.
 - Moved `read_LOFAR_HAcc()`, `convLOFARccHA()`, `convHA2DPE()` functions to
-  AntPat package.
+  `AntPat` package.
+- Pickled instances are now suffixed with `.pkl`.
+- Moved `getTelescopeBand` method out `TelescopeWizard` to become a function in
+  `rt` and renamed it `open_telescopebndmodel`.
+- `scenarios` does not use `TelescopeWizard` to get a feed model.
+- Moved `save_telescopeband` to 'rt' and generalized it.
+- Major refactor of `telescope` package, mainly to facilitate ingestion of new
+  telescope plugins via `telwizhelper.py` scripts. `telwizhelper.py` scripts
+  can now be quite minimal.
+- Made `scripts`, under project root, a package so that modules there can be
+  used as console_scripts entry points.
 
 
 ## [0.4] - 2019-09-06
