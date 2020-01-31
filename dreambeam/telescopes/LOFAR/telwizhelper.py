@@ -1,7 +1,7 @@
 """Script to generate LOFAR antenna response data."""
 import os
 import numpy
-import dreambeam.telescopes.rt as rt
+from dreambeam.telescopes.rt import TelWizHelper
 
 
 TELESCOPE_NAME = 'LOFAR'
@@ -27,9 +27,9 @@ BANDCHNS = {'LBA': numpy.linspace(0., SAMPFREQ, NR_CHANNELS, endpoint=False),
                                   endpoint=False)}
 
 
-class TelWizHelper_LOFAR(rt.TelWizHelper):
+class TelWizHelper_LOFAR(TelWizHelper):
     """Plugin for LOFAR telescope."""
-    path_ = os.path.dirname(__file__)
+    path_ = os.path.dirname(os.path.abspath(__file__))
 
 
 telhelper = TelWizHelper_LOFAR(TELESCOPE_NAME, BANDCHNS, HAVERSION,
