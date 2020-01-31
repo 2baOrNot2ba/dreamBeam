@@ -32,17 +32,24 @@ def _get_helpers():
     return telescope_plugins
 
 
-def open_telescopebndmodel(tscopename, band, beammodel):
+def open_telescopebndmodel(tscopename, band, model):
     """
-    Open the TelescopeBndStn object given by tscopename, band and beammodel.
+    Open the TelescopeBndStn object given by tscopename, band and model.
     """
     telescope_plugins = _get_helpers()
-    telbnddata = telescope_plugins[tscopename].open_bndmodel(band, beammodel)
+    telbnddata = telescope_plugins[tscopename].load_teldat(band, model)
     return telbnddata
 
 
 class TelescopesWiz():
-    """Database over available telescopes patterns."""
+    """Database over available telescopes patterns.
+    Provides an interface like:
+        <telescope0>:
+            <band0>:
+                <antmodel0>:
+                    <station0>:
+
+    """
 
     def __init__(self):
         telescope_plugins = _get_helpers()
@@ -59,9 +66,9 @@ class TelescopesWiz():
         # Find stations for telescope band antmodel:
         for tel in self.tbdata.keys():
             for band in self.tbdata[tel].keys():
-                for beammodel in self.tbdata[tel][band].keys():
-                    bnddata = telescope_plugins[tel].open_bndmodel(band,
-                                                                   beammodel)
+                for antmodel in self.tbdata[tel][band].keys():
+                    bnddata = telescope_plugins[tel].load_teldat(band,
+                                                                 antmodel)
                     self.tbdata[tel][band][antmodel] = \
                         bnddata['Station'].keys()
 
@@ -104,59 +111,57 @@ class TelWizHelper(object):
         tbdata_fname = band+"_"+modeltype+".teldat.pkl"
         return tbdata_fname
 
-    def _get_inpfile(self, band):
+    def _get_ccfile(self, band):
         inpfile = self.haversion+"Coeff"+band+".cc"
         return inpfile
 
-    def _get_outfile(self, band):
+    def _get_dpfile(self, band):
         outfile = "DP_model_"+band+".pkl"
         return outfile
 
-    def get_stndpolel(self, dp_bafile):
+    def load_stndpolel(self, band):
         """Get DualPolElem object for this station."""
+        dp_bafile = self._get_dpfile(band)
         dpepath = os.path.join(self.path_, self.DATADIR, dp_bafile)
         with open(dpepath, 'rb') as fp:
             stnDPolel = pickle.load(fp)
         return stnDPolel
 
-    def open_bndmodel(self, band, beammodel):
-        """
-        Open the TelescopeBndStn object given by band and beammodel.
-        """
-        tbdata_fname = self._get_teldat_fname(band, self.modeltype)
-        tbdata_path = os.path.join(self.path_, self.DATADIR, tbdata_fname)
-        with open(tbdata_path, 'rb') as f:
-            telbnddata = pickle.load(f)
-        return telbnddata
-
-    def gen_antmodelfiles(self, band):
-        """Reads the 'lofar_elem_resp' packages c++ header files of
+    def save_stndpolel(self, band):
+        """Generate dualPolElem for the given band.
+        Reads the 'lofar_elem_resp' packages c++ header files of
         Hamaker-Arts coefficients and writes pickled instances of DualPolElem
         class.
         Also adds nominal LOFAR frequency channels."""
-        inpfile = self._get_inpfile(band)
-        outfile = self._get_outfile(band)
+        inpfile = self._get_ccfile(band)
+        outfile = self._get_dpfile(band)
         inppath = os.path.join(self.path_, self.SHAREDIR, inpfile)
         outpath = os.path.join(self.path_, self.DATADIR, outfile)
         channels = self.bandchns[band]
         convLOFARcc2DPE(inppath, channels, outpath)
 
-    def telescope_specific_init(self):
-        """Override this method for telescope specific initialization."""
-        pass
+    def load_teldat(self, band, model):
+        """
+        Load the teldat dict given by band and beammodel for this telescope.
+        """
+        tbdata_fname = self._get_teldat_fname(band, model)
+        tbdata_path = os.path.join(self.path_, self.DATADIR, tbdata_fname)
+        with open(tbdata_path, 'rb') as f:
+            telbnddata = pickle.load(f)
+        return telbnddata
 
-    def initialize(self):
-        """Use this to produce telescope data files for use in dreamBeam, or
-        when configuration data has changed."""
-        self.telescope_specific_init()
-        for band in self.bands:
-            self.gen_antmodelfiles(band)
-            self.save_telescopeband(band, FixedMountStn)
-
-    def save_telescopeband(self, band, telbndstn_class):
+    def save_teldat(self, band, telbndstn_class):
         """
         Save all the data relevant to the telescope-band beam modeling into
         one file.
+        teldat is a dict with structure:
+            Name: <tscopename>
+            Band: <bandname>
+            Beam-model: <modeltype>
+            Station:
+                <stnId0>: <stnbnd0>
+                <stnId1>: <stnbnd1>
+                ...
         """
         tscopename = self.name
         print("""Generating '{}' beam-model for the band {} of the {} telescope
@@ -166,7 +171,7 @@ class TelWizHelper(object):
                      'Beam-model': self.modeltype}
         #   * Create station's antenna model
         if self.modeltype == 'Hamaker':
-            stnDPolel = self.get_stndpolel(self._get_outfile(band))
+            stnDPolel = self.load_stndpolel(band)
         # Rotate by polcrdrot:
         stnDPolel.rotateframe(self.polcrdrot)
 
@@ -192,3 +197,15 @@ class TelWizHelper(object):
         with open(os.path.join(teldatdir, self.DATADIR, savename), 'wb') as fp:
             pickle.dump(telescope, fp, pickle.HIGHEST_PROTOCOL)
         print("Saved '"+savename+"' in "+teldatdir)
+
+    def telescope_specific_init(self):
+        """Override this method for telescope specific initialization."""
+        pass
+
+    def initialize(self):
+        """Use this to produce telescope data files for use in dreamBeam, or
+        when configuration data has changed."""
+        self.telescope_specific_init()
+        for band in self.bands:
+            self.save_stndpolel(band)
+            self.save_teldat(band, FixedMountStn)
