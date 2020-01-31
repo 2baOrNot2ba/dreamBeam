@@ -147,7 +147,7 @@ def on_pointing_axis_tracking(telescopename, stnid, band, antmodel, obstimebeg,
 
 
 def primarybeampat(telescopename, stnid, band, antmodel, freq,
-            pointing=(0., np.pi/2, 'STN'), obstime=None, lmgrid=None):
+                   pointing=(0., np.pi/2, 'STN'), obstime=None, lmgrid=None):
     """Computes the Jones matrix over the beam fov for pointing.
     """
     # Get the telescopeband instance:
