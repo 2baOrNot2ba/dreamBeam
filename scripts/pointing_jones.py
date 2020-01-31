@@ -20,7 +20,7 @@ from casacore.quanta import quantity
 from antpat.dualpolelem import plot_polcomp_dynspec
 from dreambeam.rime.scenarios import on_pointing_axis_tracking
 from dreambeam.rime.diagnostics import display_pointings
-from dreambeam.telescopes.rt import TelescopesWiz
+import dreambeam.telescopes.rt as rt
 
 
 SCRIPTNAME = sys.argv[0].split('/')[-1]
@@ -147,13 +147,13 @@ def cli_main():
                         help='Commandline arguments')
     args = parser.parse_args()
 
-    # Startup a telescope wizard
-    tw = TelescopesWiz()
-
     # Process cmd line arguments
     do_parallactic_rot = args.pararot
     frmt = args.frmt
     args = args.cmdargs
+
+    # Get telescope plugins
+    telplugs = rt.get_tel_plugins()
     try:
         try:
             action = args.pop(0)
@@ -163,23 +163,25 @@ def cli_main():
             telescope = args.pop(0)
         except IndexError:
             raise RuntimeError("Specify telescope:\n  "
-                               + ', '.join(tw.get_telescopes()))
+                               + ', '.join(telplugs.keys()))
         try:
             band = args.pop(0)
         except IndexError:
             raise RuntimeError("Specify band/feed:\n  "
-                               + ', '.join(tw.get_bands(telescope)))
+                               + ', '.join(telplugs[telescope].get_bands()))
         try:
             stnid = args.pop(0)
         except IndexError:
             raise RuntimeError("Specify station-ID:\n  "
-                               + ', '.join(tw.get_stations(telescope, band)))
+                               + ', '.join(telplugs[telescope]
+                                           .get_stations(band)))
         try:
             antmodel = args.pop(0)
         except IndexError:
             raise RuntimeError("Specify beam-model:\n  "
-                               + ', '.join(tw.get_beammodels(telescope, band)))
-        del tw
+                               + ', '.join(telplugs[telescope]
+                                           .get_beammodels()))
+        del telplugs
         try:
             obstimebeg = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
         except IndexError:

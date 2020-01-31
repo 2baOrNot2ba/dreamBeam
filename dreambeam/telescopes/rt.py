@@ -15,7 +15,7 @@ TELESCOPES_DIR = os.path.dirname(dbtel.__file__)
 ANTMODELS = ['Hamaker']
 
 
-def _get_helpers():
+def get_tel_plugins():
     telescope_plugins = {}
     # print(dbtel.__path__, dbtel.__name__ )
     for _, pluginname, ispkg in pkgutil.iter_modules(dbtel. __path__):
@@ -36,54 +36,9 @@ def open_telescopebndmodel(tscopename, band, model):
     """
     Open the TelescopeBndStn object given by tscopename, band and model.
     """
-    telescope_plugins = _get_helpers()
+    telescope_plugins = get_tel_plugins()
     telbnddata = telescope_plugins[tscopename].load_teldat(band, model)
     return telbnddata
-
-
-class TelescopesWiz():
-    """Database over available telescopes patterns.
-    Provides an interface like:
-        <telescope0>:
-            <band0>:
-                <antmodel0>:
-                    <station0>:
-
-    """
-
-    def __init__(self):
-        telescope_plugins = _get_helpers()
-        self.tbdata = {}
-        # Find bands & models per telescope
-        for tel in telescope_plugins.keys():
-            bands = telescope_plugins[tel].get_bands()
-            antmodels = telescope_plugins[tel].get_beammodels()
-            self.tbdata[tel] = {}
-            for band in bands:
-                self.tbdata[tel][band] = {}
-                for antmodel in antmodels:
-                    self.tbdata[tel][band][antmodel] = {}
-        # Find stations for telescope band antmodel:
-        for tel in self.tbdata.keys():
-            for band in self.tbdata[tel].keys():
-                for antmodel in self.tbdata[tel][band].keys():
-                    bnddata = telescope_plugins[tel].load_teldat(band,
-                                                                 antmodel)
-                    self.tbdata[tel][band][antmodel] = \
-                        bnddata['Station'].keys()
-
-    def get_telescopes(self):
-        return self.tbdata.keys()
-
-    def get_bands(self, telescope):
-        return self.tbdata[telescope].keys()
-
-    def get_stations(self, telescope, band):
-        abeammodel = self.tbdata[telescope][band].keys()[0]
-        return self.tbdata[telescope][band][abeammodel]
-
-    def get_beammodels(self, telescope, band):
-        return self.tbdata[telescope][band].keys()
 
 
 class TelWizHelper(object):
@@ -98,6 +53,42 @@ class TelWizHelper(object):
         self.modeltype = modeltype
         self.polcrdrot = polcrdrot
         self.bands = self.bandchns.keys()
+        self.stations = {}
+        self.positions = {}
+        self.diams = {}
+        for band in self.bands:
+            xs, ys, zs, diams, stnids = gi.readarrcfg(self.name, band)
+            self.stations[band] = stnids.tolist()
+            self.positions[band] = zip(xs.tolist(), ys.tolist(), zs.tolist())
+            self.diams[band] = diams.tolist()
+        self.bandstnrot = {}
+        for band in self.bands:
+            self.bandstnrot[band] = {}
+            for station in self.stations[band]:
+                self.bandstnrot[band][station] = gi.readalignment(
+                                                    self.name, station, band)
+
+    def get_stations(self, band):
+        return self.stations[band]
+
+    def get_bandpositions(self, band):
+        bandpositions = {}
+        for stnidx, station in enumerate(self.stations[band]):
+            bandpositions[station] = self.positions[band][stnidx]
+        return bandpositions
+
+    def get_diam(self, station, band):
+        stnidx = self.stations[band].index(station)
+        diam = self.diams[band][stnidx]
+        return diam
+
+    def get_bandstnrot(self):
+        """Return a dict of rotation matrices of bands on stations.
+        The dict has two keys: stnrot[<band>][<stnid>]. Value is the
+        transformation matrix:
+           ITRF_crds = stnrot*LOCAL_crds
+        """
+        return self.bandstnrot
 
     def get_bands(self):
         return self.bands
@@ -177,21 +168,13 @@ class TelWizHelper(object):
 
         # Create telescope_band_station metadata:
         telescope['Station'] = {}
-        x, y, z, diam, stnIds = gi.readarrcfg(tscopename, band)
-
-        for stnId in stnIds:
-            print(stnId)
-            #    *Setup station Jones*
-            # Get metadata for the station. stnRot is transformation
-            # matrix:
-            #   ITRF_crds = stnRot*LOCAL_crds
-            stnid_idx = stnIds.tolist().index(stnId)
-            stnPos = [x[stnid_idx], y[stnid_idx], z[stnid_idx]]
-            stnRot = gi.readalignment(tscopename, stnId, band)
-            # Create a StationBand object for this
-            stnbnd = telbndstn_class(stnPos, stnRot)
-            stnbnd.feed_pat = stnDPolel
-            telescope['Station'][stnId] = stnbnd
+        for station in self.stations[band]:
+            print station
+            stnpos = self.get_bandpositions(band)[station]
+            stnrot = self.get_bandstnrot()[band][station]
+            telbndstn = telbndstn_class(stnpos, stnrot)
+            telbndstn.feed_pat = stnDPolel
+            telescope['Station'][station] = telbndstn
         teldatdir = self.path_
         savename = self._get_teldat_fname(band, self.modeltype)
         with open(os.path.join(teldatdir, self.DATADIR, savename), 'wb') as fp:
