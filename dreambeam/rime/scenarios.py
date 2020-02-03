@@ -125,8 +125,7 @@ def on_pointing_axis_tracking(telescopename, stnid, band, antmodel, obstimebeg,
 
     #    *Setup EJones*
     ejones = stnBD.getEJones(pointingdir)
-    stnDPolel = stnBD.feed_pat
-    freqs = stnDPolel.getfreqs()
+    freqs = stnBD.getfreqs()
 
     #    *Setup MEq*
     pjonesOfSrc = pjones.op(srcfld)
