@@ -21,14 +21,16 @@ def get_tel_plugins():
     for _, pluginname, ispkg in pkgutil.iter_modules(dbtel. __path__):
         # print("Found submodule %s (is a package: %s)" % (pluginname, ispkg))
         if ispkg:
-            tpi = os.path.join(dbtel.__path__[0], pluginname)
+            plgospath = os.path.join(dbtel.__path__[0], pluginname)
             # print(tpi)
-            for _, modnamesub, ispkg in pkgutil.iter_modules([tpi], ""):
+            for _, modnamesub, ispkg in pkgutil.iter_modules([plgospath], ""):
                 if modnamesub == "telwizhelper":
                     pluginpath = dbtel.__name__+"."+pluginname
                     telwizmod = importlib.import_module(".telwizhelper",
                                                         pluginpath)
+                    telwizmod.telhelper.path_ = plgospath
                     telescope_plugins[pluginname] = telwizmod.telhelper
+
     return telescope_plugins
 
 
@@ -96,10 +98,10 @@ class TelWizHelper(object):
     def get_beammodels(self):
         return [self.modeltype]
 
-    def _get_teldat_fname(self, band, modeltype):
+    def _get_teldat_fname(self, band):
         """Get telescope data file name.
         """
-        tbdata_fname = band+"_"+modeltype+".teldat.pkl"
+        tbdata_fname = band+"_"+self.modeltype+".teldat.pkl"
         return tbdata_fname
 
     def _get_ccfile(self, band):
@@ -114,9 +116,12 @@ class TelWizHelper(object):
         """Get DualPolElem object for this station."""
         dp_bafile = self._get_dpfile(band)
         dpepath = os.path.join(self.path_, self.DATADIR, dp_bafile)
-        with open(dpepath, 'rb') as fp:
-            stnDPolel = pickle.load(fp)
-        return stnDPolel
+        try:
+            with open(dpepath, 'rb') as fp:
+                stndpolel = pickle.load(fp)
+        except IOError:
+            stndpolel = self.save_stndpolel(band)
+        return stndpolel
 
     def save_stndpolel(self, band):
         """Generate dualPolElem for the given band.
@@ -129,16 +134,24 @@ class TelWizHelper(object):
         inppath = os.path.join(self.path_, self.SHAREDIR, inpfile)
         outpath = os.path.join(self.path_, self.DATADIR, outfile)
         channels = self.bandchns[band]
-        convLOFARcc2DPE(inppath, channels, outpath)
+        try:
+            stndpolel = convLOFARcc2DPE(inppath, channels, outpath)
+        except IOError:
+            self.telescope_specific_init()
+            stndpolel = convLOFARcc2DPE(inppath, channels, outpath)
+        return stndpolel
 
     def load_teldat(self, band, model):
         """
         Load the teldat dict given by band and beammodel for this telescope.
         """
-        tbdata_fname = self._get_teldat_fname(band, model)
+        tbdata_fname = self._get_teldat_fname(band)
         tbdata_path = os.path.join(self.path_, self.DATADIR, tbdata_fname)
-        with open(tbdata_path, 'rb') as f:
-            telbnddata = pickle.load(f)
+        try:
+            with open(tbdata_path, 'rb') as f:
+                telbnddata = pickle.load(f)
+        except IOError:
+            telbnddata = self.save_teldat(band, FixedMountStn)  ## FIXME:
         return telbnddata
 
     def save_teldat(self, band, telbndstn_class):
@@ -176,10 +189,11 @@ class TelWizHelper(object):
             telbndstn.feed_pat = stnDPolel
             telescope['Station'][station] = telbndstn
         teldatdir = self.path_
-        savename = self._get_teldat_fname(band, self.modeltype)
+        savename = self._get_teldat_fname(band)
         with open(os.path.join(teldatdir, self.DATADIR, savename), 'wb') as fp:
             pickle.dump(telescope, fp, pickle.HIGHEST_PROTOCOL)
         print("Saved '"+savename+"' in "+teldatdir)
+        return telescope
 
     def telescope_specific_init(self):
         """Override this method for telescope specific initialization."""
