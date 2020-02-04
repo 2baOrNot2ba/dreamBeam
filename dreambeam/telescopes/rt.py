@@ -34,7 +34,7 @@ def get_tel_plugins():
     return telescope_plugins
 
 
-def open_telescopebndmodel(tscopename, band, model):
+def load_telescopebndmodel(tscopename, band, model):
     """
     Open the TelescopeBndStn object given by tscopename, band and model.
     """
@@ -151,7 +151,7 @@ class TelWizHelper(object):
             with open(tbdata_path, 'rb') as f:
                 telbnddata = pickle.load(f)
         except IOError:
-            telbnddata = self.save_teldat(band, FixedMountStn)  ## FIXME:
+            telbnddata = self.save_teldat(band, FixedMountStn)  # FIXME:
         return telbnddata
 
     def save_teldat(self, band, telbndstn_class):
