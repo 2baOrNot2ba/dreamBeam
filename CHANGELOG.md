@@ -1,6 +1,19 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.6] - 2020-02-06
+## Added
+- New functionality in `TelWizHelper` class: `get_stations`, `get_bandpositions`
+  `get_diam` and `get_bandstnrot`.
+
+## Changed
+- `TelescopesWiz` funtionality now replaced by `get_tel_plugins`.
+- Simplified `save_telescopeband` to exploit that it is a method of
+  `TelWizHelper`.
+
+## Deprecated
+- Removed `TelescopesWiz`.
+
 
 ## [0.5] - 2020-01-30
 ### Added
