@@ -306,16 +306,38 @@ def rotzMat2ang(rotMat):
     return ang
 
 
-def crt2sph(dir_crt):
+def crt2sph(dir_crt, branchcut_neg_x=True):
     """Cartesian to spherical conversion.
 
-N.B. When using direction cosines (Db uses them), regions outside the horizon
-(such as l,m=1,1) will have an imaginary vertical component. This function will
-neglect the imaginary part of the vertical component, so the elevation will be
-0, rather than raise an exception. This is so that further processing can
-proceed. The user should check the vertical component of the radial base of the
-basis attribute, i.e. jones.basis[...,0,2], to see if it is imaginary and act
-accordingly.
+    Parameters
+    ----------
+
+    dir_crt: array_like
+        Cartesian 3D direction where dir_crt[0], dir_crt[1], dir_crt[2]
+        is x, y, z respectively.
+    branchcut_neg_x: bool
+        Whether the branch cut for the azimuthal angle should be on the
+        default negative x axis, so azi is on [-pi,pi].
+        If False the branch cut will be on the positive axis,
+        so azi is on [0,2*pi].
+
+    Returns
+    -------
+
+    azi, ele: array_like, array_like
+        The azimuth and elevation corresponding to the dir_crt direction
+        vectors.
+
+    Note
+    ----
+
+    When using direction cosines (Db uses them), regions outside the
+    horizon (such as l,m=1,1) will have an imaginary vertical component. This
+    function will neglect the imaginary part of the vertical component, so the
+    elevation will be 0, rather than raise an exception. This is so that
+    further processing can proceed. The user should check the vertical
+    component of the radial base of the basis attribute,
+    i.e. jones.basis[...,0,2], to see if it is imaginary and act accordingly.
     """
     x = np.squeeze(dir_crt[0])
     y = np.squeeze(dir_crt[1])
@@ -324,6 +346,9 @@ accordingly.
     # dtype complex, so x,y will seem complex. Therefore take the real parts
     # of x and y here:
     azi = np.arctan2(np.real(y), np.real(x))
+    if not branchcut_neg_x:
+        # arctan2 returns azi on [-pi,+pi] but want azi on [0,2*pi]
+        azi = np.where(azi<0, azi+2*np.pi, azi)
     ele = np.arcsin(np.real(z))
     if np.any(np.imag(z)):
          warnings.warn("Some z-components are imaginary.")
