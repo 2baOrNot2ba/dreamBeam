@@ -352,8 +352,20 @@ fill matrix specified by the `fill` argument.
     jonesobj.jones[idxs[0], idxs[1], ...] = fill
 
 
-def plotJonesField(jonesfld, jbasis, refframe, rep='abs-Jones'):
+def plotJonesField(jonesfld, jbasis, refframe, rep='abs-Jones',
+                   mask_belowhorizon=True):
     """Plot a Jones field."""
+
+    def belowhorizon(z):
+        """Return masked z values that are below the horizon.
+        Below the horizon means either than z is negative or
+        the z has a nonzero imaginary part.
+        """
+        imagz_ma = ma.getmaskarray(ma.masked_not_equal(z.imag, 0.))
+        negz_ma = ma.getmaskarray(ma.masked_less(z, .0))
+        belowhrz = ma.mask_or(imagz_ma, negz_ma)
+        return belowhrz
+
     if rep == 'abs-Jones':
         restitle = 'Beam Jones on sky'
         res00 = np.abs(jonesfld[:, :, 0, 0])
@@ -390,13 +402,12 @@ def plotJonesField(jonesfld, jbasis, refframe, rep='abs-Jones'):
         x = jbasis[..., 0, 0]
         y = jbasis[..., 1, 0]
         z = jbasis[..., 2, 0]
-        belowhrz = ma.getmask(ma.masked_less(z, .0))
-        x = ma.MaskedArray(x, mask=belowhrz)
-        y = ma.MaskedArray(y, mask=belowhrz)
-        res00 = ma.MaskedArray(res00, mask=belowhrz)
-        res01 = ma.MaskedArray(res01, mask=belowhrz)
-        res10 = ma.MaskedArray(res10, mask=belowhrz)
-        res11 = ma.MaskedArray(res11, mask=belowhrz)
+        if mask_belowhorizon:
+            belowhrz = belowhorizon(z)
+            res00 = ma.MaskedArray(res00, mask=belowhrz)
+            res01 = ma.MaskedArray(res01, mask=belowhrz)
+            res10 = ma.MaskedArray(res10, mask=belowhrz)
+            res11 = ma.MaskedArray(res11, mask=belowhrz)
         xlabel = 'STN X'
         ylabel = 'STN Y'
     elif refframe == 'J2000':
