@@ -9,15 +9,20 @@ class FixedMountEJones(dreambeam.rime.jones.EJones):
         return jb_lud3
 
 
-# PosedFeed
-class TelescopeBndStn(object):
-    """Base model of a band feed on a telescope station."""
+class MountedFeed(object):
+    """Base model of a feed on a mount."""
     feed_pat = None
 
-    def __init__(self, stnPos, stnRot):
+    def __init__(self, stnpos, stnrot):
         """Set the station's position and attitude."""
-        self.stnPos = stnPos
-        self.stnRot = stnRot
+        self.stnPos = stnpos
+        self.stnRot = stnrot
+
+    def mountfeed(self, feed_pat, feed_rot=None):
+        """Set feed pattern and alignment."""
+        self.feed_pat = feed_pat
+        if feed_rot is not None:
+            self.feed_pat.rotateframe(feed_rot)
 
     def getEJones(self):
         """Create ejones for station based on antenna patterns.
@@ -32,11 +37,11 @@ class TelescopeBndStn(object):
 
 
 # PosedFeed_FixMnt
-class FixedMountStn(TelescopeBndStn):
+class MountedFeedFixed(MountedFeed):
     """Class for fixed mount station."""
 
-    def __init__(self, stnPos, stnRot):
-        super(FixedMountStn, self).__init__(stnPos, stnRot)
+    def __init__(self, stnpos, stnrot):
+        super(MountedFeedFixed, self).__init__(stnpos, stnrot)
 
     def getEJones(self, pointing, freqsel=None):
         """Get e-jones for this pointing for a fixed mount station.
