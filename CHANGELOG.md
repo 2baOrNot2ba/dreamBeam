@@ -1,17 +1,50 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.6] - 2020-02-06
+
+## [Unreleased]
 ## Added
+- `feed` package  to handle feeds independently from  telescopes.
+- HamakerArts coeff .cc files now contain channels array of freqs.
+- `mountfeed` method in `MountedFeed` class to set feed pattern and feed
+  rotation.
+- `crt2sph` in `conversion_utils` module now has optional branch cut choice.
+
+### Changed
+- `load_mountedfeed` replaces `load_telescopebndmodel` functionality in `rt`
+    module.
+- `TelWizHelper` functionality now split into `TelescopePlugin` and `FeedPlugin`.
+   This will allow access to feed patterns independently from telescope data.
+- `feeds` module renamed `mounts`.
+- `MountedFeed` renamed `TelescopeBndStn` class.
+- `MountedFeedFixed` renamed `FixedMountStn` class.
+
+### Deprecated
+- Removed `load_telescopebndmodel` and `save_telescopeband`  methods in
+  `TelescopePlugin`.
+- Removed `load_telescopebndmodel` function in `rt` module.
+- Removed `TelWizHelper`.
+
+### Fixed
+- `plotJonesField` function in `jones` module was doing a numpy swapaxes which
+  was incorrect.
+- `plotJonesField` function in `jones` module needed to have azimuth angles
+  on [0,2*pi].
+- `plotJonesField` now handles imaginary directions, which happens
+   when direction cosine l^2+m^2>1 (i.e. beyond local horizon).
+
+
+## [0.6] - 2020-02-06
+### Added
 - New functionality in `TelWizHelper` class: `get_stations`, `get_bandpositions`
   `get_diam` and `get_bandstnrot`.
 
-## Changed
-- `TelescopesWiz` funtionality now replaced by `get_tel_plugins`.
+### Changed
+- `TelescopesWiz` functionality now replaced by `get_tel_plugins`.
 - Simplified `save_telescopeband` to exploit that it is a method of
   `TelWizHelper`.
 
-## Deprecated
+### Deprecated
 - Removed `TelescopesWiz`.
 
 
