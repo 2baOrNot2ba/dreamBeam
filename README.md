@@ -9,6 +9,7 @@ chains of Jones matrices. It also comes with some predetermined, basic beam
 models of real telescopes, currently:
 
 * LOFAR
+* NenuFAR
 * ALMA (under development)
 
 ### How do I get set up? ###
@@ -18,4 +19,4 @@ models of real telescopes, currently:
 
 ### Status ###
 
-Please note that dreamBeam is still in development.
+dreamBeam is now fairly mature.

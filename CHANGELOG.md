@@ -2,8 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 
-## [Unreleased]
-## Added
+## [0.7] 2020-02-07
+### Added
 - `feed` package  to handle feeds independently from  telescopes.
 - HamakerArts coeff .cc files now contain channels array of freqs.
 - `mountfeed` method in `MountedFeed` class to set feed pattern and feed
@@ -13,8 +13,9 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - `load_mountedfeed` replaces `load_telescopebndmodel` functionality in `rt`
     module.
-- `TelWizHelper` functionality now split into `TelescopePlugin` and `FeedPlugin`.
-   This will allow access to feed patterns independently from telescope data.
+- `TelWizHelper` functionality now split into `TelescopePlugin` and
+  `FeedPlugin`. This will allow access to feed patterns independently from
+   telescope data.
 - `feeds` module renamed `mounts`.
 - `MountedFeed` renamed `TelescopeBndStn` class.
 - `MountedFeedFixed` renamed `FixedMountStn` class.
