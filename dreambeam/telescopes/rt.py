@@ -4,57 +4,58 @@ rt (i.e. Radio Telescopes) module is for handling real telescope meta-data.
 import os
 import pickle
 import importlib
-import pkgutil
-from antpat.reps.hamaker import convLOFARcc2DPE
-import dreambeam.telescopes as dbtel
+import pkg_resources
+import dreambeam
+from dreambeam.feeds.feedplugins import FeedWiz
 import dreambeam.telescopes.geometry_ingest as gi
-from dreambeam.telescopes.feeds import FixedMountStn
-
-
-TELESCOPES_DIR = os.path.dirname(dbtel.__file__)
-ANTMODELS = ['Hamaker']
 
 
 def get_tel_plugins():
-    telescope_plugins = {}
-    # print(dbtel.__path__, dbtel.__name__ )
-    for _, pluginname, ispkg in pkgutil.iter_modules(dbtel. __path__):
-        # print("Found submodule %s (is a package: %s)" % (pluginname, ispkg))
-        if ispkg:
-            plgospath = os.path.join(dbtel.__path__[0], pluginname)
-            # print(tpi)
-            for _, modnamesub, ispkg in pkgutil.iter_modules([plgospath], ""):
-                if modnamesub == "telwizhelper":
-                    pluginpath = dbtel.__name__+"."+pluginname
-                    telwizmod = importlib.import_module(".telwizhelper",
-                                                        pluginpath)
-                    telwizmod.telhelper.path_ = plgospath
-                    telescope_plugins[pluginname] = telwizmod.telhelper
+    resource_path = '/'.join(('configs', 'telescope_paths.txt'))
+    rootpath = os.path.dirname(os.path.dirname(dreambeam.__file__))
+    tele_paths_file = pkg_resources.resource_filename(dreambeam.__name__,
+                                                      resource_path)
+    tele_paths = []
+    with open(tele_paths_file) as fp:
+        lines = fp.readlines()
+        for line in lines:
+            line = line.rstrip()
+            if not (line.startswith('#') or line == ''):
+                tele_path = line
+                tele_paths.append(tele_path)
+    teleplugins = {}
+    for tele_path in tele_paths:
+        telemodpath = os.path.join(rootpath, tele_path, '_telescope.py')
+        if os.path.exists(telemodpath):
+            pluginpath = tele_path.replace("/", ".")
+            telwizmod = importlib.import_module("._telescope",
+                                                pluginpath)
+            telwizmod.telhelper.path_ = os.path.join(rootpath, tele_path)
+            telescopename = os.path.basename(tele_path)
+            teleplugins[telescopename] = telwizmod.telhelper
+    return teleplugins
 
-    return telescope_plugins
 
-
-def load_telescopebndmodel(tscopename, band, model):
+def load_mountedfeed(tscopename, station, band, modelname):
     """
     Open the TelescopeBndStn object given by tscopename, band and model.
     """
     telescope_plugins = get_tel_plugins()
-    telbnddata = telescope_plugins[tscopename].load_teldat(band, model)
-    return telbnddata
+    stnfeed = telescope_plugins[tscopename].getstationfeed(station, band,
+                                                           modelname)
+    return stnfeed
 
 
-class TelWizHelper(object):
+class TelescopePlugin(object):
     """Plugin for a generic telescope."""
-    SHAREDIR = 'share'  # Dir for native telescope project data.
     DATADIR = 'data'    # Dir for telescope data for RIME level work.
 
-    def __init__(self, tscopename, bandchns, haversion, modeltype, polcrdrot):
+    def __init__(self, tscopename, mountedfeed_class, feedrot):
         self.name = tscopename
-        self.bandchns = bandchns
-        self.haversion = haversion
-        self.modeltype = modeltype
-        self.polcrdrot = polcrdrot
-        self.bands = self.bandchns.keys()
+        self.mountedfeed_class = mountedfeed_class
+        self.feedrot = feedrot
+        self.feedplugin = FeedWiz()[tscopename]
+        self.bands = self.feedplugin.get_bands()
         self.stations = {}
         self.positions = {}
         self.diams = {}
@@ -95,114 +96,22 @@ class TelWizHelper(object):
     def get_bands(self):
         return self.bands
 
-    def get_beammodels(self):
-        return [self.modeltype]
+    def get_beammodels(self, band):
+        return self.feedplugin.list_models4band(band)
 
     def _get_teldat_fname(self, band):
         """Get telescope data file name.
         """
-        tbdata_fname = band+"_"+self.modeltype+".teldat.pkl"
+        tbdata_fname = band+".teldat.pkl"
         return tbdata_fname
 
-    def _get_ccfile(self, band):
-        inpfile = self.haversion+"Coeff"+band+".cc"
-        return inpfile
-
-    def _get_dpfile(self, band):
-        outfile = "DP_model_"+band+".pkl"
-        return outfile
-
-    def load_stndpolel(self, band):
-        """Get DualPolElem object for this station."""
-        dp_bafile = self._get_dpfile(band)
-        dpepath = os.path.join(self.path_, self.DATADIR, dp_bafile)
-        try:
-            with open(dpepath, 'rb') as fp:
-                stndpolel = pickle.load(fp)
-        except IOError:
-            stndpolel = self.save_stndpolel(band)
-        return stndpolel
-
-    def save_stndpolel(self, band):
-        """Generate dualPolElem for the given band.
-        Reads the 'lofar_elem_resp' packages c++ header files of
-        Hamaker-Arts coefficients and writes pickled instances of DualPolElem
-        class.
-        Also adds nominal LOFAR frequency channels."""
-        inpfile = self._get_ccfile(band)
-        outfile = self._get_dpfile(band)
-        inppath = os.path.join(self.path_, self.SHAREDIR, inpfile)
-        outpath = os.path.join(self.path_, self.DATADIR, outfile)
-        channels = self.bandchns[band]
-        try:
-            stndpolel = convLOFARcc2DPE(inppath, channels, outpath)
-        except IOError:
-            self.telescope_specific_init()
-            stndpolel = convLOFARcc2DPE(inppath, channels, outpath)
-        return stndpolel
-
-    def load_teldat(self, band, model):
-        """
-        Load the teldat dict given by band and beammodel for this telescope.
-        """
-        tbdata_fname = self._get_teldat_fname(band)
-        tbdata_path = os.path.join(self.path_, self.DATADIR, tbdata_fname)
-        try:
-            with open(tbdata_path, 'rb') as f:
-                telbnddata = pickle.load(f)
-        except IOError:
-            telbnddata = self.save_teldat(band, FixedMountStn)  # FIXME:
-        return telbnddata
-
-    def save_teldat(self, band, telbndstn_class):
-        """
-        Save all the data relevant to the telescope-band beam modeling into
-        one file.
-        teldat is a dict with structure:
-            Name: <tscopename>
-            Band: <bandname>
-            Beam-model: <modeltype>
-            Station:
-                <stnId0>: <stnbnd0>
-                <stnId1>: <stnbnd1>
-                ...
-        """
-        tscopename = self.name
-        print("""Generating '{}' beam-model for the band {} of the {} telescope
-              with stations:""".format(self.modeltype, band, tscopename))
-        # Create telescope-bands metadata:
-        telescope = {'Name': tscopename, 'Band': band,
-                     'Beam-model': self.modeltype}
+    def getstationfeed(self, station, band, modelname):
         #   * Create station's antenna model
-        if self.modeltype == 'Hamaker':
-            stnDPolel = self.load_stndpolel(band)
+        stndpolel = self.feedplugin.load_dpolel(band, modelname)
         # Rotate by polcrdrot:
-        stnDPolel.rotateframe(self.polcrdrot)
-
-        # Create telescope_band_station metadata:
-        telescope['Station'] = {}
-        for station in self.stations[band]:
-            print station
-            stnpos = self.get_bandpositions(band)[station]
-            stnrot = self.get_bandstnrot()[band][station]
-            telbndstn = telbndstn_class(stnpos, stnrot)
-            telbndstn.feed_pat = stnDPolel
-            telescope['Station'][station] = telbndstn
-        teldatdir = self.path_
-        savename = self._get_teldat_fname(band)
-        with open(os.path.join(teldatdir, self.DATADIR, savename), 'wb') as fp:
-            pickle.dump(telescope, fp, pickle.HIGHEST_PROTOCOL)
-        print("Saved '"+savename+"' in "+teldatdir)
-        return telescope
-
-    def telescope_specific_init(self):
-        """Override this method for telescope specific initialization."""
-        pass
-
-    def initialize(self):
-        """Use this to produce telescope data files for use in dreamBeam, or
-        when configuration data has changed."""
-        self.telescope_specific_init()
-        for band in self.bands:
-            self.save_stndpolel(band)
-            self.save_teldat(band, FixedMountStn)
+        stndpolel.rotateframe(self.feedrot)
+        stnpos = self.get_bandpositions(band)[station]
+        stnrot = self.get_bandstnrot()[band][station]
+        stationfeed = self.mountedfeed_class(stnpos, stnrot)
+        stationfeed.mountfeed(stndpolel)
+        return stationfeed

@@ -4,7 +4,7 @@ It implements basic Jones chains or Measurement Equations.
 '''
 import numpy as np
 import dreambeam.rime.jones
-from dreambeam.telescopes.rt import load_telescopebndmodel
+from dreambeam.telescopes.rt import load_mountedfeed
 from dreambeam.rime.conversion_utils import basis2basis_transf, C09toIAU
 
 
@@ -106,26 +106,24 @@ def on_pointing_axis_tracking(telescopename, stnid, band, antmodel, obstimebeg,
      [ 0.39298880-0.02620409j -0.38686167-0.01691861j]]
 
     """
-    # Get the telescopeband instance:
-    telescope = load_telescopebndmodel(telescopename, band, antmodel)
-
     #    *Setup Source*
     srcfld = dreambeam.rime.jones.DualPolFieldPointSrc(pointingdir)
 
-    stnBD = telescope['Station'][stnid]
-    stnRot = stnBD.stnRot
+    #    *Load moouted feed*
+    stnfeed = load_mountedfeed(telescopename, stnid, band, antmodel)
+    stnrot = stnfeed.stnRot
 
     #    *Setup PJones*
     timespy = []
     nrTimSamps = int((obsdur.total_seconds()/obstimestp.seconds))+1
     for ti in range(0, nrTimSamps):
         timespy.append(obstimebeg+ti*obstimestp)
-    pjones = dreambeam.rime.jones.PJones(timespy, np.transpose(stnRot),
+    pjones = dreambeam.rime.jones.PJones(timespy, np.transpose(stnrot),
                                          do_parallactic_rot=do_parallactic_rot)
 
     #    *Setup EJones*
-    ejones = stnBD.getEJones(pointingdir)
-    freqs = stnBD.getfreqs()
+    ejones = stnfeed.getEJones(pointingdir)
+    freqs = stnfeed.getfreqs()
 
     #    *Setup MEq*
     pjonesOfSrc = pjones.op(srcfld)
@@ -150,9 +148,9 @@ def primarybeampat(telescopename, stnid, band, antmodel, freq,
     """Computes the Jones matrix over the beam fov for pointing.
     """
     # Get the telescopeband instance:
-    telescope = load_telescopebndmodel(telescopename, band, antmodel)
-    stnBD = telescope['Station'][stnid]
-    stnRot = stnBD.stnRot
+
+    stnfeed = load_mountedfeed(telescopename, stnid, band, antmodel)
+    stnrot = stnfeed.stnRot
 
     #    *Setup Source*
     (az, el, refframe) = pointing
@@ -160,15 +158,14 @@ def primarybeampat(telescopename, stnid, band, antmodel, freq,
                                                      lmgrid=lmgrid)
 
     #    *Setup Parallatic Jones*
-    pjones = dreambeam.rime.jones.PJones([obstime], np.transpose(stnRot))
+    pjones = dreambeam.rime.jones.PJones([obstime], np.transpose(stnrot))
 
     #    *Setup EJones*
-    stnDPolel = stnBD.feed_pat
     #    **Select frequency
-    freqs = stnDPolel.getfreqs()
+    freqs = stnfeed.getfreqs()
     frqIdx = np.where(np.isclose(freqs, freq, atol=190e3))[0][0]
     # N.B. Ejones doesn't really use pointing
-    ejones = stnBD.getEJones(pointing, [freqs[frqIdx]])
+    ejones = stnfeed.getEJones(pointing, [freqs[frqIdx]])
 
     #    *Setup MEq*
     pjones_src = pjones.op(srcfld)

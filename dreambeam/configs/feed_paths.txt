@@ -1,0 +1,6 @@
+#List of (forward slash separated) paths to root plugins relative
+#package root.
+#Use "#" at beginning of lines to comment out unwanted ones.
+dreambeam/telescopes/LOFAR
+dreambeam/telescopes/NenuFAR
+dreambeam/feeds/Generic
