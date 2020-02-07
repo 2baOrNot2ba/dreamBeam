@@ -370,10 +370,10 @@ def plotJonesField(jonesfld, jbasis, refframe, rep='abs-Jones'):
         res11lbl = r'|J_{q\theta}|'
     elif rep == 'Stokes':
         corrmat = np.matmul(jonesfld, np.swapaxes(jonesfld.conj(), -2, -1))
-        S0 = np.real(corrmat[:, :, 0, 0]+corrmat[:, :, 1, 1])
-        SQ = np.real(corrmat[:, :, 0, 0]-corrmat[:, :, 1, 1])
-        SU = np.real(corrmat[:, :, 0, 1]+corrmat[:, :, 1, 0])
-        SV = np.imag(corrmat[:, :, 0, 1]-corrmat[:, :, 1, 0])
+        S0 = np.real(corrmat[..., 0, 0]+corrmat[..., 1, 1])
+        SQ = np.real(corrmat[..., 0, 0]-corrmat[..., 1, 1])
+        SU = np.real(corrmat[..., 0, 1]+corrmat[..., 1, 0])
+        SV = np.imag(corrmat[..., 0, 1]-corrmat[..., 1, 0])
         restitle = 'Antenna Stokes on sky'
         res00 = S0
         res00lbl = 'I'
@@ -400,17 +400,16 @@ def plotJonesField(jonesfld, jbasis, refframe, rep='abs-Jones'):
         xlabel = 'STN X'
         ylabel = 'STN Y'
     elif refframe == 'J2000':
-        r = np.swapaxes(np.squeeze(jbasis[..., :, 0]), -1, 0)
-        az, el = crt2sph(r)
-        x = az
-        y = el
+        r = np.moveaxis(np.squeeze(jbasis[..., :, 0]), -1, 0)
+        az, el = crt2sph(r, branchcut_neg_x=False)
+        x = np.rad2deg(az)
+        y = np.rad2deg(el)
         xlabel = 'RA'
         ylabel = 'DEC'
-    print(x.shape, y.shape)
     fig = plt.figure()
     fig.suptitle(restitle)
     ax = plt.subplot(221, polar=False)
-    plt.pcolormesh(x, y, res00, vmin=0., vmax=2.0)
+    plt.pcolormesh(x, y, res00)  # , vmin=0., vmax=2.0)
     plt.colorbar()
     ax.set_title(res00lbl)
     plt.ylabel(ylabel)
