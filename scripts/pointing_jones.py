@@ -180,7 +180,7 @@ def cli_main():
         except IndexError:
             raise RuntimeError("Specify beam-model:\n  "
                                + ', '.join(telplugs[telescope]
-                                           .get_beammodels()))
+                                           .get_beammodels(band)))
         del telplugs
         try:
             obstimebeg = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
