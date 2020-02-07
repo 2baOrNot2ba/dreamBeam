@@ -26,7 +26,7 @@ setup(name='dreamBeam',
           'numpy>=1.10',
           'python-casacore',
           'matplotlib>2.0',
-          'antpat'
+          'antpat>=0.4'
       ],
       entry_points={
         'console_scripts': [
