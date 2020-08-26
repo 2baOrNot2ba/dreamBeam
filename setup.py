@@ -11,7 +11,10 @@ setup(name='dreamBeam',
       packages=find_packages(),
       package_data={'dreambeam.telescopes.LOFAR':
                     ['share/*.cc', 'share/simmos/*.cfg',
-                     'share/alignment/*.txt', 'data/*teldat.p']},
+                     'share/alignment/*.txt', 'data/*teldat.p'],
+                    'dreambeam':
+                    ['configs/*.txt']},
+      include_package_data=True,
       license='ISC',
       classifiers=[
           'Development Status :: 1 - Planning',
