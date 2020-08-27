@@ -64,6 +64,10 @@ class FeedPlugin(object):
 
     def __init__(self, path2plugin):
         self.path_ = path2plugin
+        # Make sure DATADIR path exists:
+        datadirpath = os.path.join(self.path_, self.DATADIR)
+        if not os.path.exists(datadirpath):
+            os.mkdir(datadirpath)
 
     def prep_dpefiles(self):
         coeffilemetas = self._search_coeff_files()
