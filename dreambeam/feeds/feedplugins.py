@@ -191,7 +191,7 @@ class FeedPlugin(object):
         return dpes
 
     def load_dpolel(self, band, modelstring):
-        modeltype, version = modelstring.split(self._mdlversep, 1)
+        modeltype, version, *_ = modelstring.split(self._mdlversep, 1) + [None, None]
         if version is None:
             versions = self.list_versions4bandmodels(band, modeltype)
             version = versions[0]
