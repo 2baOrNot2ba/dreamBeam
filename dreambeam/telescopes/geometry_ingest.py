@@ -9,7 +9,7 @@ import os
 import numpy as np
 
 CASA_CFG_DTYPE = [('X', float), ('Y', float), ('Z', float), ('Diam', float),
-                  ('Name', 'S7')]
+                  ('Name', 'U7')]
 CASA_CFG_FMT = '%12f %12f %12f %4.1f %s'
 SIMOBS_PATH = os.path.dirname(os.path.realpath(__file__))
 

@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+### Fixed
+- Read string values (array names) in CASA array configuration file as
+  unicode 'U' rather than string 'S', as the latter in python3 becomes byte
+  type data rather str type.
+- Telescope plugin's `data` directory should not be included in `package_data`
+  field in `setup.py`. It is now a cache for `dualPolElem` objects used by
+  feed plugins.
 
 ## [0.7] 2020-02-07
 ### Added
@@ -11,14 +19,16 @@ All notable changes to this project will be documented in this file.
 - `crt2sph` in `conversion_utils` module now has optional branch cut choice.
 
 ### Changed
+- Default model for LOFAR antennas, which used to be just "Hamaker"
+  is now called "Hamaker-default"
 - `load_mountedfeed` replaces `load_telescopebndmodel` functionality in `rt`
     module.
 - `TelWizHelper` functionality now split into `TelescopePlugin` and
   `FeedPlugin`. This will allow access to feed patterns independently from
    telescope data.
 - `feeds` module renamed `mounts`.
-- `MountedFeed` renamed `TelescopeBndStn` class.
-- `MountedFeedFixed` renamed `FixedMountStn` class.
+- `TelescopeBndStn` renamed `MountedFeed` class.
+- `FixedMountStn` renamed `MountedFeedFixed` class.
 
 ### Deprecated
 - Removed `load_telescopebndmodel` and `save_telescopeband`  methods in
