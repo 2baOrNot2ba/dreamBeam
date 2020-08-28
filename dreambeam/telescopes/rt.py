@@ -62,10 +62,8 @@ class TelescopePlugin(object):
         for band in self.bands:
             xs, ys, zs, diams, stnids = gi.readarrcfg(self.name, band)
             self.stations[band] = stnids.tolist()
-            self.positions[band] = zip(xs.tolist(), ys.tolist(), zs.tolist())
+            self.positions[band] = list(zip(xs.tolist(), ys.tolist(), zs.tolist()))
             self.diams[band] = diams.tolist()
-            if type(self.stations[band][0]) is bytes:
-                self.stations[band] = [val.decode('ascii') for val in self.stations[band]]
         self.bandstnrot = {}
         for band in self.bands:
             self.bandstnrot[band] = {}
