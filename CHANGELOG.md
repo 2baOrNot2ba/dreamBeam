@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Fixed
+- Handling of modelstring identifier so that if it doesn't have version
+  specifier, it defaults to the default version.
+  (modelstring is constructed as "\<modeltype\>-\<version\>")
 - Read string values (array names) in CASA array configuration file as
   unicode 'U' rather than string 'S', as the latter in python3 becomes byte
   type data rather str type.
