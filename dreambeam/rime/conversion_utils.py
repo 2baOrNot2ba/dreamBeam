@@ -57,7 +57,14 @@ def convertBasis(me, rbasis, from_refFrame, to_refFrame):
         vr_sph_me = measures().direction(from_refFrame,
                                          quantity(az, 'rad'),
                                          quantity(el, 'rad'))
-        v_sph_me = me.measure(vr_sph_me, to_refFrame)
+        try:
+            v_sph_me = me.measure(vr_sph_me, to_refFrame)
+        except:
+            # TODO: Remove this (except block) workaround once casacore is fixed.
+            #  As of version 3.3.1 try block is not working correctly:
+            #  first call to measure method (frame conversion) throws exception,
+            #  but second call OK.
+            v_sph_me = me.measure(vr_sph_me, to_refFrame)
         v_me = sph2crt_me(v_sph_me)
         basis[:, comp] = v_me
     return basis
