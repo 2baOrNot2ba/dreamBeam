@@ -4,15 +4,14 @@ import math
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
-from jones import PJones, DualPolFieldPointSrc
-from conversion_utils import CEL2TOPOpnts, sph2crt_me, getParallacticRot, \
+from .jones import PJones, DualPolFieldPointSrc
+from .conversion_utils import CEL2TOPOpnts, sph2crt_me, getParallacticRot, \
                             printJones, pyTimes2meTimes, sph2crt, crt2sph, \
                             getSph2CartTransf, setEpoch, convertBasis
 import antpat.reps.sphgridfun
 from casacore.measures import measures
 import dreambeam.telescopes.geometry_ingest as gi
 from dreambeam.rime.scenarios import on_pointing_axis_tracking
-from dreambeam.telescopes.rt import TelescopesWiz
 
 
 def setupObsInstance():
@@ -67,7 +66,7 @@ def tPJones():
 def tModFuncs_CEL2TOPOpnts():
     Times, celSrcDir, stnPos, stnRot = setupObsInstance()
     CelRot, rotang = CEL2TOPOpnts(Times, stnPos, celSrcDir)
-    print "CelRot", CelRot
+    print("CelRot", CelRot)
     #print np.rad2deg(rotang)
     #RotP=getParallacticRot(Times, stnPos, stnRot, celSrcDir, doPolPrec=False)
     #printJones(RotP)
@@ -77,9 +76,9 @@ def tModFuncs_crt2sph():
     azi = np.array([0.1, 0.2])
     ele = np.array([-0.3, 0.4])
     dir_crt = sph2crt(azi, ele)
-    print dir_crt
+    print(dir_crt)
     dir_sph = crt2sph(dir_crt)
-    print dir_sph
+    print(dir_sph)
 
 
 def tcomputeSphBasis():
@@ -87,15 +86,15 @@ def tcomputeSphBasis():
     obsTimesArr, obsTimeUnit = pyTimes2meTimes(Times)
     jonesbasis = np.array(getSph2CartTransf(sph2crt(celSrcDir[0],
                                                     celSrcDir[1])))
-    print jonesbasis
+    print(jonesbasis)
     for ti in range(0, len(obsTimesArr)):
         me = setEpoch(obsTimesArr[ti], obsTimeUnit)
         jonesrbasis_to = np.asmatrix(convertBasis(me, jonesbasis, 'J2000',
                                                   'ITRF'))
         jonesbasisMat = getSph2CartTransf(jonesrbasis_to[:, 0])
-        print jonesrbasis_to[:, 0]
+        print(jonesrbasis_to[:, 0])
         # print obsTimesArr[ti], jonesbasisMat[:,1:].H*jonesrbasis_to[:,1:]
-        print obsTimesArr[ti], jonesrbasis_to, jonesbasisMat
+        print(obsTimesArr[ti], jonesrbasis_to, jonesbasisMat)
 
 
 def tStokes():
@@ -106,11 +105,13 @@ def tStokes():
     btime = samptimes[0]
     duration = (samptimes[-1]-samptimes[0])
     steptime = (samptimes[1]-samptimes[0])  # .total_seconds()
-    telescope = TelescopesWiz().getTelescopeBand('LOFAR', 'LBA', 'Hamaker')
+    telescopename = 'LOFAR'  # TelescopesWiz().getTelescopeBand('LOFAR', 'LBA', 'Hamaker')
     stnid = 'SE607'
+    band = 'LBA'
+    antmodel = 'Hamaker-default'
     timespy, freqs, Jn, srcfld, res, pjonesOfSrc = \
-        on_pointing_axis_tracking(telescope, stnid, btime, duration, steptime,
-                                  srcdir,
+        on_pointing_axis_tracking(telescopename, stnid, band, antmodel, btime,
+                                  duration, steptime, srcdir,
                                   xtra_results=True)
     frqIdx = np.where(np.isclose(freqs, freq, atol=190e3))[0][0]
     Jnf = Jn[frqIdx, :, :, :].squeeze()
