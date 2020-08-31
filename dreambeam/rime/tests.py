@@ -1,4 +1,5 @@
 #!/usr/bin/python
+"""Some tests of `rime` package."""
 
 import math
 from datetime import datetime, timedelta
@@ -67,9 +68,9 @@ def tModFuncs_CEL2TOPOpnts():
     Times, celSrcDir, stnPos, stnRot = setupObsInstance()
     CelRot, rotang = CEL2TOPOpnts(Times, stnPos, celSrcDir)
     print("CelRot", CelRot)
-    #print np.rad2deg(rotang)
-    #RotP=getParallacticRot(Times, stnPos, stnRot, celSrcDir, doPolPrec=False)
-    #printJones(RotP)
+    # print(np.rad2deg(rotang))
+    # RotP=getParallacticRot(Times, stnPos, stnRot, celSrcDir, doPolPrec=False)
+    # printJones(RotP)
 
 
 def tModFuncs_crt2sph():
@@ -99,7 +100,7 @@ def tcomputeSphBasis():
 
 def tStokes():
     freq = 80e6
-    #cohmatt = 0.5*np.array([[2-1, 0+0.8j], [0-0.8j, 2+1]])  # I,Q,U,V=2,1,0,0.8
+    # cohmatt = 0.5*np.array([[2-1, 0+0.8j], [0-0.8j, 2+1]])  # I,Q,U,V=2,1,0,0.8
     cohmatt = 0.5*np.array([[2-2, 0], [0, 2+2]])
     samptimes, srcdir, stnPos, stnRot = setupObsInstance()
     btime = samptimes[0]
@@ -142,8 +143,8 @@ def tStokes():
 
 if __name__ == '__main__':
     pass
-    # print IAU_pol_basis(0.*np.pi, 0.0001*np.pi)
-    #tPJones()
+    # print(IAU_pol_basis(0.*np.pi, 0.0001*np.pi))
+    # tPJones()
     # tgetParallacticRot()
     # tModFuncs_CEL2TOPOpnts()
     # tModFuncs_crt2sph()

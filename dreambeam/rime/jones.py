@@ -1,5 +1,5 @@
 """
-  This module provides a Jones matrix framework for radio interometric
+  This module provides a Jones matrix framework for radio interferometric
   measurement equations.
 """
 import copy
@@ -17,8 +17,10 @@ from .conversion_utils import sph2crt, crt2sph, convertBasis, \
 class Jones(object):
     """This is the base class for Jones algebra. It contains the Jones matrix
     itself and a basis w.r.t. which the Jones matrix is given.
-    The basis is such that::
-        self.jonesbasis=array([[r_hat], [phi_hat], [theta_hat]]).
+    The basis is such that:
+    ::
+
+        self.jonesbasis = array([[r_hat], [phi_hat], [theta_hat]]).
     """
     _ecef_frame = 'ITRF'
     _eci_frame = 'J2000'
@@ -108,39 +110,52 @@ class PJones(Jones):
             self.computeJonesRes_overtime()
 
     def computeJonesRes_overtime(self):
-        """Compute and apply the P Jones matrix. The structure is:
+        """Compute and apply the P-Jones matrix. The structure is:
+        ::
 
-          jones[time, sphcomp, skycomp] =
+            jones[time, sphcomp, skycomp] =
                 Pjones[time, sphcomp, comp]*jonesr[comp, skycomp]
 
-        The Pjones matrix is computed as follows: consider a direction
+        The P-Jones matrix is computed as follows: consider a direction
         vector d. Let jonesrbasis be the column concatenation of the 3
         spherical basis vectors corresponding to d in the J2000 reference
         frame, so
-          jonesrbasis = [[r_J2000],[phi_J2000],[theta_J2000]].T
-        where r_J2000 is along the direction d and theta, phi are the remaining
-        two spherical basis vectors. Let jonesbasis be the basis vectors
-        corresponding to the same direction d but in the STN reference frame,
-        so
+        ::
+
+            jonesrbasis = [[r_J2000],[phi_J2000],[theta_J2000]].T
+
+        where `r_J2000` is along the direction d and theta, phi are the
+        remaining two spherical basis vectors. Let `jonesbasis` be the basis
+        vectors corresponding to the same direction d but in the STN reference
+        frame, so
+        ::
+
           jonesbasis = [[r_STN],[phi_STN],[theta_STN]].T
-        where r_STN is along the direction d and theta, phi are the remaining
+
+        where `r_STN` is along the direction d and theta, phi are the remaining
         two spherical basis vectors in the spherical system associated with the
         STN.
 
-        The algorithm takes r_J2000 from component 0 of the jonesrbasis and
-        converts it to STN (i.e. finds r_STN) using casacore measures module,
+        The algorithm takes `r_J2000` from component 0 of the `jonesrbasis` and
+        converts it to STN (i.e. finds `r_STN`) using casacore measures module,
         along with the other 2 J2000 basis vectors. These converted vectors are
-        called jonesrbasis_to. With r_STN, it also computes the corresponding
-        jonesbasis. A vector in the cartesian J2000 ref sys converted to STN
-        must be equal to the same vector expressed in the cartesian STN ref sys
-        via a coversion from spherical, so
-          jonesbasis * V_STN^sph = jonesrbasis_to * V_J2000^sph
-        which implies that we can convert directly from spherical J2000 to the
-        sppherical STN like this
-          V_STN^sph = (jonesbasis.H * jonesrbasis_to) * V_J2000^sph
-        where the matrix in parentheses is the P Jones matrix.
+        called `jonesrbasis_to`. With `r_STN`, it also computes the
+        corresponding `jonesbasis`. A vector in the cartesian J2000 ref sys
+        converted to STN must be equal to the same vector expressed in the
+        cartesian STN ref sys via a conversion from spherical, so
+        ::
 
-        The P Jones matrix is then applied to the operand Jones matrix.
+          jonesbasis * V_STN^sph = jonesrbasis_to * V_J2000^sph
+
+        which implies that we can convert directly from spherical J2000 to the
+        spherical STN like this
+        ::
+
+          V_STN^sph = (jonesbasis.H * jonesrbasis_to) * V_J2000^sph
+
+        where the matrix in parentheses is the P-Jones matrix.
+
+        The P-Jones matrix is then applied to the operand Jones matrix.
         """
         nrOfTimes = len(self.obsTimes)
         pjones = np.zeros((nrOfTimes, 2, 2))
@@ -287,7 +302,7 @@ class EJones(Jones):
     def computeJonesRes(self):
         """Compute the Jones that results from applying the E-Jones to the
         right.
-        The structure of the jonesrbasis is [timeIdx, sphIdx, skycompIdx].
+        The structure of the `jonesrbasis` is ``[timeIdx, sphIdx, skycompIdx]``.
         """
         idxshape = self.jonesrbasis_from.shape[0:-2]
         jonesrbasis = np.reshape(self.jonesrbasis_from, (-1, 3, 3))
@@ -325,7 +340,7 @@ class DualPolFieldSink(Jones):
 
 
 def inverse(jonesobj):
-    """Return a Jones object that is the inverse of jonesobj."""
+    """Return a Jones object that is the inverse of `jonesobj`."""
     inv_jones = copy.copy(jonesobj)
     jmat = jonesobj.getValue()
     inv_jones.jones = np.linalg.inv(jmat)

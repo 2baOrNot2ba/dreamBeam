@@ -87,8 +87,10 @@ class TelescopePlugin(object):
 
     def get_bandstnrot(self):
         """Return a dict of rotation matrices of bands on stations.
-        The dict has two keys: stnrot[<band>][<stnid>]. Value is the
+        The dict has two keys: ``stnrot[<band>][<stnid>]``. Value is the
         transformation matrix:
+        ::
+
            ITRF_crds = stnrot*LOCAL_crds
         """
         return self.bandstnrot
