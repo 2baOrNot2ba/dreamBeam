@@ -17,7 +17,7 @@ from .conversion_utils import sph2crt, crt2sph, convertBasis, \
 class Jones(object):
     """This is the base class for Jones algebra. It contains the Jones matrix
     itself and a basis w.r.t. which the Jones matrix is given.
-    The basis is such that:
+    The basis is such that::
         self.jonesbasis=array([[r_hat], [phi_hat], [theta_hat]]).
     """
     _ecef_frame = 'ITRF'

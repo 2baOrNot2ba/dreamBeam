@@ -7,14 +7,20 @@ def convertxy2stokes(cov_xx, cov_xy, cov_yx, cov_yy, iau_convention=True,
     Stokes parameters.
 
     A covariance matrix in standard basis takes the form:
+    ::
+
         covmat = [[cov(x, x^*), cov(x, y^*)],
                   [cov(y, x^*), cov(y, y^*]]
+
     where cov(,) is the covariance operation and x^* is the conjugate of x.
     Note the conjugation order adopted here.
 
     The Stokes representation of such a matrix takes two possible forms:
+    ::
+
         covmat = 1/2*[[I+Q,   U-/+i*V],
                       [U+/-i*V, I+Q]]
+
     where -/+ and +/- represents either - and + respectively, case 1, or + and
     -, case 2. Disregarding the factor 1/2, case 1 corresponds to the standard
     Pauli spin matrices, while case 2 is the standard Pauli matrices except
@@ -73,10 +79,12 @@ def convertxy2stokes(cov_xx, cov_xy, cov_yx, cov_yy, iau_convention=True,
     a linear, not circular basis. Finally, note the conjugation order in the
     covariance matrix is such that XY represents the expectation of X*Y^*.
 
+    For general reference see [vanStraten2010]_ or [Hamaker1996]_.
+
     References
     ----------
-    .. [1] van Straten et al., PASA, 27, 104, 2010.
-    .. [2] Hamaker et al., A&A Sup., 117, 161, 1996.
+    .. [vanStraten2010] van Straten et al., PASA, 27, 104, 2010.
+    .. [Hamaker1996] Hamaker et al., A&A Sup., 117, 161, 1996.
 
     Examples
     --------
