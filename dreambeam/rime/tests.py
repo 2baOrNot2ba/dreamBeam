@@ -9,7 +9,7 @@ from .jones import PJones, DualPolFieldPointSrc
 from .conversion_utils import CEL2TOPOpnts, sph2crt_me, getParallacticRot, \
                             printJones, pyTimes2meTimes, sph2crt, crt2sph, \
                             getSph2CartTransf, setEpoch, convertBasis
-import antpat.reps.sphgridfun
+import antpat.reps.sphgridfun.pntsonsphere
 from casacore.measures import measures
 import dreambeam.telescopes.geometry_ingest as gi
 from dreambeam.rime.scenarios import on_pointing_axis_tracking
@@ -49,13 +49,13 @@ def setupObsInstance():
     return Times, celSrcDir, stnPos, stnRot
 
 
-def tgetParallacticRot():
+def test_getParallacticRot():
     Times, celSrcDir, stnPos, stnRot = setupObsInstance()
     RotP = getParallacticRot(Times, stnPos, celSrcDir, doPolPrec=False)
     printJones(RotP)
 
 
-def tPJones():
+def test_PJones():
     Times, celSrcDir, stnPos, stn2ITRFrot = setupObsInstance()
     srcfld = DualPolFieldPointSrc(celSrcDir)
     pjones = PJones(Times, np.transpose(stn2ITRFrot))
@@ -64,7 +64,7 @@ def tPJones():
     print("Basis", res.get_basis())
 
 
-def tModFuncs_CEL2TOPOpnts():
+def test_CEL2TOPOpnts():
     Times, celSrcDir, stnPos, stnRot = setupObsInstance()
     CelRot, rotang = CEL2TOPOpnts(Times, stnPos, celSrcDir)
     print("CelRot", CelRot)
@@ -73,7 +73,7 @@ def tModFuncs_CEL2TOPOpnts():
     # printJones(RotP)
 
 
-def tModFuncs_crt2sph():
+def test_crt2sph():
     azi = np.array([0.1, 0.2])
     ele = np.array([-0.3, 0.4])
     dir_crt = sph2crt(azi, ele)
@@ -82,7 +82,7 @@ def tModFuncs_crt2sph():
     print(dir_sph)
 
 
-def tcomputeSphBasis():
+def test_computeSphBasis():
     Times, celSrcDir, stnPos, stnRot = setupObsInstance()
     obsTimesArr, obsTimeUnit = pyTimes2meTimes(Times)
     jonesbasis = np.array(getSph2CartTransf(sph2crt(celSrcDir[0],
@@ -98,7 +98,7 @@ def tcomputeSphBasis():
         print(obsTimesArr[ti], jonesrbasis_to, jonesbasisMat)
 
 
-def tStokes():
+def test_Stokes():
     freq = 80e6
     # cohmatt = 0.5*np.array([[2-1, 0+0.8j], [0-0.8j, 2+1]])  # I,Q,U,V=2,1,0,0.8
     cohmatt = 0.5*np.array([[2-2, 0], [0, 2+2]])
@@ -143,9 +143,9 @@ def tStokes():
 if __name__ == '__main__':
     pass
     # print(IAU_pol_basis(0.*np.pi, 0.0001*np.pi))
-    # tPJones()
-    # tgetParallacticRot()
-    # tModFuncs_CEL2TOPOpnts()
-    # tModFuncs_crt2sph()
-    # tcomputeSphBasis()
-    tStokes()
+    # test_PJones()
+    # test_getParallacticRot()
+    # test_CEL2TOPOpnts()
+    # test_crt2sph()
+    # test_computeSphBasis()
+    test_Stokes()
