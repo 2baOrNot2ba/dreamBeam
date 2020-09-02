@@ -1,4 +1,4 @@
-"""Module to provide LOFAR antenna response data."""
+"""Module that creates plugin for the LOFAR telescope"""
 from os.path import abspath, basename, dirname
 import numpy
 from dreambeam.telescopes.mounts import MountedFeedFixed
