@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- `docs` folder with initial sphinx-based documentation. For now minimal
+  `index.rst`, a `getting_started.rst` and `api/` for `sphinx-autoapi`
+  generated api documentation.
+
+### Changed
+- Several code refactors for migration to Python 3. (Thanks to some PR
+  intiatives)
+
 ### Fixed
 - Handling of modelstring identifier so that if it doesn't have version
   specifier, it defaults to the default version.
