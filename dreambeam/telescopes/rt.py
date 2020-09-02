@@ -2,7 +2,6 @@
 rt (i.e. Radio Telescopes) module is for handling real telescope meta-data.
 """
 import os
-import pickle
 import importlib
 import pkg_resources
 import dreambeam
