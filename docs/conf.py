@@ -41,12 +41,14 @@ release = '0.7'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'sphinx.ext.intersphinx',
+    #'sphinx.ext.intersphinx',
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx_rtd_theme'
 ]
+
+autodoc_mock_imports = ['antpat', 'numpy']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
