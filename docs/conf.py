@@ -48,7 +48,7 @@ extensions = [
     'sphinx_rtd_theme'
 ]
 
-autodoc_mock_imports = ['antpat', 'casacore', 'matplotlib', 'numpy', 'np']
+autodoc_mock_imports = ['antpat', 'casacore', 'matplotlib', 'numpy']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
