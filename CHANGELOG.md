@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- NenuFAR plugin.
+- Version string for telescope plugin packages.
 - `docs` folder with initial sphinx-based documentation. For now minimal
   `index.rst`, a `getting_started.rst` and `api/` for `sphinx-autoapi`
   generated api documentation.
