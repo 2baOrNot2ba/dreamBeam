@@ -100,12 +100,16 @@ class FeedPlugin(object):
         return antpat
 
     def compute_ccfile(self, necoutfile, scalefac, freq_center, freq_range,
-                       kord, tord, ford, channels):
+                       kord, tord, ford, channels, conv_rev):
         """Create a HamakerArts coefficients file from a NEC out file
         and save it in a .cc file.
         """
         antpat = self._convNEC2antpat(necoutfile, scalefac)
-        band, haversion = self._parsefilename(necoutfile)
+        band, necversion = self._parsefilename(necoutfile)
+        # Output filename is based on haversion, which in turn is constructed
+        # here by concatenating the necversion string with conv_rev (conversion
+        # revision string):
+        haversion = "{}{}".format(necversion, conv_rev)
         # freq_center should be close to maximum gain frequency,
         # while freq_range should avoid going outside the frequencies
         # of NEC4 file which is 0 to 100e6 Hz (also avoid edges).

@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- Revision string for conversion from NEC4 to Hamaker coefs. in NenuFAR plugin
+  since conversion has several parameters which impact on Hamaker model and 
+  needs to be traceable for reproducible results.
 - NenuFAR plugin.
 - Version string for telescope plugin packages.
 - `docs` folder with initial sphinx-based documentation. For now minimal

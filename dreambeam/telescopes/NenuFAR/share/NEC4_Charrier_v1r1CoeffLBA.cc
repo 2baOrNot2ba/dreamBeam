@@ -1,13 +1,13 @@
 //Created by AntPat version 0.4
 #include <complex>
-const double NEC4_Charrier_v1_lba_freq_center = 67000000.0;
-const double NEC4_Charrier_v1_lba_freq_range = 32000000.0;
-const unsigned int NEC4_Charrier_v1_lba_coeff_shape[3] = {1, 1, 2};            
-const std::complex<double> NEC4_Charrier_v1_lba_coeff[4] = {            
-    std::complex<double>(0.124296690603, -0.328835297727) std::complex<double>(0.126949863219, -0.390357685604)
-    std::complex<double>(-0.291451981899, -0.227488705775) std::complex<double>(-0.319097621546, -0.28966475806)
+const double NEC4_Charrier_v1r1_lba_freq_center = 67000000.0;
+const double NEC4_Charrier_v1r1_lba_freq_range = 32000000.0;
+const unsigned int NEC4_Charrier_v1r1_lba_coeff_shape[3] = {1, 1, 2};            
+const std::complex<double> NEC4_Charrier_v1r1_lba_coeff[4] = {            
+    std::complex<double>(0.12429669060310085, -0.3288352977266773) std::complex<double>(0.126949863218691, -0.3903576856039652)
+    std::complex<double>(-0.2914519818993032, -0.22748870577522962) std::complex<double>(-0.31909762154591503, -0.28966475805977254)
 };
-const double NEC4_Charrier_v1_lba_channels[512] = {
+const double NEC4_Charrier_v1r1_lba_channels[512] = {
     0.0,
     195312.5,
     390625.0,
