@@ -50,13 +50,13 @@ def convertxy2stokes(cov_xx, cov_xy, cov_yx, cov_yy, iau_convention=True,
     Parameters
     ----------
     cov_xx : array
-        xy components covariance matrix, i.e. Cov(x, conj(x))
+        xx components covariance matrix, i.e. Cov(x, conj(x))
     cov_xy : array
         xy components covariance matrix, i.e. Cov(x, conj(y))
     cov_yx : array
         yx components covariance matrix, i.e. Cov(y, conj(x))
     cov_yy : array
-        yy components covariance matrix, i.e. Cov(y, conj(xy))
+        yy components covariance matrix, i.e. Cov(y, conj(y))
     iau_convention : bool
         Compute Stokes according to IAU conventions? (Default True)
     phase_sign_pos : bool
@@ -106,3 +106,33 @@ def convertxy2stokes(cov_xx, cov_xy, cov_yx, cov_yy, iau_convention=True,
         # Standard Pauli is not to be used, so flip sign of Stokes V.
         sv *= -1
     return (si, sq, su, sv)
+
+
+def cov_lin2cir(cov_lin):
+    """\
+    Convert covariance components from linear basis to circular.
+
+    This function is a work in progress...
+
+    Parameters
+    ----------
+    cov_lin : array_like
+        Polarization covariance matrix in linear basis.
+        Note that this is not necessarily an autocovariance matrix,
+        so it does not have to be hermitian.
+    
+    Returns
+    -------
+    cov_cir : array_like
+        Polarization covariance matrix in circular basis.
+        Ordering of Left, Right is 0,1 respectively.
+    """
+    cov_xx, cov_xy, cov_yx, cov_yy = cov_lin.reshape((4,)+cov_lin.shape[2:]) 
+    # TODO Check that these are correct
+    phs_sgn = +1
+    cov_ll = (cov_xx + cov_yy + phs_sgn*1j*(cov_xy - cov_yx))/2
+    cov_rr = (cov_xx + cov_yy - phs_sgn*1j*(cov_xy - cov_yx))/2
+    cov_lr = (cov_xx - cov_yy - phs_sgn*1j*(cov_xy + cov_yx))/2
+    cov_rl = (cov_xx - cov_yy + phs_sgn*1j*(cov_xy + cov_yx))/2
+    cov_cir = numpy.array([[cov_ll, cov_lr],[cov_rl, cov_rr]])
+    return cov_cir
