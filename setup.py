@@ -12,6 +12,9 @@ setup(name='dreamBeam',
       package_data={'dreambeam.telescopes.LOFAR':
                     ['share/*.cc', 'share/simmos/*.cfg',
                      'share/alignment/*.txt'],
+                    'dreambeam.telescopes.NenuFAR':
+                    ['share/*.cc', 'share/simmos/*.cfg',
+                     'share/alignment/*.txt'],
                     'dreambeam':
                     ['configs/*.txt']},
       include_package_data=True,
