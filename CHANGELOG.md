@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Several code refactors for migration to Python 3. (Thanks to some PR
   intiatives)
+- `setup.py` avoids explicit mention of telescope plugins. 
 
 ### Fixed
 - Handling of modelstring identifier so that if it doesn't have version
