@@ -64,8 +64,6 @@ def display_pointings(jones, obsinfo=None, do_3D=False,
                 ax.plot(xph_itrf, yph_itrf, itrf_tick_clrmrk,
                         linewidth=sg_linewidth)
 
-    nrsamps = jones.jonesbasis.shape[0]
-
     jn = jones.getValue()
     jnf = jn[256, :, :, :].squeeze()  # Midpoint freq.
 
@@ -82,6 +80,11 @@ def display_pointings(jones, obsinfo=None, do_3D=False,
 
     # N.B: imag part of ant response not used:
     jbresp = np.real(np.matmul(jbant[:, :, 1:], jnf))
+
+    # Find starting point (Save in case below horizon)
+    xp0, yp0, zp0 = xp[0], yp[0], zp[0]
+
+    nrsamps = jones.jonesbasis.shape[0]
 
     # Optionally remove data below stn horizon
     hidebelowhrz = True
@@ -106,7 +109,8 @@ def display_pointings(jones, obsinfo=None, do_3D=False,
     ax.plot(xp, yp, 'c.', label='Pointing')
 
     # Mark out start point
-    ax.plot([xp[0]], [yp[0]], 'rP', label='Start')
+    label_start = 'Start' if zp0 > 0 else 'Start (below horizon)'
+    ax.plot([xp0], [yp0], 'rP', label=label_start)
 
     # Plot antenna dipole basis
     s = 0.1
@@ -114,27 +118,18 @@ def display_pointings(jones, obsinfo=None, do_3D=False,
         lw = 2 if j == 1 else 1
         ant = 'X' if j == 1 else 'Y'
         for i in range(nrsamps):
+            # Label only first samp so that legend only has it once
+            label = 'antdip_'+ant if i == 0 else None
             if do_3D:
                 ax.plot([xp[i], xp[i]+s*jbant[i, 0, j]],
                         [yp[i], yp[i]+s*jbant[i, 1, j]],
                         [zp[i], zp[i]+s*jbant[i, 2, j]],
-                        'm', linewidth=lw)
+                        'm', linewidth=lw, label=label)
                 # ax.quiver()
             else:
                 ax.plot([xp[i], xp[i]+s*jbant[i, 0, j]],
                         [yp[i], yp[i]+s*jbant[i, 1, j]],
-                        'm', linewidth=lw)
-        # Do it once again with label so that legend only does it once
-        if do_3D:
-            ax.plot([xp[i], xp[i]+s*jbant[i, 0, j]],
-                    [yp[i], yp[i]+s*jbant[i, 1, j]],
-                    [zp[i], zp[i]+s*jbant[i, 2, j]],
-                    'm', linewidth=lw, label='antdip_'+ant)
-            # ax.quiver()
-        else:
-            ax.plot([xp[i], xp[i]+s*jbant[i, 0, j]],
-                    [yp[i], yp[i]+s*jbant[i, 1, j]],
-                    'm', linewidth=lw, label='antdip_'+ant)
+                        'm', linewidth=lw, label=label)
 
     # Plot Jones antenna X & Y-channels
     s = 0.2
@@ -142,25 +137,17 @@ def display_pointings(jones, obsinfo=None, do_3D=False,
         lw = 2 if j == 0 else 1
         respiaucmp = 'x' if j == 0 else 'y'
         for i in range(nrsamps):
+            # Label only first samp so that legend only has it once
+            label = 'respSKY_'+respiaucmp if i == 0 else None
             if do_3D:
                 ax.plot([xp[i], xp[i]+s*jbresp[i, 0, j]],
                         [yp[i], yp[i]+s*jbresp[i, 1, j]],
                         [zp[i], zp[i]+s*jbresp[i, 2, j]],
-                        'b', linewidth=lw)
+                        'b', linewidth=lw, label=label)
             else:
                 ax.plot([xp[i], xp[i]+s*jbresp[i, 0, j]],
                         [yp[i], yp[i]+s*jbresp[i, 1, j]],
-                        'b', linewidth=lw)
-        # Do it once again with label so that legend only does it once
-        if do_3D:
-            ax.plot([xp[i], xp[i]+s*jbresp[i, 0, j]],
-                    [yp[i], yp[i]+s*jbresp[i, 1, j]],
-                    [zp[i], zp[i]+s*jbresp[i, 2, j]],
-                    'b', linewidth=lw, label='respSKY_'+respiaucmp)
-        else:
-            ax.plot([xp[i], xp[i]+s*jbresp[i, 0, j]],
-                    [yp[i], yp[i]+s*jbresp[i, 1, j]],
-                    'b', linewidth=lw, label='respSKY_'+respiaucmp)
+                        'b', linewidth=lw, label=label)
 
     # Plot NCP (ITRF z-base in STN crdsys)
     if do_3D:
