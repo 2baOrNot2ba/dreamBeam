@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.8]
 ### Added
 - Revision string for conversion from NEC4 to Hamaker coefs. in NenuFAR plugin
   since conversion has several parameters which impact on Hamaker model and 
@@ -11,11 +11,17 @@ All notable changes to this project will be documented in this file.
 - `docs` folder with initial sphinx-based documentation. For now minimal
   `index.rst`, a `getting_started.rst` and `api/` for `sphinx-autoapi`
   generated api documentation.
+- Made it an option to use cache for DPE objects in `FeedPlugin`. Used to be
+  done by default, but created problems when package was installed system-wide
+  since it tried to write to `DATADIR` directory though it didn't have
+  permissions (issue #8).
+
 
 ### Changed
 - Several code refactors for migration to Python 3. (Thanks to some PR
   intiatives)
-- `setup.py` avoids explicit mention of telescope plugins. 
+- `setup.py` avoids explicit mention of telescope plugins.
+- Removed unused `DATADIR` from `TelescopePlugin` class. 
 
 ### Fixed
 - Handling of modelstring identifier so that if it doesn't have version
@@ -27,6 +33,8 @@ All notable changes to this project will be documented in this file.
 - Telescope plugin's `data` directory should not be included in `package_data`
   field in `setup.py`. It is now a cache for `dualPolElem` objects used by
   feed plugins.
+- Handling of start point plotting in `display_pointings()` when it's below
+  horizon.
 
 ## [0.7] 2020-02-07
 ### Added
