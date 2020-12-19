@@ -10,6 +10,14 @@ import dreambeam.telescopes.geometry_ingest as gi
 
 
 def get_tel_plugins():
+    """
+    Get a dict of TelescopePlugin objects
+
+    Reads a list of telescope packages from the file called
+    'telesope_paths.txt' and then imports the '_telescope'
+    module in them.
+
+    """
     resource_path = '/'.join(('configs', 'telescope_paths.txt'))
     rootpath = os.path.dirname(os.path.dirname(dreambeam.__file__))
     tele_paths_file = pkg_resources.resource_filename(dreambeam.__name__,
@@ -47,7 +55,6 @@ def load_mountedfeed(tscopename, station, band, modelname):
 
 class TelescopePlugin(object):
     """Plugin for a generic telescope."""
-    DATADIR = 'data'    # Dir for telescope data for RIME level work.
 
     def __init__(self, tscopename, mountedfeed_class, feedrot):
         self.name = tscopename
@@ -61,7 +68,8 @@ class TelescopePlugin(object):
         for band in self.bands:
             xs, ys, zs, diams, stnids = gi.readarrcfg(self.name, band)
             self.stations[band] = stnids.tolist()
-            self.positions[band] = list(zip(xs.tolist(), ys.tolist(), zs.tolist()))
+            self.positions[band] = list(zip(xs.tolist(), ys.tolist(),
+                                            zs.tolist()))
             self.diams[band] = diams.tolist()
         self.bandstnrot = {}
         for band in self.bands:
