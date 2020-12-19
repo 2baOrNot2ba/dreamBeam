@@ -12,12 +12,12 @@ class FeedWiz(object):
 
     def __init__(self):
         feed_paths = self._get_feed_paths()
-        self.feedplugins = {}
+        self.feedplugin_paths = {}
         for feed_path in feed_paths:
-            feedmodpath = os.path.join(feed_path, '_feeds.py')
-            if os.path.exists(feedmodpath):
+            feed_modpath = os.path.join(feed_path, '_feeds.py')
+            if os.path.exists(feed_modpath):
                 feed_category = os.path.basename(feed_path)
-                self.feedplugins[feed_category] = feed_path
+                self.feedplugin_paths[feed_category] = feed_path
 
     def _get_feed_paths(self):
         resource_path = '/'.join(('configs', 'feed_paths.txt'))
@@ -36,23 +36,11 @@ class FeedWiz(object):
 
     def __getitem__(self, feed_category):
         try:
-            feed_path = self.feedplugins[feed_category]
+            feed_path = self.feedplugin_paths[feed_category]
         except KeyError:
             return None
         feedplugin = FeedPlugin(feed_path)
         return feedplugin
-
-    def list_names(self):
-        names = []
-        for feed_plugin in self.feed_plugins:
-            names.extend(feed_plugin.get_bands())
-        return names
-
-    def list_models4receptor(self, feed_name):
-        models = []
-        for feed_plugin in self.feed_plugins:
-            models.extend(feed_plugin.list_models4receptor(feed_name))
-        return models
 
 
 class FeedPlugin(object):
@@ -61,13 +49,15 @@ class FeedPlugin(object):
     _mdlversep = '-'  # Model Version Separator
     SHAREDIR = 'share'  # Dir for native telescope project data.
     DATADIR = 'data'    # Dir for telescope data for RIME level work.
+    CACHE_DPE = False   # Cache DPE objects
 
     def __init__(self, path2plugin):
         self.path_ = path2plugin
-        # Make sure DATADIR path exists:
-        datadirpath = os.path.join(self.path_, self.DATADIR)
-        if not os.path.exists(datadirpath):
-            os.mkdir(datadirpath)
+        self.path_data = os.path.join(self.path_, self.DATADIR)
+        #  Check if DATADIR needs to be created:
+        if self.CACHE_DPE and not os.path.exists(self.path_data):
+            os.mkdir(self.path_data)
+        self.path_share = os.path.join(self.path_, self.SHAREDIR)
 
     def prep_dpefiles(self):
         coeffilemetas = self._search_coeff_files()
@@ -79,8 +69,8 @@ class FeedPlugin(object):
 
     def find_necoutfiles(self):
         necfiles = []
-        necoutdir = os.path.join(self.path_, self.SHAREDIR)
-        ls = os.listdir(necoutdir)
+        # NEC .out files are located in share dir
+        ls = os.listdir(self.path_share)
         for lsentry in ls:
             if lsentry.endswith('.out'):
                 necfiles.append(lsentry)
@@ -93,7 +83,7 @@ class FeedPlugin(object):
 
     def _convNEC2antpat(self, necoutfile, scalefac):
         print("Generating antpat from necfile: {}".format(necoutfile))
-        necoutfile = os.path.join(self.path_, self.SHAREDIR, necoutfile)
+        necoutfile = os.path.join(self.path_share, necoutfile)
         tvf = readNECout_tvecfuns(necoutfile)
         tvf.scale(scalefac)
         antpat = radfarfield.RadFarField(tvf)
@@ -120,13 +110,12 @@ class FeedPlugin(object):
                                              kord=kord, tord=tord, ford=ford,
                                              channels=channels)
         srcpath = os.path.abspath(filename)
-        destfilepath = os.path.join(self.path_, self.SHAREDIR, filename)
+        destfilepath = os.path.join(self.path_share, filename)
         shutil.move(srcpath, destfilepath)
 
     def _search_coeff_files(self):
         coeffilemetas = []
-        modelspecdir = os.path.join(self.path_, self.SHAREDIR)
-        ls = os.listdir(modelspecdir)
+        ls = os.listdir(self.path_share)
         for lsentry in ls:
             if lsentry.endswith('.cc'):
                 modeltype = 'Hamaker'
@@ -168,7 +157,8 @@ class FeedPlugin(object):
         coeffilemetas = self._search_coeff_files()
         versions = []
         for coeffilemeta in coeffilemetas:
-            if coeffilemeta['band'] == band and coeffilemeta['modeltype'] == modeltype:
+            if (coeffilemeta['band'] == band
+                    and coeffilemeta['modeltype'] == modeltype):
                 version = coeffilemeta['version']
                 versions.append(version)
         return versions
@@ -183,8 +173,7 @@ class FeedPlugin(object):
 
     def list_dpes(self):
         dpes = []
-        dpedir = os.path.join(self.path_, self.DATADIR)
-        ls = os.listdir(dpedir)
+        ls = os.listdir(self.path_data)
         for lsentry in ls:
             if lsentry.endswith(self.dpesuffix):
                 modeltype = 'Hamaker'  # FIXME:
@@ -195,6 +184,7 @@ class FeedPlugin(object):
         return dpes
 
     def load_dpolel(self, band, modelstring):
+        dpolel = None
         if self._mdlversep in modelstring:
             modeltype, version = modelstring.split(self._mdlversep, 1)
         else:
@@ -205,6 +195,7 @@ class FeedPlugin(object):
             version = versions[0]
         if modeltype == 'Hamaker':
             dpfile = self._get_dpfile(band, version)
+            dpfile = os.path.join(self.path_data, dpfile)
             if os.path.exists(dpfile):
                 dpolel = pickle.load(open(dpfile, 'rb'))
             else:
@@ -219,7 +210,10 @@ class FeedPlugin(object):
         Also adds nominal LOFAR frequency channels."""
         inpfile = self._get_ccfile(band, haversion)
         outfile = self._get_dpfile(band, haversion)
-        inppath = os.path.join(self.path_, self.SHAREDIR, inpfile)
-        outpath = os.path.join(self.path_, self.DATADIR, outfile)
+        inppath = os.path.join(self.path_share, inpfile)
+        if self.CACHE_DPE:
+            outpath = os.path.join(self.path_data, outfile)
+        else:
+            outpath = None
         stndpolel = convLOFARcc2DPE(inppath, outpath)
         return stndpolel
