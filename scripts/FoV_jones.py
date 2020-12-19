@@ -44,38 +44,41 @@ def main():
 
     Example
     -------
-    >>> FoV_jones print LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 \
-           6.11 1.02 60E6
+    >>> FoV_jones plot LOFAR LBA SE607 Hamaker 2012-04-01T01:02:03 \
+            '6.11,1.02,J2000' 60E6
     """
     # Get telescope plugins
     tp = get_tel_plugins()
     # Process cmd line arguments
     args = sys.argv[1:]
-    action = getnextcmdarg(args, "output-type:\n  'print' or 'plot'")
-    telescopename = getnextcmdarg(args, "telescope:\n  "
-                                  + ', '.join(tp.keys()))
-    band = getnextcmdarg(args, "band/feed:\n  "
-                         + ', '.join(tp[telescopename].get_bands()))
-    stnid = getnextcmdarg(args, "station-ID:\n  "
-                          + ', '.join(tp[telescopename].get_stations(band)))
-    antmodel = getnextcmdarg(args, "beam-model:\n  "
-                             + ', '.join(tp[telescopename].get_beammodels(
-                                                                        band)))
     try:
-        obstime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
-    except IndexError:
-        raise RuntimeError(
-            "Specify time (UTC in ISO format: yy-mm-ddTHH:MM:SS ).")
-    try:
-        (az, el, refframe) = args[1].split(',')
-        az, el = float(az), float(el)
-    except ValueError:
-        raise RuntimeError("""Specify pointing direction (in radians):
-                           'RA,DEC,J2000' or 'AZ,EL,AZEL'""")
-    try:
-        freq = float(args[2])
-    except ValueError:
-        raise RuntimeError("Specify frequency (in Hz).")
+        action = getnextcmdarg(args, "output-type:\n  'print' or 'plot'")
+        telescopename = getnextcmdarg(args, "telescope:\n  "
+                                      + ', '.join(tp.keys()))
+        band = getnextcmdarg(args, "band/feed:\n  "
+                             + ', '.join(tp[telescopename].get_bands()))
+        stnid = getnextcmdarg(args, "station-ID:\n  "
+                              + ', '.join(tp[telescopename].get_stations(band)))
+        antmodel = getnextcmdarg(args, "beam-model:\n  "
+                                 + ', '.join(tp[telescopename].get_beammodels(
+                                                                         band)))
+        try:
+            obstime = datetime.strptime(args[0], "%Y-%m-%dT%H:%M:%S")
+        except IndexError:
+            raise RuntimeError(
+                "Specify time (UTC in ISO format: yy-mm-ddTHH:MM:SS ).")
+        try:
+            (az, el, refframe) = args[1].split(',')
+            az, el = float(az), float(el)
+        except ValueError:
+            raise RuntimeError("Specify pointing direction (in radians):"
+                               " 'RA,DEC,J2000' or 'AZ,EL,AZEL'")
+        try:
+            freq = float(args[2])
+        except ValueError:
+            raise RuntimeError("Specify frequency (in Hz).")
+    except Exception as e:
+        raise SystemExit(e)
 
     if refframe == 'AZEL':
         refframe = 'STN'
