@@ -80,12 +80,10 @@ def printAllJones(timespy, freqs, Jn, frmt='csv'):
             J01 = Jn[fi, ti, 0, 1]
             J10 = Jn[fi, ti, 1, 0]
             J11 = Jn[fi, ti, 1, 1]
-            if frmt == 'csv':
-                # Create and print a comma-separated string
-                delimiter = ','
-                t = timespy[ti].isoformat()
-            elif frmt == 'pac':
-                # Create and print a comma-separated string
+            # Default delimiter and t values (frmt=='csv')
+            delimiter = ','
+            t = timespy[ti].isoformat()
+            if frmt == 'pac':
                 delimiter = ' '
                 t = quantity(timespy[ti].isoformat()).get_value()
                 J00 = paccompf(J00)
