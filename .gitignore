@@ -69,5 +69,10 @@ target/
 .pydevproject
 .project
 
+# Some other IDEs
+.eric6project/
+.idea/
+dreamBeam.code-workspace
+
 # Project specific
 data/
