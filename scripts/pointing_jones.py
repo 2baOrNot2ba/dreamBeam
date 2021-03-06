@@ -110,14 +110,11 @@ def main(telescopename, stnid, band, antmodel, bTime, duration, stepTime,
         on_pointing_axis_tracking(telescopename, stnid, band, antmodel, bTime,
                                   duration, stepTime, celdir,
                                   do_parallactic_rot=do_parallactic_rot)
-    if (freq < freqs[0] or freq > freqs[-1]) and freq is not None:
+    if freq is not None and (freq < freqs[0] or freq > freqs[-1]):
         raise ValueError("Requested frequency {} Hz outside of band {}"
                          .format(freq, band))
+
     # Do something with resulting Jones according to cmdline args
-    if action == "plot":
-        obsinfo = {'stnid': stnid, 'band': band, 'freq': freq,
-                   'starttime': bTime, 'antmodel': antmodel}
-        display_pointings(res, obsinfo, do_parallactic_rot=do_parallactic_rot)
     if freq is None:
         if action == "plot":
             plotAllJones(timespy, freqs, Jn)
@@ -127,6 +124,10 @@ def main(telescopename, stnid, band, antmodel, bTime, duration, stepTime,
         frqIdx = np.where(np.isclose(freqs, freq, atol=190e3))[0][0]
         Jnf = Jn[frqIdx, :, :, :].squeeze()
         if action == "plot":
+            obsinfo = {'stnid': stnid, 'band': band, 'freq': freq,
+                   'starttime': bTime, 'antmodel': antmodel}
+            display_pointings(res, obsinfo,
+                              do_parallactic_rot=do_parallactic_rot)
             plotJonesFreq(timespy, Jnf)
         else:
             printJonesFreq(timespy, Jnf, freq)
