@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+### Changed
+- NenuFAR X/Y flipped to Y/X w.r.t. LOFAR.
+
 ## [0.8]
 ### Added
 - Revision string for conversion from NEC4 to Hamaker coefs. in NenuFAR plugin
