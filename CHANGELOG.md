@@ -2,10 +2,17 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+
 ### Changed
 - NenuFAR X/Y flipped to Y/X w.r.t. LOFAR.
 
-## [0.8]
+### Fixed
+- Requesting whole band in pointing_jones script (i.e. no freq arg given)
+  resulted in crash.
+
+
+## [0.8] 2020-12-19
 ### Added
 - Revision string for conversion from NEC4 to Hamaker coefs. in NenuFAR plugin
   since conversion has several parameters which impact on Hamaker model and 
