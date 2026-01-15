@@ -1,0 +1,13 @@
+# observatory=LOFAR
+# station=LV614
+# arrayband=LBA
+# coordsys=XYZ
+# Rotation matrix (alignment station frame w.r.t. ITRF)
+# 
+# Created with iLiSA
+# Created at 2025-11-28 08:44:58.496563
+# 
+# x_hat y_hat z_hat
+   -0.190498    -0.846055     0.497897
+    0.974551    -0.101937     0.199650
+   -0.118161     0.523259     0.843942
