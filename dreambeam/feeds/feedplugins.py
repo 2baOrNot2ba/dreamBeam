@@ -78,7 +78,7 @@ class FeedPlugin(object):
 
     def _parsefilename(self, filename):
         filebase, fileext = filename.split('.', 1)
-        band, version, = filebase.split(self._bndversep, 1)
+        band, version = filebase.split(self._bndversep, 1)
         return band, version
 
     def _convNEC2antpat(self, necoutfile, scalefac):
