@@ -3,11 +3,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- Revision 2 of the Hamaker rep of the NEC4_Charrier_v1 antenna patterns
+  denoted `Hamaker-NEC4_Charrier_v1r2` was created.
 
 ### Changed
+- NenuFAR plugin bumped to v0.2
 - NenuFAR X/Y flipped to Y/X w.r.t. LOFAR.
 
 ### Fixed
+- Intended NenuFAR `_feeds.py` was reinstated.
+- Dangling ',' in split of nec filenames removed.
 - Requesting whole band in pointing_jones script (i.e. no freq arg given)
   resulted in crash.
 
