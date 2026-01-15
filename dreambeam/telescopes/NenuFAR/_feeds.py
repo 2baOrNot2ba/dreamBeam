@@ -2,7 +2,7 @@
 here but first time it needs to initialize.
 """
 # Revision string of conversion from NEC 2 Ham. with format f"r{param_iter}"
-__NEC2Hamaker_conversion_rev__ = 'r1'
+__NEC2Hamaker_conversion_rev__ = 'r2'
 
 
 
@@ -35,12 +35,13 @@ if __name__ == "__main__":
     NR_CHANNELS = 512
     # Overriding channels for NEC simulation:
     channels = numpy.linspace(0., SAMPFREQ, NR_CHANNELS, endpoint=False)
+    #feedplugin.compute_ccfile(necfile, scalefac=-1/240.0, freq_center=67e6,
+    #                          freq_range=32e6, kord=1, tord=1, ford=2,
+    #                          channels=channels,
+    #                          conv_rev=__NEC2Hamaker_conversion_rev__)
+    # Default with same ords as LOFAR default:
     feedplugin.compute_ccfile(necfile, scalefac=-1/240.0, freq_center=67e6,
-                              freq_range=32e6, kord=1, tord=1, ford=2,
+                              freq_range=32e6, kord=2, tord=5, ford=5,
                               channels=channels,
                               conv_rev=__NEC2Hamaker_conversion_rev__)
-    # Default with same ords as LOFAR default:
-    # feedplugin.compute_ccfile(necfile, scalefac=-1/240.0, freq_center=67e6,
-    #                          freq_range=32e6, kord=2, tord=5, ford=5,
-    #                          channels=channels)
     print("Completed setup.")
