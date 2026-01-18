@@ -56,23 +56,19 @@ class Jones(object):
     def sph2lud3_basis(self, jonesbasis_sph, alignment=None):
         """Convert sph basis to Ludwig3 frame with an optional rotation
         alignment."""
+        if alignment is None:
+            alignment = np.identity(3)
         # The jonesbasis for the antennas is taken to be the Ludwig3 def.
         # with r,u,v basis expressed wrt the station frame
         r_refframe = jonesbasis_sph[..., 0]
-        if alignment is not None:
-            r = np.tensordot(r_refframe, alignment, axes=([-1, 1]))
-        else:
-            r = r_refframe
-        (az, el) = crt2sph(r.T)
+        (az, el) = crt2sph(r_refframe.T)
+        az += np.pi/2  # When az=0, phi_hat is along y so add 90 to ludwig3 az
         lugwig3rot = np.zeros((3, 3, len(az)))
         lugwig3rot[0, 0, :] = 1.
         lugwig3rot[1:, 1:, :] = np.array([[np.cos(az), np.sin(az)],
                                           [-np.sin(az), np.cos(az)]])
         lugwig3rot = np.moveaxis(lugwig3rot, -1, 0)
-        jonesbasis_lud3 = np.matmul(jonesbasis_sph, lugwig3rot)
-        # ang_u = np.rad2deg(
-        #           np.arctan2(jonesbasis_lud3[:,1,1], jonesbasis_lud3[:,0,1]))
-        # print ang_u
+        jonesbasis_lud3 = np.matmul(np.matmul(alignment, jonesbasis_sph), lugwig3rot)
         return jonesbasis_lud3
 
     def convert2iaucmp(self):
