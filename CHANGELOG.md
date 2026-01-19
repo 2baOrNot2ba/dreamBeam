@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 - NenuFAR X/Y flipped to Y/X w.r.t. LOFAR.
 
 ### Fixed
+- The `Jones()` method `sph2lud3_basis()` did not work except for LBA and
+  in particular, not for left-handed dual-pol feed (but now does).
 - Intended NenuFAR `_feeds.py` was reinstated.
 - Dangling ',' in split of nec filenames removed.
 - Requesting whole band in pointing_jones script (i.e. no freq arg given)
