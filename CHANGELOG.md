@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+
+## [0.9] 2025-01-30
+
 ### Added
 - Revision 2 of the Hamaker rep of the NEC4_Charrier_v1 antenna patterns
   denoted `Hamaker-NEC4_Charrier_v1r2` was created.
@@ -20,6 +24,7 @@ All notable changes to this project will be documented in this file.
 
 
 ## [0.8] 2020-12-19
+
 ### Added
 - Revision string for conversion from NEC4 to Hamaker coefs. in NenuFAR plugin
   since conversion has several parameters which impact on Hamaker model and 
@@ -33,7 +38,6 @@ All notable changes to this project will be documented in this file.
   done by default, but created problems when package was installed system-wide
   since it tried to write to `DATADIR` directory though it didn't have
   permissions (issue #8).
-
 
 ### Changed
 - Several code refactors for migration to Python 3. (Thanks to some PR
@@ -54,7 +58,9 @@ All notable changes to this project will be documented in this file.
 - Handling of start point plotting in `display_pointings()` when it's below
   horizon.
 
+
 ## [0.7] 2020-02-07
+
 ### Added
 - `feed` package  to handle feeds independently from  telescopes.
 - HamakerArts coeff .cc files now contain channels array of freqs.
@@ -90,6 +96,7 @@ All notable changes to this project will be documented in this file.
 
 
 ## [0.6] - 2020-02-06
+
 ### Added
 - New functionality in `TelWizHelper` class: `get_stations`, `get_bandpositions`
   `get_diam` and `get_bandstnrot`.
@@ -104,6 +111,7 @@ All notable changes to this project will be documented in this file.
 
 
 ## [0.5] - 2020-01-30
+
 ### Added
 - New base class `TelWizHelper` that is meant to be inherited for each
   telescope plug-in.
@@ -133,6 +141,7 @@ All notable changes to this project will be documented in this file.
 
 
 ## [0.4] - 2019-09-06
+
 ### Added
 - New method in `Jones` class called `sph2lud3_basis` that converts spherical
   basis vectors to the Ludwig3 basis. It has an optional `alignment` rotation
@@ -170,6 +179,7 @@ All notable changes to this project will be documented in this file.
 
 
 ## [0.3] - 2019-08-19
+
 ### Added
 - New argument `--fmt` for `pointing_jones.py` script that controls print
   output. Can have values: `csv` (default) or `pac` (compatible)
@@ -184,6 +194,7 @@ All notable changes to this project will be documented in this file.
 
 
 ## [0.2] - 2019-04-14
+
 ### Added
 - Flag in `PJones()` to turn off parallactic rotation.
 
@@ -206,6 +217,7 @@ All notable changes to this project will be documented in this file.
 
 
 ## [0.1] - 2019-04-11
+
 ### Added
 - Basic framework for project, consisting of a `rime` package that implements
   generic Radio Interferometric Measurement Equations, and a `telescopes`
@@ -215,5 +227,6 @@ All notable changes to this project will be documented in this file.
 
 
 ## [0.0] - 2016-03-26
+
 ### Added
 - Start using git as VCS for project.
