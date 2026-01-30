@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Reference to 3D Jones radio astronomy measurement equations in README.md.
+
+### Updated
+- README.md now has dreamBeam Zenodo DOI.
+
 
 ## [0.9] 2025-01-30
 
