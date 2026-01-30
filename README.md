@@ -1,4 +1,6 @@
 # dreamBeam #
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18433630.svg)](https://doi.org/10.5281/zenodo.18433630)
+
 
 `dreamBeam` is a framework for modeling radio astronomical telescope observations.
 
