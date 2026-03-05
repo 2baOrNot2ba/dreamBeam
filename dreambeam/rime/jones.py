@@ -381,16 +381,16 @@ def plotJonesField(jonesfld, jbasis, refframe, rep='abs-Jones',
         restitle = 'Beam Jones on sky'
         res00 = np.abs(jonesfld[:, :, 0, 0])
         res00 = ma.masked_invalid(res00)
-        res00lbl = r'|J_{p\phi}|'
+        res00lbl = r'$|J_{p\phi}|$'
         res01 = np.abs(jonesfld[:, :, 0, 1])
         res01 = ma.masked_invalid(res01)
-        res01lbl = r'|J_{p\theta}|'
+        res01lbl = r'$|J_{p\theta}|$'
         res10 = np.abs(jonesfld[:, :, 1, 0])
         res10 = ma.masked_invalid(res10)
-        res10lbl = r'|J_{q\phi}|'
+        res10lbl = r'$|J_{q\phi}|$'
         res11 = np.abs(jonesfld[:, :, 1, 1])
         res11 = ma.masked_invalid(res11)
-        res11lbl = r'|J_{q\theta}|'
+        res11lbl = r'$|J_{q\theta}|$'
     elif rep == 'Stokes':
         corrmat = np.matmul(jonesfld, np.swapaxes(jonesfld.conj(), -2, -1))
         S0 = np.real(corrmat[..., 0, 0]+corrmat[..., 1, 1])
@@ -400,12 +400,20 @@ def plotJonesField(jonesfld, jbasis, refframe, rep='abs-Jones',
         restitle = 'Antenna Stokes on sky'
         res00 = S0
         res00lbl = 'I'
-        res01 = SQ/S0
-        res01lbl = 'q'
+        res01 = SQ
+        res01lbl = 'Q'
         res10 = SU/S0
-        res10lbl = 'u'
-        res11 = SV/S0
-        res11lbl = 'v'
+        res10lbl = 'U'
+        res11 = SV
+        res11lbl = 'V'
+        fracpol = True
+        if fracpol == True:
+            res01 /= S0
+            res01lbl = res01lbl.lower()
+            res10 /= S0
+            res10lbl = res10lbl.lower()
+            res11 /= S0
+            res11lbl = res11lbl.lower()
     else:
         raise Exception("Unknown Jones representation {}.".format(rep))
     if refframe == 'STN':
@@ -428,18 +436,23 @@ def plotJonesField(jonesfld, jbasis, refframe, rep='abs-Jones',
         y = np.rad2deg(el)
         xlabel = 'RA'
         ylabel = 'DEC'
+    x = np.real(x)
+    y = np.real(y)
     fig = plt.figure()
     fig.suptitle(restitle)
+
     ax = plt.subplot(221, polar=False)
     plt.pcolormesh(x, y, res00)  # , vmin=0., vmax=2.0)
     plt.colorbar()
     ax.set_title(res00lbl)
     plt.ylabel(ylabel)
+    plt.axis('equal')
 
     ax = plt.subplot(222, polar=False)
     plt.pcolormesh(x, y, res01)
     plt.colorbar()
     ax.set_title(res01lbl)
+    plt.axis('equal')
 
     ax = plt.subplot(223, polar=False)
     plt.pcolormesh(x, y, res10)
@@ -447,11 +460,13 @@ def plotJonesField(jonesfld, jbasis, refframe, rep='abs-Jones',
     ax.set_title(res10lbl)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+    plt.axis('equal')
 
     ax = plt.subplot(224, polar=False)
-    plt.pcolormesh(x, y, res11, vmin=np.nanmin(res11), vmax=np.nanmax(res11))
+    plt.pcolormesh(x, y, res11) # vmin=np.nanmin(res11), vmax=np.nanmax(res11))
     plt.colorbar()
     ax.set_title(res11lbl)
     plt.xlabel(xlabel)
+    plt.axis('equal')
 
     plt.show()
