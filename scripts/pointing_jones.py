@@ -48,19 +48,22 @@ def printJonesFreq(timespy, Jnf, freq):
 def plotJonesFreq(timespy, Jnf):
     p_ch = np.abs(Jnf[:, 0, 0].squeeze())**2+np.abs(Jnf[:, 0, 1].squeeze())**2
     q_ch = np.abs(Jnf[:, 1, 1].squeeze())**2+np.abs(Jnf[:, 1, 0].squeeze())**2
-    # p_ch = -np.real(Jnf[:,0,0].squeeze())   #+ 0,1 => 0,0
-    # q_ch = -np.real(Jnf[:,1,1].squeeze())  #- 1,0 0> 1,1
+    Bmat = np.matmul(Jnf, np.swapaxes(Jnf, -2, -1).conj())
+    p_ch = Bmat[:,0,0]
+    q_ch = Bmat[:,1,1]
+    #p_ch = -np.real(Jnf[:,0,1].squeeze())   #+ 0,1 => 0,0
+    #q_ch = -np.real(Jnf[:,1,0].squeeze())  #- 1,0 0> 1,1
     # In dB:
     # p_ch = 10*np.log10(p_ch)
     # q_ch = 10*np.log10(q_ch)
     plt.figure()
-    plt.subplot(211)
-    plt.plot(timespy, p_ch)
-    plt.title('p-channel')
-    plt.subplot(212)
-    plt.plot(timespy, q_ch)
-    plt.title('q-channel')
+    plt.title('p,q amplitude vs time')
+    plt.plot(timespy, p_ch, 'b')
+    plt.plot(timespy, q_ch,'r')
     plt.xlabel('Time')
+    plt.ylabel('Amplitude [arb. u.]')
+    plt.legend(['abs(p)', 'abs(q)'])
+    plt.show()
     plt.show()
 
 
