@@ -115,7 +115,7 @@ def on_pointing_axis_tracking(telescopename, stnid, band, antmodel, obstimebeg,
 
     #    *Setup PJones*
     timespy = []
-    nrTimSamps = int((obsdur.total_seconds()/obstimestp.seconds))+1
+    nrTimSamps = min(2,int((obsdur.total_seconds()/obstimestp.seconds))+1)
     for ti in range(0, nrTimSamps):
         timespy.append(obstimebeg+ti*obstimestp)
     pjones = dreambeam.rime.jones.PJones(timespy, np.transpose(stnrot),
