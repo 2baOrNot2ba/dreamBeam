@@ -3,7 +3,6 @@ rt (i.e. Radio Telescopes) module is for handling real telescope meta-data.
 """
 import os
 import importlib
-import pkg_resources
 import dreambeam
 from dreambeam.feeds.feedplugins import FeedWiz
 import dreambeam.telescopes.geometry_ingest as gi
@@ -20,8 +19,10 @@ def get_tel_plugins():
     """
     resource_path = '/'.join(('configs', 'telescope_paths.txt'))
     rootpath = os.path.dirname(os.path.dirname(dreambeam.__file__))
-    tele_paths_file = pkg_resources.resource_filename(dreambeam.__name__,
-                                                      resource_path)
+    tele_paths_file = importlib.resources.files(dreambeam.__name__).joinpath(
+        resource_path
+    )
+    
     tele_paths = []
     with open(tele_paths_file) as fp:
         lines = fp.readlines()
