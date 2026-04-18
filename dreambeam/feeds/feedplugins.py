@@ -1,7 +1,7 @@
 import os
 import shutil
-import pkg_resources
 import pickle
+import importlib
 import dreambeam
 from antpat import radfarfield
 from antpat.io.NECread import readNECout_tvecfuns
@@ -22,8 +22,10 @@ class FeedWiz(object):
     def _get_feed_paths(self):
         resource_path = '/'.join(('configs', 'feed_paths.txt'))
         rootpath = os.path.dirname(os.path.dirname(dreambeam.__file__))
-        feed_paths_file = pkg_resources.resource_filename(dreambeam.__name__,
-                                                          resource_path)
+        feed_paths_file = importlib.resources.files(
+            dreambeam.__name__
+        ).joinpath(resource_path)
+        
         feed_paths = []
         with open(feed_paths_file) as fp:
             lines = fp.readlines()
