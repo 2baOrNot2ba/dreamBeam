@@ -404,11 +404,11 @@ def plotJonesField(jonesfld, jbasis, refframe, rep='abs-Jones',
         res00lbl = 'I'
         res01 = SQ
         res01lbl = 'Q'
-        res10 = SU/S0
+        res10 = SU
         res10lbl = 'U'
         res11 = SV
         res11lbl = 'V'
-        fracpol = True
+        fracpol = False
         if fracpol == True:
             res01 /= S0
             res01lbl = res01lbl.lower()
