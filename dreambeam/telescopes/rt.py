@@ -2,7 +2,7 @@
 rt (i.e. Radio Telescopes) module is for handling real telescope meta-data.
 """
 import os
-import importlib
+import importlib.resources
 import dreambeam
 from dreambeam.feeds.feedplugins import FeedWiz
 import dreambeam.telescopes.geometry_ingest as gi

@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Updated
 - README.md now has dreamBeam Zenodo DOI.
-
+- `importlib.resources` migration from `pkg_resources`.
 
 ## [0.9] 2025-01-30
 
